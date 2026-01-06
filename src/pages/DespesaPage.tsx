@@ -1,9 +1,9 @@
 import React from 'react';
-import { FaturamentoForm } from '../components/forms/FaturamentoForm';
+import { DespesaForm } from '../components/forms/DespesaForm';
 import { ChevronRight, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-export const FaturamentoPage: React.FC = () => {
+export const DespesaPage: React.FC = () => {
     return (
         <div className="container mx-auto px-4 py-12">
             <div className="max-w-xl mx-auto mb-10">
@@ -13,21 +13,21 @@ export const FaturamentoPage: React.FC = () => {
                         RAIZ
                     </Link>
                     <ChevronRight className="w-2.5 h-2.5 opacity-20" />
-                    <span className="text-cyber-gold/60">FATURAMENTO_STREAM_V2</span>
+                    <span className="text-cyber-gold/60">MÓDULO_DESPESAS_SAÍDA</span>
                 </nav>
 
                 <div className="relative mb-12">
                     <div className="absolute -left-4 top-0 bottom-0 w-px bg-cyber-gold/20"></div>
                     <h1 className="text-5xl font-black text-cyber-gold tracking-tighter italic italic-shadow uppercase glitch">
-                        Canais de Faturamento
+                        Console de Despesas
                     </h1>
                     <p className="text-cyber-gold/40 text-[10px] font-mono tracking-[0.2em] mt-3 uppercase max-w-lg">
-                        INICIALIZAR_CANAIS_DIRETOS_FATURAMENTO // SINCR_FLUXOS_PARA_CÁLCULO_AUTOMÁTICO_0x42
+                        ALOCAR_CUSTOS_OPERACIONAIS // SINCR_FLUXOS_PARA_AUDITORIA_V2.5
                     </p>
                 </div>
             </div>
 
-            <FaturamentoForm />
+            <DespesaForm />
         </div>
     );
 };

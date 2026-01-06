@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAdiantamento } from '../../hooks/useAdiantamento';
 import { useForm } from '../../hooks/useForm';
-import { ErrorAlert } from '../common/ErrorAlert';
 import { formatInputCurrency, parseCurrencyString } from '../../utils/formatters';
 
 export const AdiantamentoForm: React.FC = () => {
@@ -52,47 +51,65 @@ export const AdiantamentoForm: React.FC = () => {
     };
 
     return (
-        <div className="bg-white rounded-lg shadow-md p-6 max-w-md mx-auto">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">Registrar Adiantamento</h2>
+        <div className="hud-card top-brackets bottom-brackets p-8 max-w-md mx-auto relative overflow-hidden bg-black/60">
+            <div className="static-overlay opacity-10"></div>
 
-            {error && <ErrorAlert message={error} />}
+            <div className="flex justify-between items-center mb-10 pb-4 border-b border-cyber-gold/20">
+                <h2 className="text-xl font-black text-cyber-gold tracking-widest uppercase italic italic-shadow">
+                    [CONSOLE_ALOC_CRÉDITO]
+                </h2>
+                <span className="text-[8px] font-mono text-cyber-gold/40">SIST_OVR: ALTO</span>
+            </div>
 
-            {successMessage && (
-                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4 animate-pulse">
-                    ✓ Adiantamento registrado com sucesso! Dashboard será atualizado...
+            {error && (
+                <div className="border border-cyber-error bg-cyber-error/5 p-4 text-cyber-error text-[10px] font-mono mb-6 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-cyber-error animate-pulse"></div>
+                    <span className="font-black uppercase block mb-1">IO_ERROR:</span>
+                    {error}
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Data do Pagamento
-                    </label>
-                    <input
-                        type="date"
-                        name="dataPagamento"
-                        value={values.dataPagamento}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        required
-                        id="adiantamento-date"
-                    />
+            {successMessage && (
+                <div className="border border-cyber-gold bg-cyber-gold/5 p-4 text-cyber-gold text-[10px] font-mono mb-6 relative overflow-hidden animate-pulse">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-cyber-gold"></div>
+                    <span className="font-black uppercase block mb-1">IO_SUCESSO:</span>
+                    ALOCAÇÃO_ESTÁVEL. RECONSTRUINDO_GRÁFICO...
                 </div>
+            )}
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Valor
+            <form onSubmit={handleSubmit} className="space-y-8">
+                <div className="relative group/field">
+                    <label className="hud-label group-focus-within/field:text-cyber-gold transition-colors">
+                        REF_CARIMBO
                     </label>
                     <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium font-mono">
-                            R$
+                        <input
+                            type="date"
+                            name="dataPagamento"
+                            value={values.dataPagamento}
+                            onChange={handleChange}
+                            className="w-full bg-black/40 border border-cyber-gold/10 text-cyber-gold text-sm font-mono p-3 outline-none focus:border-cyber-gold focus:shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all"
+                            required
+                            id="adiantamento-date"
+                        />
+                        <div className="absolute bottom-0 left-0 w-0 h-px bg-cyber-gold group-focus-within/field:w-full transition-all duration-500"></div>
+                    </div>
+                </div>
+
+                <div className="relative group/field">
+                    <label className="hud-label group-focus-within/field:text-cyber-gold transition-colors">
+                        PESO_CRÉDITO (BRL)
+                    </label>
+                    <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-cyber-gold/40 font-black font-mono text-xs">
+                            ALLOC_
                         </span>
                         <input
                             type="text"
                             name="valor"
                             value={values.valor}
                             onChange={handleValorChange}
-                            className="w-full pl-12 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium"
+                            className="w-full bg-black/40 border border-cyber-gold/10 text-cyber-gold text-lg font-black italic p-3 pl-16 outline-none focus:border-cyber-gold focus:shadow-[0_0_20px_rgba(212,175,55,0.15)] transition-all"
                             placeholder="0,00"
                             required
                             id="adiantamento-valor"
@@ -100,29 +117,36 @@ export const AdiantamentoForm: React.FC = () => {
                     </div>
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Descrição (Opcional)
+                <div className="relative group/field">
+                    <label className="hud-label group-focus-within/field:text-cyber-gold transition-colors">
+                        ANEXAR_METADADOS
                     </label>
                     <textarea
                         name="descricao"
                         value={values.descricao}
                         onChange={handleChange as any}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Ex: Adiantamento para despesas..."
+                        className="w-full bg-black/40 border border-cyber-gold/10 text-cyber-gold text-xs font-mono p-3 min-h-[100px] outline-none focus:border-cyber-gold focus:shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all resize-none"
+                        placeholder="FORNEÇA_CONTEXTO_SE_NECESSÁRIO..."
                         rows={3}
                         id="adiantamento-descricao"
                     />
                 </div>
 
-                <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition"
-                    id="adiantamento-submit"
-                >
-                    {isLoading ? '⏳ Registrando...' : '✓ Registrar Adiantamento'}
-                </button>
+                <div className="pt-2">
+                    <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-full hud-button"
+                        id="adiantamento-submit"
+                    >
+                        {isLoading ? '>>> CRIPTOGRAFANDO...' : 'CONFIRMAR_ALOCAÇÃO'}
+                    </button>
+                </div>
+
+                <div className="flex justify-between items-center pt-2 text-[7px] text-cyber-gold/20 font-mono tracking-widest uppercase">
+                    <span>OBOOS_SECURE_NODE_09</span>
+                    <span>TAG: EXP_CREDIT</span>
+                </div>
             </form>
         </div>
     );

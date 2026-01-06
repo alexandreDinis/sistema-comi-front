@@ -16,7 +16,7 @@ export const AdiantamentoPage: React.FC = () => {
                     <span className="text-slate-900">Novo Adiantamento</span>
                 </nav>
 
-                <h1 className="text-4xl font-black text-slate-900 tracking-tight text-emerald-950">
+                <h1 className="text-4xl font-black text-slate-900 tracking-tight">
                     Controle de Adiantamentos
                 </h1>
                 <p className="text-slate-500 mt-2 font-medium">

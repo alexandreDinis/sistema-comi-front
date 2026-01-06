@@ -8,7 +8,7 @@ export const Header: React.FC = () => {
     const isActive = (path: string) => location.pathname === path;
 
     return (
-        <header className="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg sticky top-0 z-50">
+        <header className="bg-linear-to-r from-blue-600 to-blue-800 text-white shadow-lg sticky top-0 z-50">
             <div className="container mx-auto px-4 py-4">
                 <div className="flex justify-between items-center">
                     <Link
@@ -22,8 +22,8 @@ export const Header: React.FC = () => {
                         <Link
                             to="/"
                             className={`transition ${isActive('/')
-                                    ? 'text-white font-bold border-b-2 border-white'
-                                    : 'hover:text-blue-100'
+                                ? 'text-white font-bold border-b-2 border-white'
+                                : 'hover:text-blue-100'
                                 }`}
                         >
                             Dashboard
@@ -31,8 +31,8 @@ export const Header: React.FC = () => {
                         <Link
                             to="/faturamento"
                             className={`transition ${isActive('/faturamento')
-                                    ? 'text-white font-bold border-b-2 border-white'
-                                    : 'hover:text-blue-100'
+                                ? 'text-white font-bold border-b-2 border-white'
+                                : 'hover:text-blue-100'
                                 }`}
                         >
                             Faturamento
@@ -40,8 +40,8 @@ export const Header: React.FC = () => {
                         <Link
                             to="/adiantamento"
                             className={`transition ${isActive('/adiantamento')
-                                    ? 'text-white font-bold border-b-2 border-white'
-                                    : 'hover:text-blue-100'
+                                ? 'text-white font-bold border-b-2 border-white'
+                                : 'hover:text-blue-100'
                                 }`}
                         >
                             Adiantamentos
@@ -49,8 +49,8 @@ export const Header: React.FC = () => {
                         <Link
                             to="/comissao"
                             className={`transition ${isActive('/comissao')
-                                    ? 'text-white font-bold border-b-2 border-white'
-                                    : 'hover:text-blue-100'
+                                ? 'text-white font-bold border-b-2 border-white'
+                                : 'hover:text-blue-100'
                                 }`}
                         >
                             Comissão

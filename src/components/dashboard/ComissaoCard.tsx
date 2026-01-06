@@ -12,7 +12,7 @@ export const ComissaoCard: React.FC<ComissaoCardProps> = ({ comissao }) => {
 
     return (
         <div className="space-y-6 fade-in">
-            <div className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
+            <div className="bg-white rounded-4xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="px-8 py-6 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
                     <div>
                         <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full uppercase tracking-wider mb-2">
@@ -71,7 +71,7 @@ export const ComissaoCard: React.FC<ComissaoCardProps> = ({ comissao }) => {
                         </div>
                     </div>
 
-                    <div className={`p-8 rounded-[2rem] flex flex-col sm:flex-row items-center justify-between gap-6 ${isPositivo ? 'bg-emerald-600' : 'bg-rose-600'
+                    <div className={`p-8 rounded-4xl flex flex-col sm:flex-row items-center justify-between gap-6 ${isPositivo ? 'bg-emerald-600' : 'bg-rose-600'
                         } text-white shadow-xl shadow-opacity-20`}>
                         <div>
                             <p className="text-sm font-bold uppercase tracking-widest opacity-80">Saldo Líquido a Receber</p>

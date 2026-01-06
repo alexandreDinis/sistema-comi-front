@@ -29,7 +29,8 @@ body {
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900;
+    background-color: var(--color-slate-50);
+    color: var(--color-slate-900);
   }
 }
 

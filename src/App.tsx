@@ -27,7 +27,7 @@ export const App: React.FC = () => {
       <Router>
         <div className="flex flex-col min-h-screen bg-gray-50">
           <Header />
-          <main className="flex-grow">
+          <main className="grow">
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/faturamento" element={<FaturamentoPage />} />

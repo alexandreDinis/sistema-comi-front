@@ -10,7 +10,7 @@ export const ErrorAlert: React.FC<ErrorAlertProps> = ({ message, onClose }) => {
     return (
         <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-4 rounded-xl mb-6 flex items-start gap-3 fade-in">
             <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-            <div className="flex-grow">
+            <div className="grow">
                 <p className="font-semibold text-sm">Ocorreu um erro</p>
                 <p className="text-sm opacity-90">{message}</p>
             </div>

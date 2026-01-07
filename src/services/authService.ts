@@ -3,7 +3,7 @@ import type { LoginRequest, RegisterRequest, UserResponse } from '../types';
 import { userService } from './userService';
 
 // Usamos a URL base definida no api.ts mas acessamos o endpoint de auth especificamente
-const API_URL = (import.meta.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1/').replace(/\/?$/, '/') + 'auth';
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1/').replace(/\/?$/, '/') + 'auth';
 
 export const authService = {
     login: async (credentials: LoginRequest): Promise<UserResponse> => {

@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
+import { LogOut, Menu, X } from 'lucide-react';
 import { authService } from '../../services/authService';
 import logo from '../../assets/log.png';
 
 export const Header: React.FC = () => {
+    const [isMenuOpen, setIsMenuOpen] = React.useState(false);
     const location = useLocation();
     const navigate = useNavigate();
     const user = authService.getCurrentUser();
@@ -67,7 +68,18 @@ export const Header: React.FC = () => {
                         </div>
                     </Link>
 
-                    <nav className="flex gap-1">
+
+
+                    {/* Mobile Menu Button */}
+                    <button
+                        className="md:hidden text-cyber-gold p-2 hover:bg-cyber-gold/10 transition-colors"
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    >
+                        {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                    </button>
+
+                    {/* Desktop Nav */}
+                    <nav className="hidden md:flex gap-1">
                         {[
                             { path: '/', label: 'PAINEL', restrict: false },
                             { path: '/faturamento', label: 'FATURAMENTO', restrict: false },
@@ -96,16 +108,58 @@ export const Header: React.FC = () => {
                         ))}
                     </nav>
 
-                    <button
-                        onClick={handleLogout}
-                        className="ml-4 px-4 py-3 bg-cyber-error/10 border border-cyber-error/30 text-cyber-error hover:bg-cyber-error/20 hover:text-white transition-all text-[10px] font-mono tracking-widest uppercase flex items-center gap-2 group"
-                        title="ENCERRAR_CONEXÃO"
-                    >
-                        <LogOut className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" />
-                        <span className="hidden sm:inline">SAIR</span>
-                    </button>
+                    {/* Desktop Logout - Hidden on mobile, shown in menu instead */}
+                    <div className="hidden md:block">
+                        <button
+                            onClick={handleLogout}
+                            className="ml-4 px-4 py-3 bg-cyber-error/10 border border-cyber-error/30 text-cyber-error hover:bg-cyber-error/20 hover:text-white transition-all text-[10px] font-mono tracking-widest uppercase flex items-center gap-2 group"
+                            title="ENCERRAR_CONEXÃO"
+                        >
+                            <LogOut className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" />
+                            <span className="hidden sm:inline">SAIR</span>
+                        </button>
+                    </div>
                 </div>
+
+                {/* Mobile Menu Overlay */}
+                {isMenuOpen && (
+                    <div className="md:hidden border-t border-cyber-gold/20 mt-2 py-4 space-y-2 animate-slideDown bg-black/95 backdrop-blur-md">
+                        {[
+                            { path: '/', label: 'PAINEL', restrict: false },
+                            { path: '/faturamento', label: 'FATURAMENTO', restrict: false },
+                            { path: '/adiantamento', label: 'ADIANTAMENTOS', restrict: false },
+                            { path: '/despesa', label: 'DESPESAS', restrict: false },
+                            { path: '/relatorio', label: 'AUDITORIA', restrict: false },
+                            { path: '/admin', label: 'PAINEL_ADMIN', restrict: false },
+                        ].filter(link => !link.restrict || isAdmin).map((link) => (
+                            <Link
+                                key={link.path}
+                                to={link.path}
+                                onClick={() => setIsMenuOpen(false)}
+                                className={`block px-5 py-3 text-xs font-black tracking-widest uppercase transition-all relative group ${isActive(link.path)
+                                    ? 'text-cyber-gold bg-cyber-gold/5 border-l-2 border-cyber-gold'
+                                    : 'text-cyber-gold/40 hover:text-cyber-gold hover:bg-cyber-gold/5'
+                                    }`}
+                            >
+                                {link.label}
+                            </Link>
+                        ))}
+                        <button
+                            onClick={() => {
+                                setIsMenuOpen(false);
+                                handleLogout();
+                            }}
+                            className="w-full text-left px-5 py-3 text-cyber-error hover:bg-cyber-error/10 transition-all text-xs font-mono tracking-widest uppercase flex items-center gap-2"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            SAIR
+                        </button>
+                    </div>
+                )}
+
+
             </div>
-        </header>
+
+        </header >
     );
 };

@@ -48,7 +48,7 @@ export const LoginForm: React.FC = () => {
             <div className="text-center mb-10">
                 <div className="inline-block relative">
                     <h2 className="text-3xl font-black text-cyber-gold tracking-widest uppercase italic italic-shadow glitch">
-                        SISTEMA COMI
+                        GESTÃO DE SERVIÇOS
                     </h2>
                     <span className="absolute -bottom-2 right-0 text-[8px] font-mono text-cyber-gold/40">V2.4.0 // SECURE_ACCESS</span>
                 </div>
@@ -80,7 +80,7 @@ export const LoginForm: React.FC = () => {
                             value={values.email}
                             onChange={handleChange}
                             className="w-full bg-black/40 border border-cyber-gold/10 text-cyber-gold text-sm font-mono p-3 pl-4 outline-none focus:border-cyber-gold focus:shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all"
-                            placeholder="usuario@sistema.com"
+                            placeholder="usuario@gestao.com"
                             required
                         />
                         <div className="absolute bottom-0 left-0 w-0 h-px bg-cyber-gold group-focus-within/field:w-full transition-all duration-500"></div>

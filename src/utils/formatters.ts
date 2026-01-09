@@ -1,45 +1,14 @@
-export const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    }).format(value);
+export const formatarData = (dataString: string) => {
+    if (!dataString) return '';
+    // dataString comes as "2024-01-15". We split and create date manually to avoid UTC offset issues.
+    const parts = dataString.split('-');
+    if (parts.length !== 3) return dataString; // Fallback
+
+    const [ano, mes, dia] = parts.map(Number);
+    // Note: Month in Date constructor is 0-indexed (0=January, 11=December)
+    return new Date(ano, mes - 1, dia).toLocaleDateString('pt-BR');
 };
 
-export const formatPercentage = (value: number): string => {
-    return `${value.toFixed(2).replace('.', ',')}%`;
-};
-
-export const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('pt-BR').format(date);
-};
-
-export const formatDateTime = (dateString: string): string => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('pt-BR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-    }).format(date);
-};
-
-export const formatInputCurrency = (value: string): string => {
-    // Remove tudo que não é número
-    const digits = value.replace(/\D/g, '');
-
-    // Converte para centavos
-    const amount = parseInt(digits || '0') / 100;
-
-    // Formata como moeda (sem o símbolo R$ para facilitar o input)
-    return new Intl.NumberFormat('pt-BR', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    }).format(amount);
-};
-
-export const parseCurrencyString = (value: string): number => {
-    // Converte de volta para número (ex: "1.250,50" -> 1250.50)
-    return parseFloat(value.replace(/\./g, '').replace(',', '.')) || 0;
+export const formatarMoeda = (valor: number) => {
+    return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };

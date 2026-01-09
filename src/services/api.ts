@@ -1,9 +1,13 @@
 import axios from 'axios';
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1/').replace(/\/?$/, '/');
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+if (!API_BASE_URL) {
+    throw new Error('VITE_API_URL não definida no build');
+}
 
 const api = axios.create({
-    baseURL: API_BASE_URL,
+    baseURL: API_BASE_URL.replace(/\/?$/, '/'),
     timeout: 15000,
     headers: {
         'Content-Type': 'application/json',

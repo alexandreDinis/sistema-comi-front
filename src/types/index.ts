@@ -104,3 +104,112 @@ export interface User {
     roles?: string[];
     active: boolean;
 }
+
+// --- Módulo OS Definitions ---
+
+export type OSStatus = 'ABERTA' | 'EM_EXECUCAO' | 'FINALIZADA' | 'CANCELADA';
+
+export type StatusCliente = 'ATIVO' | 'INATIVO' | 'EM_PROSPECCAO';
+
+export interface Cliente {
+    id: number;
+    razaoSocial: string;
+    nomeFantasia: string;
+    cnpj: string;
+    endereco?: string; // Mantido para retrocompatibilidade visual se necessario, mas o foco agora são os campos detalhados
+    contato: string;
+    email: string;
+    status: StatusCliente;
+
+    // Address Fields
+    logradouro?: string;
+    numero?: string;
+    complemento?: string;
+    bairro?: string;
+    cidade?: string;
+    estado?: string;
+    cep?: string;
+}
+
+export interface ClienteRequest {
+    razaoSocial: string;
+    nomeFantasia: string;
+    cnpj: string;
+    endereco?: string;
+    contato: string;
+    email: string;
+    status: StatusCliente;
+
+    // Address Fields
+    logradouro: string;
+    numero: string;
+    complemento?: string;
+    bairro: string;
+    cidade: string;
+    estado: string;
+    cep: string;
+}
+
+export interface ClienteFiltros {
+    termo?: string;
+    cidade?: string;
+    bairro?: string;
+    status?: StatusCliente;
+}
+
+export interface TipoPeca {
+    id: number;
+    nome: string;
+    valorPadrao: number;
+}
+
+export interface TipoPecaRequest {
+    nome: string;
+    valorPadrao: number;
+}
+
+export interface PecaOS {
+    id: number;
+    nomePeca: string;
+    valorCobrado: number;
+}
+
+export interface VeiculoOS {
+    id: number;
+    placa: string;
+    modelo: string;
+    cor: string;
+    valorTotal: number;
+    pecas: PecaOS[];
+}
+
+export interface OrdemServico {
+    id: number;
+    data: string;
+    status: OSStatus;
+    valorTotal: number;
+    cliente: Cliente;
+    veiculos: VeiculoOS[];
+}
+
+export interface CreateOSRequest {
+    clienteId: number;
+    data: string;
+}
+
+export interface AddVeiculoRequest {
+    ordemServicoId: number;
+    placa: string;
+    modelo: string;
+    cor: string;
+}
+
+export interface AddPecaRequest {
+    veiculoId: number;
+    tipoPecaId: number;
+    valorCobrado?: number; // Optional, uses default if null
+}
+
+export interface UpdateOSStatusRequest {
+    status: OSStatus;
+}

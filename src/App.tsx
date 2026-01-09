@@ -11,7 +11,12 @@ import { RelatorioPage } from './pages/RelatorioPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
-import { AdminPanel } from './pages/AdminPanel';
+import { AdminPanel } from './pages/AdminPanel'; // Admin Module
+import { ClientesPage } from './pages/os/ClientesPage';
+import { CatalogoPage } from './pages/os/CatalogoPage';
+import { OrdemServicoListPage } from './pages/os/OSListPage';
+import { OSDetailsPage } from './pages/os/OSDetailsPage';
+import { MinhaComissaoPage } from './pages/MinhaComissaoPage';
 import './index.css';
 
 // ✅ Configurar QueryClient com opções apropriadas
@@ -69,9 +74,38 @@ export const App: React.FC = () => {
                   <DespesaPage />
                 </ProtectedRoute>
               } />
+
+              {/* --- Módulo de OS --- */}
+              <Route path="/clientes" element={
+                <ProtectedRoute role="ADMIN">
+                  <ClientesPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/catalogo" element={
+                <ProtectedRoute role="ADMIN">
+                  <CatalogoPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/os" element={
+                <ProtectedRoute role="ADMIN">
+                  <OrdemServicoListPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/os/:id" element={
+                <ProtectedRoute role="ADMIN">
+                  <OSDetailsPage />
+                </ProtectedRoute>
+              } />
+
               <Route path="/relatorio" element={
                 <ProtectedRoute role="ADMIN">
                   <RelatorioPage />
+                </ProtectedRoute>
+              } />
+
+              <Route path="/minha-comissao" element={
+                <ProtectedRoute>
+                  <MinhaComissaoPage />
                 </ProtectedRoute>
               } />
               <Route path="*" element={<NotFoundPage />} />

@@ -55,7 +55,15 @@ export const RelatorioPage: React.FC = () => {
                         </p>
                     </div>
 
-                    <div className="flex items-center bg-black/40 border border-cyber-gold/20 p-1 relative">
+                    <div className="flex items-center gap-4 bg-black/40 border border-cyber-gold/20 p-1 relative">
+                        <button
+                            onClick={() => import('../services/osService').then(m => m.osService.downloadRelatorioPdf(ano, mes))}
+                            className="px-4 h-12 flex items-center justify-center hover:bg-cyber-gold hover:text-black transition-all font-bold text-xs tracking-wider border-r border-cyber-gold/10 font-oxanium text-cyber-gold"
+                            title="Exportar Relatório em PDF"
+                        >
+                            <span className="mr-2">PDF</span>
+                            EXPORT
+                        </button>
                         <div className="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-cyber-gold/40"></div>
                         <button
                             onClick={handlePreviousMonth}

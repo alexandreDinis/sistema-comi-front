@@ -108,6 +108,19 @@ export interface Empresa {
     plano: 'BRONZE' | 'PRATA' | 'OURO' | string;
 }
 
+// Commission Mode Configuration
+export type ModoComissao = 'INDIVIDUAL' | 'COLETIVA';
+
+export interface EmpresaConfig {
+    id: number;
+    nome: string;
+    modoComissao: ModoComissao;
+}
+
+export interface UpdateEmpresaConfigRequest {
+    modoComissao?: ModoComissao;
+}
+
 export interface Feature {
     id?: number;
     codigo: string;

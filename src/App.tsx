@@ -137,7 +137,7 @@ export const App: React.FC = () => {
             } />
 
             <Route path="/relatorio" element={
-              <ProtectedRoute requiredFeature={Feature.RELATORIO_COMISSAO_VIEW}>
+              <ProtectedRoute requiredFeature={Feature.RELATORIO_FINANCEIRO_VIEW}>
                 <RelatorioPage />
               </ProtectedRoute>
             } />

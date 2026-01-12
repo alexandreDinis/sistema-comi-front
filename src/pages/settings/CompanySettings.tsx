@@ -1,6 +1,7 @@
 import React from 'react';
-import { Users, Shield } from 'lucide-react';
+import { Users, Shield, Calculator } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { ModoComissaoConfig } from '../../components/settings/ModoComissaoConfig';
 
 export const CompanySettings: React.FC = () => {
     const navigate = useNavigate();
@@ -9,7 +10,7 @@ export const CompanySettings: React.FC = () => {
         <div className="space-y-8">
             <div className="border-b border-cyber-gold/20 pb-4">
                 <h1 className="text-3xl font-black text-cyber-gold tracking-tighter uppercase glitch">Configurações da Empresa</h1>
-                <p className="text-cyber-gold/60 font-mono text-sm mt-2">Gestão de Equipe e Assinatura</p>
+                <p className="text-cyber-gold/60 font-mono text-sm mt-2">Gestão de Equipe, Assinatura e Comissões</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -52,7 +53,18 @@ export const CompanySettings: React.FC = () => {
                     </button>
                 </section>
             </div>
+
+            {/* Comissão Configuration */}
+            <section className="bg-black/40 border border-cyber-gold/30 p-6 relative group overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full bg-cyber-gold opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                <div className="flex items-center gap-4 mb-6">
+                    <div className="p-3 bg-cyber-gold/10 rounded-lg border border-cyber-gold/30 text-cyber-gold">
+                        <Calculator size={24} />
+                    </div>
+                    <h2 className="text-xl font-bold text-cyber-gold uppercase">Configuração de Comissão</h2>
+                </div>
+                <ModoComissaoConfig />
+            </section>
         </div>
     );
 };
-

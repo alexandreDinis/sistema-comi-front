@@ -29,8 +29,8 @@ export const ComissaoDashboard: React.FC = () => {
 
     const handleRefresh = () => {
         console.log('🔄 Atualizando dados...');
-        invalidate(); // Invalida o cache
-        setTimeout(() => refetch(), 100); // Refetch após invalidar
+        invalidate();
+        setTimeout(() => refetch(), 100);
     };
 
     return (

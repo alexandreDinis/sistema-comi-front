@@ -30,6 +30,9 @@ export const RelatorioConsolidado: React.FC<RelatorioConsolidadoProps> = ({ ano,
         queryFn: () => relatorioService.getRelatorio(ano, mes),
     });
 
+    // Debug: log what we receive
+    console.log('[RelatorioConsolidado] Data:', report, 'Error:', error);
+
     if (isLoading) return (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
             <div className="w-48 h-px bg-cyber-gold/10 relative overflow-hidden">
@@ -75,8 +78,11 @@ export const RelatorioConsolidado: React.FC<RelatorioConsolidadoProps> = ({ ano,
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {Object.entries(report.despesasPorCategoria).map(([cat, val]) => {
+                        {Object.entries(report.despesasPorCategoria || {}).map(([cat, val]) => {
                             const Icon = CATEGORY_ICONS[cat] || FileText;
+                            const percentage = report.despesasTotal > 0
+                                ? Math.min(((val as number) / report.despesasTotal) * 100, 100)
+                                : 0;
                             return (
                                 <div key={cat} className="p-4 bg-black/40 border border-cyber-gold/10 hover:border-cyber-gold/30 transition-all relative group">
                                     <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -89,7 +95,7 @@ export const RelatorioConsolidado: React.FC<RelatorioConsolidadoProps> = ({ ano,
                                     <div className="w-full h-1 bg-cyber-gold/5 mt-3 overflow-hidden">
                                         <div
                                             className="h-full bg-cyber-gold/40"
-                                            style={{ width: `${Math.min(((val as number) / report.despesasTotal) * 100, 100)}%` }}
+                                            style={{ width: `${percentage}%` }}
                                         ></div>
                                     </div>
                                 </div>

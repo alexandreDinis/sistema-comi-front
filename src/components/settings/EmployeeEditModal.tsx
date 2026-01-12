@@ -60,10 +60,11 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({ user, onCl
                 return { ...user, ...data };
             } else {
                 return await userService.createUser({
-                    name: data.name, // Send name to backend
+                    name: data.name,
                     email: data.email,
                     password: data.password,
                     role: data.role,
+                    features: data.features  // Include features so user isn't blocked
                 });
             }
         },

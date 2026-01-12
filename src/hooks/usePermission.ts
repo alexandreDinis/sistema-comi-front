@@ -14,23 +14,11 @@ export const usePermission = () => {
     const hasFeature = (featureCode: Feature | string): boolean => {
         if (!user) return false;
 
-        // Normalize role
-        const role = user.role ? user.role.toUpperCase().replace('ROLE_', '') : '';
-
-        // Fallback para ADMINs enquanto backend não retorna features completas
-        // ADMIN_EMPRESA deve ter acesso a TODAS as features de sua empresa
+        // Warn if user has no features assigned - this indicates a configuration issue
         if (!user.features || user.features.length === 0) {
-            const isAdmin = role === 'ADMIN' ||
-                role === 'ADMIN_EMPRESA' ||
-                user.roles?.some((r: string) => r.includes('ADMIN'));
-
-            if (isAdmin) {
-                console.log('[usePermission] Fallback: Admin without features list -> granting access');
-                return true;
-            }
+            console.warn('[usePermission] User has no features assigned:', user.email);
+            return false;
         }
-
-        if (!user.features) return false;
 
         return user.features.includes(featureCode);
     };

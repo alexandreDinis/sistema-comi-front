@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { userService } from '../services/userService';
 import type { User } from '../types';
 import { CheckCircle, Trash2, UserCog, AlertTriangle } from 'lucide-react';
+import { FeatureSelector } from '../components/forms/FeatureSelector';
 
 export const AdminPanel: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
@@ -51,7 +52,12 @@ export const AdminPanel: React.FC = () => {
 
     // State for Create User Modal
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [newUser, setNewUser] = useState({ email: '', password: '', role: 'USER' });
+    const [newUser, setNewUser] = useState({
+        email: '',
+        password: '',
+        role: 'FUNCIONARIO',
+        features: [] as string[]
+    });
 
     const handleCreateUser = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -59,7 +65,7 @@ export const AdminPanel: React.FC = () => {
             const created = await userService.createUser(newUser);
             setUsers(prev => [...prev, created]);
             setIsCreateModalOpen(false);
-            setNewUser({ email: '', password: '', role: 'USER' });
+            setNewUser({ email: '', password: '', role: 'FUNCIONARIO', features: [] });
         } catch (err) {
             console.error(err);
             alert('Erro ao criar usuário.');
@@ -145,8 +151,8 @@ export const AdminPanel: React.FC = () => {
                                         <button
                                             onClick={() => toggleRole(user)}
                                             className={`px-2 py-1 text-[9px] font-bold border transition-colors hover:bg-white/10 ${user.role === 'ADMIN'
-                                                    ? 'border-purple-500 text-purple-400 bg-purple-500/10'
-                                                    : 'border-cyber-gold/30 text-cyber-gold/60'
+                                                ? 'border-purple-500 text-purple-400 bg-purple-500/10'
+                                                : 'border-cyber-gold/30 text-cyber-gold/60'
                                                 }`}
                                             title="Clique para alternar permissão"
                                         >
@@ -236,12 +242,16 @@ export const AdminPanel: React.FC = () => {
                                     <select
                                         value={newUser.role}
                                         onChange={e => setNewUser({ ...newUser, role: e.target.value })}
-                                        className="w-full bg-black/40 border border-cyber-gold/20 p-2 text-cyber-gold text-sm focus:border-cyber-gold outline-none"
+                                        className="w-full bg-black/40 border border-cyber-gold/20 p-2 text-cyber-gold text-sm focus:border-cyber-gold outline-none mb-4"
                                     >
-                                        <option value="USER">USUÁRIO_PADRÃO</option>
-                                        <option value="ADMIN">ADMINISTRADOR</option>
+                                        <option value="FUNCIONARIO">FUNCIONÁRIO</option>
+                                        <option value="ADMIN_EMPRESA">ADMINISTRADOR</option>
                                     </select>
                                 </div>
+                                <FeatureSelector
+                                    selectedFeatures={newUser.features}
+                                    onChange={(features) => setNewUser({ ...newUser, features })}
+                                />
                                 <div className="flex justify-end gap-3 mt-6">
                                     <button
                                         type="button"

@@ -41,7 +41,7 @@ export const AppHeader: React.FC = () => {
                 { label: 'FATURAMENTO', path: '/faturamento', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
                 { label: 'ADIANTAMENTOS', path: '/adiantamento', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
                 { label: 'DESPESAS', path: '/despesa', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
-                { label: 'RELATÓRIOS', path: '/relatorio', feature: Feature.RELATORIO_COMISSAO_VIEW }
+                { label: 'RELATÓRIOS', path: '/relatorio', feature: Feature.RELATORIO_FINANCEIRO_VIEW }
             ]
         },
         {
@@ -93,13 +93,15 @@ export const AppHeader: React.FC = () => {
 
                     {/* Desktop Nav */}
                     <nav className="hidden md:flex gap-6">
-                        <Link
-                            to="/"
-                            className={`px-3 py-2 text-[10px] font-black tracking-widest uppercase transition-all flex items-center gap-2 relative group ${isActive('/') ? 'text-cyber-gold' : 'text-cyber-gold/60 hover:text-cyber-gold'}`}
-                        >
-                            PAINEL
-                            {isActive('/') && <div className="absolute -bottom-3 left-0 right-0 h-[2px] bg-cyber-gold shadow-[0_0_10px_var(--color-cyber-gold)]"></div>}
-                        </Link>
+                        {hasFeature(Feature.DASHBOARD_VIEW) && (
+                            <Link
+                                to="/"
+                                className={`px-3 py-2 text-[10px] font-black tracking-widest uppercase transition-all flex items-center gap-2 relative group ${isActive('/') ? 'text-cyber-gold' : 'text-cyber-gold/60 hover:text-cyber-gold'}`}
+                            >
+                                PAINEL
+                                {isActive('/') && <div className="absolute -bottom-3 left-0 right-0 h-[2px] bg-cyber-gold shadow-[0_0_10px_var(--color-cyber-gold)]"></div>}
+                            </Link>
+                        )}
 
                         {navGroups.map((group) => (
                             <div key={group.label} className="relative group/menu">
@@ -138,7 +140,9 @@ export const AppHeader: React.FC = () => {
                 {/* Mobile Menu */}
                 {isMenuOpen && (
                     <div className="md:hidden mt-4 border-t border-cyber-gold/20 pt-4 space-y-4 animate-slideDown bg-black/95">
-                        <Link to="/" onClick={() => setIsMenuOpen(false)} className="block px-4 py-2 text-xs font-black tracking-widest uppercase text-cyber-gold">PAINEL</Link>
+                        {hasFeature(Feature.DASHBOARD_VIEW) && (
+                            <Link to="/" onClick={() => setIsMenuOpen(false)} className="block px-4 py-2 text-xs font-black tracking-widest uppercase text-cyber-gold">PAINEL</Link>
+                        )}
                         {navGroups.map(group => (
                             <div key={group.label} className="px-4">
                                 <div className="text-[10px] text-cyber-gold/40 uppercase tracking-widest mb-2 font-mono flex items-center gap-2">

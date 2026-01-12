@@ -4,12 +4,16 @@ import { osService } from '../../services/osService';
 import type { ClienteRequest, StatusCliente, ClienteFiltros } from '../../types';
 import { Users, Plus, Save, MapPin, Phone, Mail, Building2, Trash2, Search, Filter } from 'lucide-react';
 import { formatCNPJ, formatTelefone, formatCEP } from '../../utils/formatters';
+import { usePermission } from '../../hooks/usePermission';
+import { Feature } from '../../types/features';
 
 import { ActionModal } from '../../components/modals/ActionModal';
 import type { ActionModalType } from '../../components/modals/ActionModal';
 
 export const ClientesPage: React.FC = () => {
     const queryClient = useQueryClient();
+    const { hasFeature } = usePermission();
+    const canWrite = hasFeature(Feature.CLIENTE_WRITE);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [actionModal, setActionModal] = useState<{
@@ -222,7 +226,9 @@ export const ClientesPage: React.FC = () => {
                         if (isFormOpen) resetForm();
                         else setIsFormOpen(true);
                     }}
-                    className="bg-cyber-gold/10 text-cyber-gold border border-cyber-gold px-4 py-2 rounded hover:bg-cyber-gold hover:text-black transition-all flex items-center gap-2 font-oxanium"
+                    disabled={!canWrite}
+                    className={`bg-cyber-gold/10 text-cyber-gold border border-cyber-gold px-4 py-2 rounded hover:bg-cyber-gold hover:text-black transition-all flex items-center gap-2 font-oxanium ${!canWrite ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    title={!canWrite ? 'Sem permissão para gerenciar clientes' : undefined}
                 >
                     <Plus className="w-4 h-4" />
                     {isFormOpen ? 'CANCELAR' : 'NOVO CLIENTE'}
@@ -488,8 +494,9 @@ export const ClientesPage: React.FC = () => {
                             {clientes?.map((cliente) => (
                                 <tr
                                     key={cliente.id}
-                                    className="hover:bg-white/5 transition-colors group cursor-pointer"
-                                    onClick={() => handleEdit(cliente)}
+                                    className={`hover:bg-white/5 transition-colors group ${canWrite ? 'cursor-pointer' : 'cursor-default'}`}
+                                    onClick={() => canWrite && handleEdit(cliente)}
+                                    title={!canWrite ? 'Sem permissão para editar' : 'Clique para editar'}
                                 >
                                     <td className="p-4 font-mono text-gray-500 text-xs">#{cliente.id}</td>
 

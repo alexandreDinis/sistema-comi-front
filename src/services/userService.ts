@@ -21,7 +21,14 @@ export const userService = {
         await api.delete(`/users/${id}`);
     },
 
-    createUser: async (userData: { email: string; password: string; role?: string; name?: string }): Promise<User> => {
+    createUser: async (userData: {
+        email: string;
+        password: string;
+        role?: string;
+        name?: string;
+        empresaId?: number;       // Only for Super Admin
+        features?: string[];      // Required - user will be blocked without features
+    }): Promise<User> => {
         const response = await api.post<User>('/users', userData);
         return response.data;
     },

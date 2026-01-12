@@ -2,12 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { osService } from '../../services/osService';
 import type { ClienteRequest, StatusCliente, ClienteFiltros } from '../../types';
-import { Users, Plus, Save, MapPin, Phone, Mail, Building2, Activity, Trash2, Search, Filter } from 'lucide-react';
+import { Users, Plus, Save, MapPin, Phone, Mail, Building2, Trash2, Search, Filter } from 'lucide-react';
+import { formatCNPJ, formatTelefone, formatCEP } from '../../utils/formatters';
+
+import { ActionModal } from '../../components/modals/ActionModal';
+import type { ActionModalType } from '../../components/modals/ActionModal';
 
 export const ClientesPage: React.FC = () => {
     const queryClient = useQueryClient();
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [actionModal, setActionModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        type: ActionModalType;
+        confirmText?: string;
+        cancelText?: string;
+        onConfirm?: () => void;
+        showCancel?: boolean;
+    }>({ isOpen: false, title: '', message: '', type: 'info' });
 
     // Filters State
     const [filters, setFilters] = useState<ClienteFiltros>({
@@ -32,6 +46,7 @@ export const ClientesPage: React.FC = () => {
         nomeFantasia: '',
         cnpj: '',
         contato: '',
+        endereco: '', // Explicit init
         email: '',
         status: 'ATIVO',
         logradouro: '',
@@ -50,12 +65,52 @@ export const ClientesPage: React.FC = () => {
         queryFn: () => osService.listClientes(debouncedFilters)
     });
 
+    const handleError = (error: any) => {
+        let title = 'Erro';
+        let message = 'Ocorreu um erro ao processar sua solicitação.';
+
+        if (error.response?.status === 400) {
+            title = 'Dados Inválidos';
+            const apiErrors = error.response.data.errors;
+            if (apiErrors) {
+                // Format list of errors
+                const errorList = Object.keys(apiErrors).map(key => `• ${apiErrors[key]}`).join('\n');
+                message = `Verifique os seguintes campos:\n\n${errorList}`;
+            } else {
+                message = error.response.data.message || 'Verifique os dados informados.';
+            }
+        } else if (error.response?.status === 500) {
+            title = 'Erro no Servidor';
+            message = 'Ocorreu um erro interno. Tente novamente mais tarde.';
+        }
+
+        setActionModal({
+            isOpen: true,
+            title,
+            message,
+            type: 'danger',
+            confirmText: 'FECHAR',
+            showCancel: false,
+            onConfirm: () => setActionModal(prev => ({ ...prev, isOpen: false }))
+        });
+    };
+
     const createMutation = useMutation({
         mutationFn: osService.createCliente,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['clientes'] });
             resetForm();
-        }
+            setActionModal({
+                isOpen: true,
+                title: 'Sucesso',
+                message: 'Cliente cadastrado com sucesso!',
+                type: 'success',
+                confirmText: 'OK',
+                showCancel: false,
+                onConfirm: () => setActionModal(prev => ({ ...prev, isOpen: false }))
+            });
+        },
+        onError: handleError
     });
 
     const updateMutation = useMutation({
@@ -63,7 +118,17 @@ export const ClientesPage: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['clientes'] });
             resetForm();
-        }
+            setActionModal({
+                isOpen: true,
+                title: 'Sucesso',
+                message: 'Cliente atualizado com sucesso!',
+                type: 'success',
+                confirmText: 'OK',
+                showCancel: false,
+                onConfirm: () => setActionModal(prev => ({ ...prev, isOpen: false }))
+            });
+        },
+        onError: handleError
     });
 
     const deleteMutation = useMutation({
@@ -71,7 +136,17 @@ export const ClientesPage: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['clientes'] });
             resetForm();
-        }
+            setActionModal({
+                isOpen: true,
+                title: 'Sucesso',
+                message: 'Cliente excluído com sucesso!',
+                type: 'success',
+                confirmText: 'OK',
+                showCancel: false,
+                onConfirm: () => setActionModal(prev => ({ ...prev, isOpen: false }))
+            });
+        },
+        onError: handleError
     });
 
     const resetForm = () => {
@@ -108,10 +183,21 @@ export const ClientesPage: React.FC = () => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Clean data before sending
+        // FIX: Mapping logradouro to endereco to satisfy backend requirement
+        const cleanData = {
+            ...formData,
+            cnpj: formData.cnpj.replace(/\D/g, ''),
+            contato: formData.contato.replace(/\D/g, ''),
+            cep: formData.cep.replace(/\D/g, ''),
+            endereco: formData.logradouro
+        };
+
         if (editingId) {
-            updateMutation.mutate({ id: editingId, data: formData });
+            updateMutation.mutate({ id: editingId, data: cleanData });
         } else {
-            createMutation.mutate(formData);
+            createMutation.mutate(cleanData);
         }
     };
 
@@ -242,7 +328,9 @@ export const ClientesPage: React.FC = () => {
                                 required
                                 className="w-full bg-black/60 border border-cyber-gold/30 text-white p-2 focus:border-cyber-gold focus:outline-none transition-all"
                                 value={formData.cnpj}
-                                onChange={e => setFormData({ ...formData, cnpj: e.target.value })}
+                                onChange={e => setFormData({ ...formData, cnpj: formatCNPJ(e.target.value) })}
+                                placeholder="00.000.000/0000-00"
+                                maxLength={18}
                             />
                         </div>
                         <div className="space-y-2">
@@ -252,7 +340,9 @@ export const ClientesPage: React.FC = () => {
                                 required
                                 className="w-full bg-black/60 border border-cyber-gold/30 text-white p-2 focus:border-cyber-gold focus:outline-none transition-all"
                                 value={formData.contato}
-                                onChange={e => setFormData({ ...formData, contato: e.target.value })}
+                                onChange={e => setFormData({ ...formData, contato: formatTelefone(e.target.value) })}
+                                placeholder="(00) 00000-0000"
+                                maxLength={15}
                             />
                         </div>
                         <div className="space-y-2">
@@ -292,8 +382,9 @@ export const ClientesPage: React.FC = () => {
                                 required
                                 className="w-full bg-black/60 border border-cyber-gold/30 text-white p-2 focus:border-cyber-gold focus:outline-none transition-all"
                                 value={formData.cep}
-                                onChange={e => setFormData({ ...formData, cep: e.target.value })}
+                                onChange={e => setFormData({ ...formData, cep: formatCEP(e.target.value) })}
                                 placeholder="00000-000"
+                                maxLength={9}
                             />
                         </div>
                         <div className="space-y-2 md:col-span-2">
@@ -460,6 +551,18 @@ export const ClientesPage: React.FC = () => {
                     )}
                 </div>
             )}
+
+            <ActionModal
+                isOpen={actionModal.isOpen}
+                title={actionModal.title}
+                message={actionModal.message}
+                type={actionModal.type}
+                confirmText={actionModal.confirmText}
+                cancelText={actionModal.cancelText}
+                onConfirm={actionModal.onConfirm}
+                onClose={() => setActionModal(prev => ({ ...prev, isOpen: false }))}
+                showCancel={actionModal.showCancel}
+            />
         </div>
     );
 };

@@ -3,8 +3,14 @@ import { formatarData } from '../../utils/formatters';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { osService } from '../../services/osService';
-import { ArrowLeft, Car, Wrench, CheckCircle, Plus, Ban } from 'lucide-react';
-import type { OSStatus } from '../../types';
+import { ArrowLeft, Car, Wrench, CheckCircle, Plus, Ban, History } from 'lucide-react';
+import { VehicleHistoryModal } from '../../components/modals/VehicleHistoryModal';
+import { DuplicatePlateModal } from '../../components/modals/DuplicatePlateModal';
+import { ActionModal } from '../../components/modals/ActionModal';
+import { limparPlaca, validarPlaca } from '../../utils/validators';
+import { PlateInput } from '../../components/forms/PlateInput';
+import type { ActionModalType } from '../../components/modals/ActionModal';
+import type { OSStatus, VeiculoExistente } from '../../types';
 
 
 export const OSDetailsPage: React.FC = () => {
@@ -16,6 +22,18 @@ export const OSDetailsPage: React.FC = () => {
     // State for modals
     const [isVeiculoModalOpen, setVeiculoModalOpen] = useState(false);
     const [isPecaModalOpen, setPecaModalOpen] = useState<{ isOpen: boolean, veiculoId: number | null }>({ isOpen: false, veiculoId: null });
+    const [historyModal, setHistoryModal] = useState<{ isOpen: boolean, placa: string, modelo: string }>({ isOpen: false, placa: '', modelo: '' });
+    const [duplicateModal, setDuplicateModal] = useState<{ isOpen: boolean, data?: VeiculoExistente }>({ isOpen: false });
+    const [actionModal, setActionModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        type: ActionModalType;
+        confirmText?: string;
+        cancelText?: string;
+        onConfirm?: () => void;
+        showCancel?: boolean;
+    }>({ isOpen: false, title: '', message: '', type: 'info' });
 
     // Forms State
     const [veiculoForm, setVeiculoForm] = useState({ placa: '', modelo: '', cor: '' });
@@ -39,6 +57,38 @@ export const OSDetailsPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['ordem-servico', osId] });
             setVeiculoModalOpen(false);
             setVeiculoForm({ placa: '', modelo: '', cor: '' });
+            setActionModal({
+                isOpen: true,
+                type: 'success',
+                title: 'Veículo Adicionado',
+                message: 'Veículo cadastrado com sucesso!',
+                showCancel: false,
+                confirmText: 'OK',
+                onConfirm: () => setActionModal(prev => ({ ...prev, isOpen: false }))
+            });
+        },
+        onError: (error: any) => {
+            console.error('Erro ao adicionar veículo:', error);
+            let title = 'Erro';
+            let message = 'Não foi possível adicionar o veículo.';
+
+            if (error.response?.status === 400) {
+                title = 'Dados Inválidos';
+                message = error.response.data?.mensagem || 'Verifique os dados informados e tente novamente. A placa pode estar em formato inválido.';
+            } else if (error.response?.status === 500) {
+                title = 'Erro no Servidor';
+                message = 'Ocorreu um erro interno no servidor. Tente novamente mais tarde.';
+            }
+
+            setActionModal({
+                isOpen: true,
+                type: 'danger',
+                title,
+                message,
+                showCancel: false,
+                confirmText: 'FECHAR',
+                onConfirm: () => setActionModal(prev => ({ ...prev, isOpen: false }))
+            });
         }
     });
 
@@ -53,8 +103,23 @@ export const OSDetailsPage: React.FC = () => {
 
     const updateStatusMutation = useMutation({
         mutationFn: (status: OSStatus) => osService.updateStatus(osId, status),
-        onSuccess: () => {
+        onSuccess: async () => {
             queryClient.invalidateQueries({ queryKey: ['ordem-servico', osId] });
+
+            // ✅ Sync System: Update lists and financial data with delay to ensure backend commit
+            // Using setTimeout to allow backend transaction propagation
+            setTimeout(() => {
+                console.log('🔄 [SYNC] Hard Resetting system caches...');
+
+                // Resetting queries clears the cache and forces a hard loading state on next fetch
+                // This is more aggressive than invalidate
+                queryClient.resetQueries({ queryKey: ['os-list'] });
+
+                queryClient.resetQueries({
+                    queryKey: ['comissao'],
+                    exact: false // Reset all commission related queries (any month/year)
+                });
+            }, 1500);
         }
     });
 
@@ -77,7 +142,13 @@ export const OSDetailsPage: React.FC = () => {
         },
         onError: (error) => {
             console.error('Erro ao excluir OS (Cascade Manual):', error);
-            alert('Erro ao excluir a OS. Verifique se existem dependências ou consulte o log.');
+            setActionModal({
+                isOpen: true,
+                title: 'Erro na Exclusão',
+                message: 'Erro ao excluir a OS. Verifique se existem dependências ou consulte o log.',
+                type: 'danger',
+                onConfirm: () => setActionModal(prev => ({ ...prev, isOpen: false }))
+            });
         }
     });
 
@@ -85,26 +156,52 @@ export const OSDetailsPage: React.FC = () => {
 
     const handleAddVeiculo = (e: React.FormEvent) => {
         e.preventDefault();
+
+        // 1. LIMPAR
+        const placaLimpa = limparPlaca(veiculoForm.placa);
+
+        // 2. VALIDAR
+        if (!validarPlaca(placaLimpa)) {
+            setActionModal({
+                isOpen: true,
+                type: 'danger', // Fixed type
+                title: 'Placa Inválida',
+                message: `A placa "${veiculoForm.placa}" não atende aos formatos permitidos.`,
+                confirmText: 'ENTENDI',
+                onConfirm: () => setActionModal(prev => ({ ...prev, isOpen: false }))
+            });
+            return;
+        }
+
+        // Check local duplicate
+        const jaExiste = os.veiculos.some(v => limparPlaca(v.placa) === placaLimpa);
+        if (jaExiste) {
+            setActionModal({
+                isOpen: true,
+                type: 'warning',
+                title: 'Veículo Duplicado',
+                message: 'Este veículo já foi adicionado a esta Ordem de Serviço.',
+                confirmText: 'OK',
+                onConfirm: () => setActionModal(prev => ({ ...prev, isOpen: false }))
+            });
+            return;
+        }
+
+        // 3. ENVIAR (Clean)
         addVeiculoMutation.mutate({
             ordemServicoId: osId,
-            ...veiculoForm
+            ...veiculoForm,
+            placa: placaLimpa
         });
     };
 
     const handleAddPeca = (e: React.FormEvent) => {
         e.preventDefault();
-        const tipoPeca = catalogo?.find(p => p.id === parseInt(pecaForm.tipoPecaId));
-        // If user didn't type a value, send null (or dont send) to let backend use default? 
-        // Backend says "if null, use default".
-        // But my input is controlled string.
+        // Removed unused tipoPeca
         let valorToSend: number | undefined = undefined;
         if (pecaForm.valorCobrado) {
             valorToSend = parseFloat(pecaForm.valorCobrado);
-        } else if (tipoPeca) {
-            // Optional: send explicit default if I want to "lock" it now, but backend logic is robust.
-            // Let's send undefined if empty string
         }
-
         addPecaMutation.mutate({
             veiculoId: isPecaModalOpen.veiculoId!,
             tipoPecaId: parseInt(pecaForm.tipoPecaId),
@@ -124,16 +221,47 @@ export const OSDetailsPage: React.FC = () => {
     const isFinalized = os.status === 'FINALIZADA';
 
     const handleCheckPlaca = async () => {
-        if (veiculoForm.placa.length > 3) {
+        const placaLimpa = limparPlaca(veiculoForm.placa);
+        if (placaLimpa.length >= 7) {
+            // Optional: validate strictly before checking API to save bandwidth
+            if (!validarPlaca(placaLimpa)) return;
+
             try {
-                const check = await osService.checkPlaca(veiculoForm.placa);
-                if (check.exists) {
-                    alert(`${check.message}\n\nAtenção: Este veículo já tem histórico na oficina.`);
+                const check = await osService.verificarPlaca(placaLimpa);
+                if (check.existe) {
+                    setDuplicateModal({
+                        isOpen: true,
+                        data: check.veiculoExistente
+                    });
                 }
             } catch (error) {
                 console.error("Erro ao verificar placa", error);
             }
         }
+    };
+
+    const handleDuplicateContinue = () => {
+        setDuplicateModal({ isOpen: false });
+        // User continues with form filled
+    };
+
+    const handleDuplicateCancel = () => {
+        setDuplicateModal({ isOpen: false });
+        setVeiculoForm(prev => ({ ...prev, placa: '' })); // Clear plate
+    };
+
+    const handleDuplicateViewHistory = () => {
+        const plate = veiculoForm.placa;
+        setDuplicateModal({ isOpen: false });
+        setVeiculoForm(prev => ({ ...prev, placa: '' })); // Clear add form if viewing history
+        setVeiculoModalOpen(false); // Close add modal
+
+        // Open history
+        setHistoryModal({
+            isOpen: true,
+            placa: plate,
+            modelo: duplicateModal.data?.modelo || 'Veículo'
+        });
     };
 
     return (
@@ -148,9 +276,14 @@ export const OSDetailsPage: React.FC = () => {
                         <>
                             <button
                                 onClick={() => {
-                                    if (window.confirm('Deseja cancelar esta OS? Ela será excluída permanentemente.')) {
-                                        deleteMutation.mutate(osId);
-                                    }
+                                    setActionModal({
+                                        isOpen: true,
+                                        title: 'Cancelar OS?',
+                                        message: 'Deseja cancelar esta OS? Ela será excluída permanentemente.',
+                                        type: 'danger',
+                                        confirmText: 'SIM, CANCELAR',
+                                        onConfirm: () => deleteMutation.mutate(osId)
+                                    });
                                 }}
                                 className="bg-red-600/20 text-red-400 border border-red-600/50 px-4 py-2 rounded hover:bg-red-600/40 transition-all font-oxanium flex items-center gap-2"
                             >
@@ -167,9 +300,14 @@ export const OSDetailsPage: React.FC = () => {
                     {os.status === 'EM_EXECUCAO' && (
                         <button
                             onClick={() => {
-                                if (window.confirm("Finalizar esta OS irá gerar um Faturamento automaticamente. Confirma?")) {
-                                    updateStatusMutation.mutate('FINALIZADA');
-                                }
+                                setActionModal({
+                                    isOpen: true,
+                                    title: 'Finalizar OS',
+                                    message: 'Finalizar esta OS irá gerar um Faturamento automaticamente. Confirma?',
+                                    type: 'success',
+                                    confirmText: 'FINALIZAR',
+                                    onConfirm: () => updateStatusMutation.mutate('FINALIZADA')
+                                });
                             }}
                             className="bg-green-600/20 text-green-400 border border-green-600/50 px-4 py-2 rounded hover:bg-green-600/40 transition-all font-oxanium flex items-center gap-2"
                         >
@@ -271,6 +409,12 @@ export const OSDetailsPage: React.FC = () => {
                                     <div className="text-lg font-bold text-white">
                                         {v.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                                     </div>
+                                    <button
+                                        onClick={() => setHistoryModal({ isOpen: true, placa: v.placa, modelo: v.modelo })}
+                                        className="text-[10px] text-cyber-gold hover:text-white underline mt-1 flex items-center justify-end gap-1"
+                                    >
+                                        <History className="w-3 h-3" /> VER HISTÓRICO
+                                    </button>
                                 </div>
                             </div>
 
@@ -322,12 +466,10 @@ export const OSDetailsPage: React.FC = () => {
                         <h3 className="text-xl font-orbitron text-white mb-4">Novo Veículo</h3>
                         <form onSubmit={handleAddVeiculo}>
                             <div className="space-y-3">
-                                <input
-                                    placeholder="Placa"
-                                    required
-                                    className="w-full bg-black/60 border border-white/20 text-white p-2 text-sm uppercase"
+                                <PlateInput
                                     value={veiculoForm.placa}
-                                    onChange={e => setVeiculoForm({ ...veiculoForm, placa: e.target.value })}
+                                    onChange={(val) => setVeiculoForm({ ...veiculoForm, placa: val })}
+                                    className="mb-2"
                                     onBlur={handleCheckPlaca}
                                 />
                                 <input
@@ -395,6 +537,36 @@ export const OSDetailsPage: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* Modal: Vehicle History */}
+            <VehicleHistoryModal
+                isOpen={historyModal.isOpen}
+                onClose={() => setHistoryModal({ ...historyModal, isOpen: false })}
+                placa={historyModal.placa}
+                modelo={historyModal.modelo}
+            />
+
+            {/* Modal: Duplicate Plate Warning */}
+            <DuplicatePlateModal
+                isOpen={duplicateModal.isOpen}
+                onClose={handleDuplicateCancel}
+                onContinue={handleDuplicateContinue}
+                onViewHistory={handleDuplicateViewHistory}
+                veiculoData={duplicateModal.data}
+            />
+
+            {/* Modal: Generic Action */}
+            <ActionModal
+                isOpen={actionModal.isOpen}
+                onClose={() => setActionModal({ ...actionModal, isOpen: false })}
+                onConfirm={() => {
+                    if (actionModal.onConfirm) actionModal.onConfirm();
+                    setActionModal({ ...actionModal, isOpen: false });
+                }}
+                title={actionModal.title}
+                message={actionModal.message}
+                type={actionModal.type}
+            />
 
         </div>
     );

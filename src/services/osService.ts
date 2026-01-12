@@ -4,7 +4,8 @@ import type {
     TipoPeca, TipoPecaRequest,
     OrdemServico, CreateOSRequest,
     AddVeiculoRequest, AddPecaRequest, UpdateOSStatusRequest,
-    VeiculoOS, OSStatus
+    VeiculoOS, OSStatus,
+    PlacaCheckResponse, HistoricoResponse
 } from '../types';
 
 export const osService = {
@@ -79,9 +80,28 @@ export const osService = {
         await api.delete(`/ordens-servico/veiculos/${id}`);
     },
 
-    checkPlaca: async (placa: string): Promise<{ exists: boolean; message: string }> => {
-        const response = await api.get<{ exists: boolean; message: string }>(`/veiculos/check-placa?placa=${placa}`);
+    verificarPlaca: async (placa: string): Promise<PlacaCheckResponse> => {
+        const response = await api.get<PlacaCheckResponse>(`/veiculos/verificar-placa`, {
+            params: { placa }
+        });
         return response.data;
+    },
+
+    obterHistorico: async (placa: string): Promise<HistoricoResponse> => {
+        const response = await api.get<HistoricoResponse>(`/veiculos/${placa}/historico`);
+        return response.data;
+    },
+
+    checkPlaca: async (placa: string): Promise<{ exists: boolean; message: string }> => {
+        // Deprecated wrapper to maintain backward compatibility if needed temporarily,
+        // but ideally we switch usages to verificarPlaca.
+        // For now, I'll remove it or keep it? Current code usages will be updated.
+        // Let's replace it fully as per plan.
+        const response = await api.get<PlacaCheckResponse>(`/veiculos/verificar-placa`, { params: { placa } });
+        return {
+            exists: response.data.existe,
+            message: response.data.mensagem
+        };
     },
 
     addPeca: async (data: AddPecaRequest): Promise<any> => {

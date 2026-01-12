@@ -21,16 +21,25 @@ export const userService = {
         await api.delete(`/users/${id}`);
     },
 
-    createUser: async (userData: { email: string; password: string; role?: string }): Promise<User> => {
+    createUser: async (userData: { email: string; password: string; role?: string; name?: string }): Promise<User> => {
         const response = await api.post<User>('/users', userData);
         return response.data;
     },
 
     updateUserRole: async (id: number, role: string): Promise<User> => {
         // Envia a string "ADMIN" ou "USER" diretamente como body, JSON encoded, conforme guia
-        const response = await api.patch<User>(`/users/${id}/role`, JSON.stringify(role), {
+        const response = await api.patch<User>(`/users/${id}/role`, role, {
             headers: { 'Content-Type': 'application/json' }
         });
         return response.data;
+    },
+
+    updateUser: async (id: number, data: Partial<User> & { password?: string; features?: string[] }): Promise<User> => {
+        const response = await api.patch<User>(`/users/${id}`, data);
+        return response.data;
+    },
+
+    changePassword: async (password: string): Promise<void> => {
+        await api.post('/users/change-password', { password });
     }
 };

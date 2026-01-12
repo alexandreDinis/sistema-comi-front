@@ -21,9 +21,31 @@ export const LoginForm: React.FC = () => {
         setError(null);
 
         try {
-            await authService.login(values);
-            // Redireciona para a página inicial (dashboard) após login
-            navigate('/');
+            const user = await authService.login(values);
+
+            // Normalize role checking (Backend might send ROLE_SUPER_ADMIN)
+            const role = user.role ? user.role.toUpperCase().replace('ROLE_', '') : '';
+
+            console.log('[LoginForm] Login Success:', { role, empresa: user.empresa, user });
+
+            // =====================================================
+            // 🔐 LOGIN REDIRECT LOGIC - TWO WORLDS (REGRA DE OURO)
+            // =====================================================
+            // Platform Admin -> /platform/dashboard
+            // ONLY if: role is SUPER_ADMIN AND empresa is null (global context)
+            // Everyone else -> / (tenant app context)
+            // =====================================================
+
+            const isPlatformAdmin = (role === 'SUPER_ADMIN' || role === 'ADMIN_PLATAFORMA') &&
+                (user.empresa === null || user.empresa === undefined);
+
+            if (isPlatformAdmin) {
+                console.log('[LoginForm] ✅ Platform Admin detected -> /platform/dashboard');
+                navigate('/platform/dashboard');
+            } else {
+                console.log('[LoginForm] ✅ Tenant User detected -> / (app)');
+                navigate('/');
+            }
         } catch (err: any) {
             if (err.response) {
                 if (err.response.status === 401) {

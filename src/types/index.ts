@@ -92,17 +92,41 @@ export interface RegisterRequest {
 export interface UserResponse {
     token: string;
     email: string;
+    name?: string;
     role?: string;
     roles?: string[];
     expiresIn: number;
+
+    // V2 Multi-Tenant
+    empresa?: Empresa;
+    features?: string[];
+    mustChangePassword?: boolean;
+}
+
+export interface Empresa {
+    nome: string;
+    plano: 'BRONZE' | 'PRATA' | 'OURO' | string;
+}
+
+export interface Feature {
+    id?: number;
+    codigo: string;
+    descricao?: string;
+    planoMinimo?: string;
 }
 
 export interface User {
     id: number;
     email: string;
+    name?: string;
     role?: 'USER' | 'ADMIN' | string;
     roles?: string[];
     active: boolean;
+
+    // V2 Multi-Tenant Fields
+    empresa?: Empresa;
+    features?: Feature[] | string[]; // Can be strings (legacy/mock) or objects (backend)
+    mustChangePassword?: boolean;
 }
 
 // --- Módulo OS Definitions ---
@@ -182,6 +206,28 @@ export interface VeiculoOS {
     valorTotal: number;
     pecas: PecaOS[];
 }
+
+export interface VeiculoExistente {
+    modelo: string;
+    cor: string;
+    cliente: string; // Nome fantasia do cliente
+}
+
+export interface PlacaCheckResponse {
+    existe: boolean;
+    mensagem: string;
+    veiculoExistente?: VeiculoExistente;
+}
+
+export interface HistoricoItem {
+    ordemServicoId: number;
+    data: string; // Formato ISO "YYYY-MM-DD"
+    status: OSStatus;
+    valorTotalServico: number;
+    pecasOuServicos: string[]; // Lista de nomes das peças/serviços
+}
+
+export type HistoricoResponse = HistoricoItem[];
 
 export interface OrdemServico {
     id: number;

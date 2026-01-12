@@ -3,7 +3,7 @@ import { AdiantamentoForm } from '../components/forms/AdiantamentoForm';
 import { ChevronRight, Home, Wallet } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useComissao } from '../hooks/useComissao';
-import { formatCurrency } from '../utils/formatters';
+import { formatarMoeda } from '../utils/formatters';
 
 export const AdiantamentoPage: React.FC = () => {
     const now = new Date();
@@ -50,7 +50,7 @@ export const AdiantamentoPage: React.FC = () => {
                                     <div className="h-10 w-32 bg-cyber-gold/10 animate-pulse rounded"></div>
                                 ) : (
                                     <h2 className="text-4xl font-black text-cyber-gold italic italic-shadow tracking-tighter">
-                                        {formatCurrency(comissao?.saldoAReceber || 0)}
+                                        {formatarMoeda(comissao?.saldoAReceber || 0)}
                                     </h2>
                                 )}
                             </div>
@@ -62,7 +62,7 @@ export const AdiantamentoPage: React.FC = () => {
                         <div className="px-4 py-2 border-l border-cyber-gold/10">
                             <span className="hud-label text-[8px] block mb-1">RENDIMENTO_BRUTO</span>
                             <p className="font-mono text-cyber-gold/60 text-xs">
-                                {isLoading ? '...' : formatCurrency(comissao?.valorBrutoComissao || 0)}
+                                {isLoading ? '...' : formatarMoeda(comissao?.valorBrutoComissao || 0)}
                             </p>
                         </div>
                     </div>

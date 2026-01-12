@@ -1,6 +1,6 @@
 import React from 'react';
 import type { ComissaoCalculada } from '../../types';
-import { formatCurrency, formatPercentage } from '../../utils/formatters';
+import { formatarMoeda, formatarPorcentagem } from '../../utils/formatters';
 import { TrendingUp, Percent, Landmark, ReceiptText, ArrowUpRight } from 'lucide-react';
 
 interface ComissaoCardProps {
@@ -37,10 +37,10 @@ export const ComissaoCard: React.FC<ComissaoCardProps> = ({ comissao }) => {
                 <div className="p-8 relative">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                         {[
-                            { label: 'FATUR_GERAL', value: formatCurrency(comissao.faturamentoMensal), icon: TrendingUp },
-                            { label: 'TAXA_RENDIM', value: formatPercentage(comissao.porcentagemComissao), icon: Percent },
-                            { label: 'ALOC_BRUTA', value: formatCurrency(comissao.valorBrutoComissao), icon: ReceiptText },
-                            { label: 'SAQUE_PRÉVIO', value: formatCurrency(comissao.valorAdiantado), icon: Landmark },
+                            { label: 'FATUR_GERAL', value: formatarMoeda(comissao.faturamentoMensal), icon: TrendingUp },
+                            { label: 'TAXA_RENDIM', value: formatarPorcentagem(comissao.porcentagemComissao), icon: Percent },
+                            { label: 'ALOC_BRUTA', value: formatarMoeda(comissao.valorBrutoComissao), icon: ReceiptText },
+                            { label: 'SAQUE_PRÉVIO', value: formatarMoeda(comissao.valorAdiantado), icon: Landmark },
                         ].map((stat, idx) => (
                             <div key={idx} className="p-6 bg-black/60 border border-cyber-gold/10 hover:border-cyber-gold/40 transition-all relative overflow-hidden group/item">
                                 <div className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-cyber-gold"></div>
@@ -70,7 +70,7 @@ export const ComissaoCard: React.FC<ComissaoCardProps> = ({ comissao }) => {
                                 <span className={`hud-label mb-0 ${isPositivo ? 'text-cyber-gold/60' : 'text-cyber-error/60'}`}>LIQUIDAÇÃO_LÍQUIDA_A_PAGAR</span>
                             </div>
                             <p className={`text-7xl font-black tracking-tighter italic ${isPositivo ? 'text-cyber-gold italic-shadow' : 'text-cyber-error'}`}>
-                                {formatCurrency(comissao.saldoAReceber)}
+                                {formatarMoeda(comissao.saldoAReceber)}
                             </p>
                         </div>
 

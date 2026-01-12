@@ -22,8 +22,13 @@ api.interceptors.request.use(
         if (userStr) {
             const user = JSON.parse(userStr);
             if (user && user.token) {
+                console.log("[API] Attaching Token:", user.token.substring(0, 10) + "...");
                 config.headers['Authorization'] = 'Bearer ' + user.token;
+            } else {
+                console.warn("[API] No token found in localStorage user object");
             }
+        } else {
+            console.warn("[API] No user found in localStorage");
         }
         return config;
     },
@@ -40,9 +45,10 @@ api.interceptors.response.use(
     (error) => {
         if (error.response) {
             if (error.response.status === 401) {
+                console.warn("[API] 401 Unauthorized - Token inválido ou expirado.");
                 // Auto logout if token is invalid or expired
-                localStorage.removeItem('user'); // Inline logout
-                window.location.reload();
+                // localStorage.removeItem('user'); 
+                // window.location.href = '/login'; // Better than reload
             } else if (error.response.status === 429) {
                 // Rate Limiting
                 console.error("Muitas tentativas de login. Por favor, aguarde 15 minutos e tente novamente.");

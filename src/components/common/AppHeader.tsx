@@ -1,21 +1,16 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, Menu, X, ChevronDown, Wrench, Briefcase, Settings, Shield } from 'lucide-react';
+import { LogOut, Menu, X, ChevronDown, Wrench, Briefcase, Settings } from 'lucide-react';
 import { authService } from '../../services/authService';
+import { usePermission } from '../../hooks/usePermission';
+import { Feature } from '../../types/features';
 import logo from '../../assets/log.png';
 
-export const Header: React.FC = () => {
+export const AppHeader: React.FC = () => {
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
     const location = useLocation();
     const navigate = useNavigate();
-    const user = authService.getCurrentUser();
-
-    const isAdmin = React.useMemo(() => {
-        if (!user) return false;
-        const singleRole = user.role ? user.role.toUpperCase() : '';
-        const rolesList = user.roles ? user.roles.map((r: string) => r.toUpperCase()) : [];
-        return singleRole === 'ADMIN' || singleRole === 'ROLE_ADMIN' || rolesList.includes('ADMIN') || rolesList.includes('ROLE_ADMIN');
-    }, [user]);
+    const { hasFeature } = usePermission();
 
     const handleLogout = () => {
         authService.logout();
@@ -25,50 +20,45 @@ export const Header: React.FC = () => {
     const isActive = (path: string) => location.pathname === path;
     const isSectionActive = (paths: string[]) => paths.some(path => location.pathname.startsWith(path));
 
-    // Nav Groups
-    const navGroups = [
+    // Definição dos Grupos de Navegação com Features
+    const allNavGroups = [
         {
             label: 'OPERAÇÃO',
             icon: Wrench,
-            path: null,
+            requiredFeature: [Feature.CLIENTE_READ, Feature.OS_READ, Feature.PRODUTO_READ],
             items: [
-                { label: 'CLIENTES', path: '/clientes' },
-                { label: 'ORDENS DE SERVIÇO', path: '/os' },
-                { label: 'CATÁLOGO', path: '/catalogo' },
+                { label: 'CLIENTES', path: '/clientes', feature: Feature.CLIENTE_READ },
+                { label: 'ORDENS DE SERVIÇO', path: '/os', feature: Feature.OS_READ },
+                { label: 'CATÁLOGO', path: '/catalogo', feature: Feature.PRODUTO_READ },
             ]
         },
         {
             label: 'FINANCEIRO',
             icon: Briefcase,
+            requiredFeature: [Feature.RELATORIO_FINANCEIRO_VIEW, Feature.RELATORIO_COMISSAO_VIEW],
             items: [
-                { label: 'MINHA COMISSÃO', path: '/minha-comissao' },
-                { label: 'FATURAMENTO', path: '/faturamento' },
-                { label: 'ADIANTAMENTOS', path: '/adiantamento' },
-                { label: 'DESPESAS', path: '/despesa' },
-                { label: 'RELATÓRIOS', path: '/relatorio' }
+                { label: 'MINHA COMISSÃO', path: '/minha-comissao', feature: Feature.RELATORIO_COMISSAO_VIEW },
+                { label: 'FATURAMENTO', path: '/faturamento', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
+                { label: 'ADIANTAMENTOS', path: '/adiantamento', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
+                { label: 'DESPESAS', path: '/despesa', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
+                { label: 'RELATÓRIOS', path: '/relatorio', feature: Feature.RELATORIO_COMISSAO_VIEW }
             ]
         },
         {
-            label: 'CONTROLE',
-            icon: Shield,
-            items: [
-                { label: 'AUDITORIA', path: '/relatorio', duplicate: true }
-            ]
-        },
-        {
-            label: 'ADMIN',
+            label: 'CONFIGURAÇÕES',
             icon: Settings,
-            restricted: true,
+            requiredFeature: [Feature.ADMIN_CONFIG, Feature.ADMIN_USERS_READ],
             items: [
-                { label: 'CATÁLOGO', path: '/catalogo' },
-                { label: 'PAINEL ADMIN', path: '/admin' },
+                { label: 'ADMINISTRAÇÃO', path: '/settings', feature: Feature.ADMIN_CONFIG },
             ]
         }
-    ].filter(group => !group.restricted || isAdmin);
+    ];
 
-    // Cleanup: Remove Duplicate Auditoria/Relatorio if ambiguous. 
-    // User: Financeiro -> Relatorios. Controle -> Auditoria.
-    // I will keep Relatorios in Financeiro and Auditoria in Controle pointing to same for now, or just separate properly later.
+    // Filtrar grupos e itens baseados nas permissões do usuário
+    const navGroups = allNavGroups.map(group => ({
+        ...group,
+        items: group.items.filter(item => hasFeature(item.feature))
+    })).filter(group => group.items.length > 0);
 
     return (
         <header className="bg-black/90 border-b border-cyber-gold/40 shadow-[0_0_20px_rgba(212,175,55,0.1)] sticky top-0 z-50">

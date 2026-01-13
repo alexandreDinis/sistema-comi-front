@@ -247,6 +247,11 @@ export interface OrdemServico {
     data: string;
     status: OSStatus;
     valorTotal: number;
+    // New Discount Fields
+    tipoDesconto?: 'PERCENTUAL' | 'VALOR_FIXO';
+    valorDesconto?: number;
+    valorTotalSemDesconto?: number;
+    valorTotalComDesconto?: number;
     cliente: Cliente;
     veiculos: VeiculoOS[];
 }
@@ -254,6 +259,8 @@ export interface OrdemServico {
 export interface CreateOSRequest {
     clienteId: number;
     data: string;
+    tipoDesconto?: 'PERCENTUAL' | 'VALOR_FIXO';
+    valorDesconto?: number;
 }
 
 export interface AddVeiculoRequest {
@@ -271,4 +278,30 @@ export interface AddPecaRequest {
 
 export interface UpdateOSStatusRequest {
     status: OSStatus;
+}
+
+// --- Year-over-Year Revenue Comparison ---
+
+export interface ComparacaoFaturamentoDTO {
+    faturamentoAtual: number;
+    faturamentoAnoAnterior: number;
+    diferencaAbsoluta: number;
+    diferencaPercentual: number;
+    temDadosAnoAnterior: boolean;
+}
+
+export interface MesFaturamentoDTO {
+    mes: number;
+    nomeMes: string;
+    faturamentoAtual: number;
+    faturamentoAnoAnterior: number;
+    diferencaAbsoluta: number;
+    diferencaPercentual: number;
+}
+
+export interface RelatorioAnualDTO {
+    meses: MesFaturamentoDTO[];
+    faturamentoTotalAno: number;
+    faturamentoTotalAnoAnterior: number;
+    crescimentoAnual: number;
 }

@@ -7,7 +7,9 @@ import { HomePage } from './pages/HomePage';
 import { FaturamentoPage } from './pages/FaturamentoPage';
 import { AdiantamentoPage } from './pages/AdiantamentoPage';
 import { DespesaPage } from './pages/DespesaPage';
-import { RelatorioPage } from './pages/RelatorioPage';
+import { RelatoriosHubPage } from './pages/RelatoriosHubPage';
+import { RelatorioFinanceiroPage } from './pages/RelatorioFinanceiroPage';
+import { RelatorioAnualPage } from './pages/RelatorioAnualPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -138,7 +140,19 @@ export const App: React.FC = () => {
 
             <Route path="/relatorio" element={
               <ProtectedRoute requiredFeature={Feature.RELATORIO_FINANCEIRO_VIEW}>
-                <RelatorioPage />
+                <RelatoriosHubPage />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/relatorio/financeiro" element={
+              <ProtectedRoute requiredFeature={Feature.RELATORIO_FINANCEIRO_VIEW}>
+                <RelatorioFinanceiroPage />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/relatorio/anual" element={
+              <ProtectedRoute requiredFeature={Feature.RELATORIO_FINANCEIRO_VIEW}>
+                <RelatorioAnualPage />
               </ProtectedRoute>
             } />
 

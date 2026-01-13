@@ -35,6 +35,12 @@ export const OSDetailsPage: React.FC = () => {
         showCancel?: boolean;
     }>({ isOpen: false, title: '', message: '', type: 'info' });
 
+    const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false);
+    const [discountForm, setDiscountForm] = useState<{
+        tipoDesconto: 'PERCENTUAL' | 'VALOR_FIXO' | null;
+        valorDesconto: string;
+    }>({ tipoDesconto: null, valorDesconto: '' });
+
     // Forms State
     const [veiculoForm, setVeiculoForm] = useState({ placa: '', modelo: '', cor: '' });
     const [pecaForm, setPecaForm] = useState({ tipoPecaId: '', valorCobrado: '' });
@@ -101,6 +107,17 @@ export const OSDetailsPage: React.FC = () => {
         }
     });
 
+
+
+    const updateDiscountMutation = useMutation({
+        mutationFn: (data: { tipoDesconto: 'PERCENTUAL' | 'VALOR_FIXO' | null, valorDesconto: number }) =>
+            osService.updateDiscount(osId, data.tipoDesconto, data.valorDesconto),
+        onSuccess: () => {
+            // After applying discount, proceed to finalize
+            updateStatusMutation.mutate('FINALIZADA');
+        }
+    });
+
     const updateStatusMutation = useMutation({
         mutationFn: (status: OSStatus) => osService.updateStatus(osId, status),
         onSuccess: async () => {
@@ -120,8 +137,26 @@ export const OSDetailsPage: React.FC = () => {
                     exact: false // Reset all commission related queries (any month/year)
                 });
             }, 1500);
+            setIsFinalizeModalOpen(false);
         }
     });
+
+    const handleConfirmFinalize = (e: React.FormEvent) => {
+        e.preventDefault();
+
+        const valorDesconto = discountForm.valorDesconto ? parseFloat(discountForm.valorDesconto) : 0;
+
+        // If has discount, update first
+        if (discountForm.tipoDesconto && valorDesconto > 0) {
+            updateDiscountMutation.mutate({
+                tipoDesconto: discountForm.tipoDesconto,
+                valorDesconto
+            });
+        } else {
+            // Direct finalize
+            updateStatusMutation.mutate('FINALIZADA');
+        }
+    };
 
     const deleteMutation = useMutation({
         mutationFn: async (id: number) => {
@@ -299,16 +334,7 @@ export const OSDetailsPage: React.FC = () => {
                     )}
                     {os.status === 'EM_EXECUCAO' && (
                         <button
-                            onClick={() => {
-                                setActionModal({
-                                    isOpen: true,
-                                    title: 'Finalizar OS',
-                                    message: 'Finalizar esta OS irá gerar um Faturamento automaticamente. Confirma?',
-                                    type: 'success',
-                                    confirmText: 'FINALIZAR',
-                                    onConfirm: () => updateStatusMutation.mutate('FINALIZADA')
-                                });
-                            }}
+                            onClick={() => setIsFinalizeModalOpen(true)}
                             className="bg-green-600/20 text-green-400 border border-green-600/50 px-4 py-2 rounded hover:bg-green-600/40 transition-all font-oxanium flex items-center gap-2"
                         >
                             <CheckCircle className="w-4 h-4" /> FINALIZAR OS
@@ -353,10 +379,26 @@ export const OSDetailsPage: React.FC = () => {
                             {os.status}
                         </span>
                     </div>
-                    <div className="text-3xl text-cyber-gold font-bold font-orbitron mt-2">
-                        {os.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">VALOR TOTAL ACUMULADO</div>
+                    {os.tipoDesconto && os.valorDesconto && os.valorDesconto > 0 ? (
+                        <div className="mt-2 space-y-1">
+                            <div className="flex justify-between text-xs text-gray-400 font-mono">
+                                <span>Subtotal</span>
+                                <span className="line-through opacity-60">{(os.valorTotalSemDesconto || os.valorTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                            </div>
+                            <div className="flex justify-between text-xs text-green-400 font-mono">
+                                <span>Desconto {os.tipoDesconto === 'PERCENTUAL' ? `(${os.valorDesconto}%)` : ''}</span>
+                                <span>- {((os.valorTotalSemDesconto || 0) - (os.valorTotalComDesconto || 0)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                            </div>
+                            <div className="text-3xl text-cyber-gold font-bold font-orbitron border-t border-white/10 pt-1 mt-1">
+                                {os.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-3xl text-cyber-gold font-bold font-orbitron mt-2">
+                            {os.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </div>
+                    )}
+                    <div className="text-xs text-gray-500 mt-1">VALOR TOTAL {os.tipoDesconto ? 'COM DESCONTO' : 'ACUMULADO'}</div>
                 </div>
 
                 {/* Data */}
@@ -481,7 +523,6 @@ export const OSDetailsPage: React.FC = () => {
                                 />
                                 <input
                                     placeholder="Cor"
-                                    required
                                     className="w-full bg-black/60 border border-white/20 text-white p-2 text-sm"
                                     value={veiculoForm.cor}
                                     onChange={e => setVeiculoForm({ ...veiculoForm, cor: e.target.value })}
@@ -555,7 +596,144 @@ export const OSDetailsPage: React.FC = () => {
                 veiculoData={duplicateModal.data}
             />
 
-            {/* Modal: Generic Action */}
+            {/* Modal: Finalize with Discount */}
+            {isFinalizeModalOpen && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-black/90 border border-cyber-gold/50 p-6 rounded-lg max-w-sm w-full">
+                        <h3 className="text-xl font-orbitron text-white mb-4">Finalizar OS</h3>
+                        <p className="text-gray-400 text-sm mb-6">
+                            Confirme os valores finais antes de encerrar. Esta ação irá gerar o faturamento automaticamente.
+                        </p>
+                        <form onSubmit={handleConfirmFinalize}>
+                            <div className="space-y-4 mb-6 bg-white/5 p-4 rounded border border-white/10">
+                                <h4 className="text-cyber-gold font-bold font-oxanium text-sm mb-2">Aplicar Desconto? (Opcional)</h4>
+                                <div>
+                                    <label className="text-gray-500 text-xs block mb-1">Tipo de Desconto</label>
+                                    <select
+                                        className="w-full bg-black/60 border border-white/20 text-white p-2 text-sm focus:border-cyber-gold outline-none"
+                                        value={discountForm.tipoDesconto || ''}
+                                        onChange={e => setDiscountForm({
+                                            ...discountForm,
+                                            tipoDesconto: e.target.value ? (e.target.value as 'PERCENTUAL' | 'VALOR_FIXO') : null,
+                                            valorDesconto: '' // Reset value when type changes
+                                        })}
+                                    >
+                                        <option value="">Sem Desconto</option>
+                                        <option value="PERCENTUAL">Porcentagem (%)</option>
+                                        <option value="VALOR_FIXO">Valor Fixo (R$)</option>
+                                    </select>
+                                </div>
+                                {discountForm.tipoDesconto && (
+                                    <div>
+                                        <label className="text-gray-500 text-xs block mb-2 font-oxanium">
+                                            {discountForm.tipoDesconto === 'PERCENTUAL' ? 'Porcentagem do Desconto' : 'Valor do Desconto'}
+                                        </label>
+                                        <div className="relative">
+                                            {discountForm.tipoDesconto === 'VALOR_FIXO' && (
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-cyber-gold font-bold text-sm">R$</span>
+                                            )}
+
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step={discountForm.tipoDesconto === 'PERCENTUAL' ? "1" : "0.01"}
+                                                max={discountForm.tipoDesconto === 'PERCENTUAL' ? "100" : undefined}
+                                                className={`w-full bg-black/60 border border-white/20 text-white p-2 text-sm focus:border-cyber-gold outline-none transition-all font-mono
+                                                    ${discountForm.tipoDesconto === 'VALOR_FIXO' ? 'pl-10' : ''}
+                                                    ${discountForm.tipoDesconto === 'PERCENTUAL' ? 'pr-8' : ''}
+                                                `}
+                                                value={discountForm.valorDesconto}
+                                                onChange={e => setDiscountForm({ ...discountForm, valorDesconto: e.target.value })}
+                                                placeholder={discountForm.tipoDesconto === 'PERCENTUAL' ? '0' : '0.00'}
+                                                required={!!discountForm.tipoDesconto}
+                                                autoFocus
+                                            />
+
+                                            {discountForm.tipoDesconto === 'PERCENTUAL' && (
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-cyber-gold font-bold text-sm">%</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Summary Preview */}
+                            {/* Summary Preview */}
+                            <div className="mt-4 bg-black/40 p-3 rounded border border-white/5 space-y-1">
+                                <div className="flex justify-between items-center text-xs text-gray-400">
+                                    <span>SUBTOTAL</span>
+                                    <span>{(os.valorTotalSemDesconto || os.valorTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                                </div>
+                                {discountForm.tipoDesconto && discountForm.valorDesconto && (
+                                    <div className="flex justify-between items-center text-xs text-green-400">
+                                        <span>DESCONTO PREVISTO</span>
+                                        <span>
+                                            - {(() => {
+                                                const val = parseFloat(discountForm.valorDesconto);
+                                                if (isNaN(val)) return 'R$ 0,00';
+
+                                                const subtotal = os.valorTotalSemDesconto || os.valorTotal;
+                                                let discountAmount = 0;
+
+                                                if (discountForm.tipoDesconto === 'PERCENTUAL') {
+                                                    discountAmount = subtotal * (val / 100);
+                                                } else {
+                                                    discountAmount = val;
+                                                }
+                                                return discountAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                                            })()}
+                                        </span>
+                                    </div>
+                                )}
+                                <div className="flex justify-between items-center text-sm font-bold text-cyber-gold border-t border-white/10 pt-2 mt-1">
+                                    <span>TOTAL FINAL</span>
+                                    <span>
+                                        {(() => {
+                                            const subtotal = os.valorTotalSemDesconto || os.valorTotal;
+                                            let final = subtotal;
+
+                                            if (discountForm.tipoDesconto && discountForm.valorDesconto) {
+                                                const val = parseFloat(discountForm.valorDesconto);
+                                                if (!isNaN(val)) {
+                                                    if (discountForm.tipoDesconto === 'PERCENTUAL') {
+                                                        final = subtotal - (subtotal * (val / 100));
+                                                    } else {
+                                                        final = subtotal - val;
+                                                    }
+                                                }
+                                            }
+                                            // Ensure non-negative
+                                            return Math.max(0, final).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                                        })()}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-2 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsFinalizeModalOpen(false)}
+                                    className="text-gray-500 hover:text-white px-3 py-1 font-oxanium text-sm"
+                                >
+                                    CANCELAR
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={updateDiscountMutation.isPending || updateStatusMutation.isPending}
+                                    className="bg-green-500 text-black px-4 py-2 rounded font-bold hover:bg-green-400 font-oxanium text-sm flex items-center gap-2"
+                                >
+                                    {(updateDiscountMutation.isPending || updateStatusMutation.isPending) ? 'PROCESSANDO...' : (
+                                        <>
+                                            <CheckCircle className="w-4 h-4" /> CONFIRMAR E FINALIZAR
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             <ActionModal
                 isOpen={actionModal.isOpen}
                 onClose={() => setActionModal({ ...actionModal, isOpen: false })}

@@ -169,6 +169,8 @@ export const OrdemServicoListPage: React.FC = () => {
                                     required
                                 />
                             </div>
+
+
                             <div className="flex justify-end gap-3 mt-6">
                                 <button
                                     type="button"
@@ -229,9 +231,20 @@ export const OrdemServicoListPage: React.FC = () => {
                                 </div>
                                 <div className="text-right">
                                     <div className="text-xs text-gray-500 font-oxanium">VALOR TOTAL</div>
-                                    <div className="text-xl font-bold text-cyber-gold font-orbitron">
-                                        {os.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                    </div>
+                                    {os.valorDesconto && os.valorDesconto > 0 ? (
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-xs text-gray-500 line-through font-mono">
+                                                {(os.valorTotalSemDesconto || os.valorTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                            </span>
+                                            <span className="text-xl font-bold text-cyber-gold font-orbitron">
+                                                {(os.valorTotalComDesconto || os.valorTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <div className="text-xl font-bold text-cyber-gold font-orbitron">
+                                            {os.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                        </div>
+                                    )}
                                 </div>
                                 <ChevronRight className="w-6 h-6 text-gray-600 group-hover:text-cyber-gold transition-colors" />
                             </div>

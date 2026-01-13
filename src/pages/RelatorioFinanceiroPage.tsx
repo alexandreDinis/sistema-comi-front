@@ -3,7 +3,7 @@ import { RelatorioConsolidado } from '../components/reports/RelatorioConsolidado
 import { ChevronRight, Home } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 
-export const RelatorioPage: React.FC = () => {
+export const RelatorioFinanceiroPage: React.FC = () => {
     const [searchParams] = useSearchParams();
     const today = new Date();
 
@@ -36,9 +36,9 @@ export const RelatorioPage: React.FC = () => {
         <div className="container mx-auto px-4 py-12">
             <div className="mb-12">
                 <nav className="flex items-center gap-3 text-[9px] font-black text-cyber-gold/30 mb-8 uppercase tracking-[0.4em]">
-                    <Link to="/" className="hover:text-cyber-gold transition-colors flex items-center gap-1.5 border border-cyber-gold/10 px-2 py-1 bg-black/40">
+                    <Link to="/relatorio" className="hover:text-cyber-gold transition-colors flex items-center gap-1.5 border border-cyber-gold/10 px-2 py-1 bg-black/40">
                         <Home className="w-2.5 h-2.5" />
-                        RAIZ
+                        RELATÓRIOS
                     </Link>
                     <ChevronRight className="w-2.5 h-2.5 opacity-20" />
                     <span className="text-cyber-gold/60">CONSOLIDAÇÃO_LOG_AUDITORIA</span>

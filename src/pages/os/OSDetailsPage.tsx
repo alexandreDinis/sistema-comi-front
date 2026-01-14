@@ -3,7 +3,7 @@ import { formatarData } from '../../utils/formatters';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { osService } from '../../services/osService';
-import { ArrowLeft, Car, Wrench, CheckCircle, Plus, Ban, History } from 'lucide-react';
+import { ArrowLeft, Car, Wrench, CheckCircle, Plus, Ban, History, FileDown } from 'lucide-react';
 import { VehicleHistoryModal } from '../../components/modals/VehicleHistoryModal';
 import { DuplicatePlateModal } from '../../components/modals/DuplicatePlateModal';
 import { ActionModal } from '../../components/modals/ActionModal';
@@ -341,9 +341,17 @@ export const OSDetailsPage: React.FC = () => {
                         </button>
                     )}
                     {isFinalized && (
-                        <div className="text-green-500 font-bold font-oxanium border border-green-500/50 bg-green-500/10 px-4 py-2 rounded flex items-center gap-2">
-                            <CheckCircle className="w-4 h-4" /> FINALIZADA
-                        </div>
+                        <>
+                            <div className="text-green-500 font-bold font-oxanium border border-green-500/50 bg-green-500/10 px-4 py-2 rounded flex items-center gap-2">
+                                <CheckCircle className="w-4 h-4" /> FINALIZADA
+                            </div>
+                            <button
+                                onClick={() => osService.downloadOSPdf(osId)}
+                                className="bg-cyber-gold/20 text-cyber-gold border border-cyber-gold/50 px-4 py-2 rounded hover:bg-cyber-gold hover:text-black transition-all font-oxanium flex items-center gap-2"
+                            >
+                                <FileDown className="w-4 h-4" /> BAIXAR PDF
+                            </button>
+                        </>
                     )}
                     {os.status === 'CANCELADA' && (
                         <div className="text-red-500 font-bold font-oxanium border border-red-500/50 bg-red-500/10 px-4 py-2 rounded flex items-center gap-2">

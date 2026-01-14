@@ -115,6 +115,12 @@ export interface EmpresaConfig {
     id: number;
     nome: string;
     modoComissao: ModoComissao;
+    logoUrl: string | null;
+}
+
+export interface UploadLogoResponse {
+    message: string;
+    logoUrl: string;
 }
 
 export interface UpdateEmpresaConfigRequest {

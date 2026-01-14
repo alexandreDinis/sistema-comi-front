@@ -1,7 +1,8 @@
 import React from 'react';
-import { Users, Shield, Calculator } from 'lucide-react';
+import { Users, Shield, Calculator, Image } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ModoComissaoConfig } from '../../components/settings/ModoComissaoConfig';
+import { LogoUploadConfig } from '../../components/settings/LogoUploadConfig';
 
 export const CompanySettings: React.FC = () => {
     const navigate = useNavigate();
@@ -53,6 +54,18 @@ export const CompanySettings: React.FC = () => {
                     </button>
                 </section>
             </div>
+
+            {/* Logo da Empresa */}
+            <section className="bg-black/40 border border-cyber-gold/30 p-6 relative group overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full bg-cyber-gold opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                <div className="flex items-center gap-4 mb-6">
+                    <div className="p-3 bg-cyber-gold/10 rounded-lg border border-cyber-gold/30 text-cyber-gold">
+                        <Image size={24} />
+                    </div>
+                    <h2 className="text-xl font-bold text-cyber-gold uppercase">Logo da Empresa</h2>
+                </div>
+                <LogoUploadConfig />
+            </section>
 
             {/* Comissão Configuration */}
             <section className="bg-black/40 border border-cyber-gold/30 p-6 relative group overflow-hidden">

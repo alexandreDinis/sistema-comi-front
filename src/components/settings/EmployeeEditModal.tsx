@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, User, UserCheck, Unlock, Lock } from 'lucide-react';
+import { X, Save, User, UserCheck, Unlock, Lock, DollarSign } from 'lucide-react';
 import { userService } from '../../services/userService';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { User as UserType } from '../../types';
 import { AVAILABLE_FEATURES } from '../../config/permissions';
+import { SalarioFuncionarioForm } from './SalarioFuncionarioForm';
 
 interface EmployeeEditModalProps {
     user?: UserType | null;
@@ -91,8 +92,8 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({ user, onCl
     };
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-black border border-cyber-gold/40 w-full max-w-lg shadow-[0_0_50px_rgba(212,175,55,0.2)] relative overflow-hidden">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-black border border-cyber-gold/40 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-[0_0_50px_rgba(212,175,55,0.2)] relative my-4">
                 {/* Decorative Borders */}
                 <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-cyber-gold"></div>
                 <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-cyber-gold"></div>
@@ -230,6 +231,20 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({ user, onCl
                             )}
                         </div>
                     </div>
+
+                    {/* Salary/Remuneration Configuration - Only for existing employees */}
+                    {isEditing && user?.id && (user.empresaId || user.empresa?.id) && user.role !== 'ADMIN_EMPRESA' && (
+                        <div className="space-y-4">
+                            <h3 className="text-xs font-bold text-cyber-gold/50 uppercase tracking-widest border-b border-cyber-gold/10 pb-1 mb-2 flex items-center gap-2">
+                                <DollarSign size={14} />
+                                Tipo de Remuneração
+                            </h3>
+                            <SalarioFuncionarioForm
+                                usuarioId={user.id}
+                                empresaId={user.empresaId || user.empresa?.id || 0}
+                            />
+                        </div>
+                    )}
 
                     {/* Footer */}
                     <div className="pt-4 flex justify-end gap-3 border-t border-cyber-gold/20 mt-6">

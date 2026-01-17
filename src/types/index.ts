@@ -104,6 +104,7 @@ export interface UserResponse {
 }
 
 export interface Empresa {
+    id?: number;
     nome: string;
     plano: 'BRONZE' | 'PRATA' | 'OURO' | string;
 }
@@ -144,6 +145,7 @@ export interface User {
 
     // V2 Multi-Tenant Fields
     empresa?: Empresa;
+    empresaId?: number; // Direct empresaId from backend UserResponse
     features?: Feature[] | string[]; // Can be strings (legacy/mock) or objects (backend)
     mustChangePassword?: boolean;
 }
@@ -310,4 +312,58 @@ export interface RelatorioAnualDTO {
     faturamentoTotalAno: number;
     faturamentoTotalAnoAnterior: number;
     crescimentoAnual: number;
+}
+
+// --- Sistema de Comissão Flexível ---
+
+export type TipoRegraComissao = 'FAIXA_FATURAMENTO' | 'FIXA_FUNCIONARIO' | 'FIXA_EMPRESA' | 'HIBRIDA';
+export type TipoRemuneracao = 'COMISSAO' | 'SALARIO_FIXO' | 'MISTA';
+
+export interface FaixaComissaoConfig {
+    id?: number;
+    minFaturamento: number;
+    maxFaturamento: number | null;
+    porcentagem: number;
+    descricao?: string;
+}
+
+export interface RegraComissao {
+    id: number;
+    nome: string;
+    tipoRegra: TipoRegraComissao;
+    descricao?: string;
+    dataInicio: string;
+    dataFim?: string;
+    ativa: boolean;
+    faixas: FaixaComissaoConfig[];
+}
+
+export interface SalarioFuncionario {
+    id: number;
+    usuario: { id: number; name?: string; email: string };
+    tipoRemuneracao: TipoRemuneracao;
+    salarioBase?: number;
+    percentualComissao?: number;
+    dataInicio: string;
+    dataFim?: string;
+    ativo: boolean;
+}
+
+// Requests
+export interface RegraComissaoRequest {
+    nome: string;
+    tipoRegra: TipoRegraComissao;
+    descricao?: string;
+    dataInicio: string;
+    dataFim?: string;
+    faixas: Omit<FaixaComissaoConfig, 'id'>[];
+}
+
+export interface SalarioFuncionarioRequest {
+    usuarioId: number;
+    tipoRemuneracao: TipoRemuneracao;
+    salarioBase?: number;
+    percentualComissao?: number;
+    dataInicio: string;
+    dataFim?: string;
 }

@@ -77,6 +77,15 @@ export const CompanySettings: React.FC = () => {
                     <h2 className="text-xl font-bold text-cyber-gold uppercase">Configuração de Comissão</h2>
                 </div>
                 <ModoComissaoConfig />
+                <div className="mt-4 pt-4 border-t border-cyber-gold/20">
+                    <p className="text-cyber-gold/50 text-sm mb-3">Configure as faixas de comissão e regras avançadas.</p>
+                    <button
+                        onClick={() => navigate('/settings/comissao')}
+                        className="px-4 py-2 bg-cyber-gold/10 border border-cyber-gold text-cyber-gold hover:bg-cyber-gold hover:text-black transition-all font-bold uppercase text-xs tracking-wider cursor-pointer"
+                    >
+                        Gerenciar Regras de Comissão
+                    </button>
+                </div>
             </section>
         </div>
     );

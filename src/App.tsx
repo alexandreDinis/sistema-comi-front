@@ -26,6 +26,7 @@ import { PlatformPlans } from './pages/platform/PlatformPlans';
 import { CompanySettings } from './pages/settings/CompanySettings';
 import { TeamSettings } from './pages/settings/TeamSettings';
 import { SubscriptionSettings } from './pages/settings/SubscriptionSettings';
+import { ComissaoRulesPage } from './pages/settings/ComissaoRulesPage';
 import { ChangePasswordPage } from './pages/auth/ChangePasswordPage';
 import { AppLayout } from './layouts/AppLayout';
 import { PlatformLayout } from './layouts/PlatformLayout';
@@ -94,6 +95,11 @@ export const App: React.FC = () => {
             <Route path="/settings/subscription" element={
               <ProtectedRoute requiredFeature={Feature.ADMIN_CONFIG}>
                 <SubscriptionSettings />
+              </ProtectedRoute>
+            } />
+            <Route path="/settings/comissao" element={
+              <ProtectedRoute requiredFeature={Feature.ADMIN_CONFIG}>
+                <ComissaoRulesPage />
               </ProtectedRoute>
             } />
 

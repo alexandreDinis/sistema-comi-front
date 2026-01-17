@@ -276,8 +276,20 @@ export const OSDetailsPage: React.FC = () => {
     };
 
     const handleDuplicateContinue = () => {
+        // If we have existing vehicle data from backend, use it to add the vehicle directly
+        if (duplicateModal.data) {
+            const placaLimpa = limparPlaca(veiculoForm.placa);
+
+            // Add vehicle with existing data from backend
+            addVeiculoMutation.mutate({
+                ordemServicoId: osId,
+                placa: placaLimpa,
+                modelo: duplicateModal.data.modelo,
+                cor: duplicateModal.data.cor
+            });
+        }
         setDuplicateModal({ isOpen: false });
-        // User continues with form filled
+        setVeiculoModalOpen(false); // Close the add vehicle modal as well
     };
 
     const handleDuplicateCancel = () => {

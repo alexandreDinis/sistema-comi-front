@@ -1,21 +1,15 @@
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, Menu, X, ChevronDown, Wrench, Briefcase, Settings } from 'lucide-react';
-import { authService } from '../../services/authService';
+import { Link, useLocation } from 'react-router-dom';
+import { Menu, X, ChevronDown, Wrench, Briefcase, Settings } from 'lucide-react';
 import { usePermission } from '../../hooks/usePermission';
 import { Feature } from '../../types/features';
+import { UserMenu } from './UserMenu';
 import logo from '../../assets/log.png';
 
 export const AppHeader: React.FC = () => {
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
     const location = useLocation();
-    const navigate = useNavigate();
     const { hasFeature } = usePermission();
-
-    const handleLogout = () => {
-        authService.logout();
-        navigate('/login');
-    };
 
     const isActive = (path: string) => location.pathname === path;
     const isSectionActive = (paths: string[]) => paths.some(path => location.pathname.startsWith(path));
@@ -129,11 +123,9 @@ export const AppHeader: React.FC = () => {
                         ))}
                     </nav>
 
-                    {/* Desktop Logout */}
+                    {/* Desktop User Menu */}
                     <div className="hidden md:block">
-                        <button onClick={handleLogout} className="ml-4 p-2 text-cyber-error/60 hover:text-cyber-error transition-colors" title="SAIR">
-                            <LogOut size={16} />
-                        </button>
+                        <UserMenu />
                     </div>
                 </div>
 
@@ -162,6 +154,10 @@ export const AppHeader: React.FC = () => {
                                 </div>
                             </div>
                         ))}
+                        {/* Mobile User Menu */}
+                        <div className="border-t border-cyber-gold/20 pt-4 px-4">
+                            <UserMenu />
+                        </div>
                     </div>
                 )}
             </div>

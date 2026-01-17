@@ -28,6 +28,8 @@ import { TeamSettings } from './pages/settings/TeamSettings';
 import { SubscriptionSettings } from './pages/settings/SubscriptionSettings';
 import { ComissaoRulesPage } from './pages/settings/ComissaoRulesPage';
 import { ChangePasswordPage } from './pages/auth/ChangePasswordPage';
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 import { AppLayout } from './layouts/AppLayout';
 import { PlatformLayout } from './layouts/PlatformLayout';
 import './index.css';
@@ -52,6 +54,8 @@ export const App: React.FC = () => {
           {/* Public Routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
           {/* Platform Routes (Blue Theme) */}
           <Route path="/platform" element={

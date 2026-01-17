@@ -46,7 +46,7 @@ export const userService = {
         return response.data;
     },
 
-    changePassword: async (password: string): Promise<void> => {
-        await api.post('/users/change-password', { password });
+    changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
+        await api.post('/users/change-password', { currentPassword, newPassword });
     }
 };

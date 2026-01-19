@@ -1,14 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { ComissaoCalculada } from '../../types';
 import { formatarMoeda, formatarPorcentagem } from '../../utils/formatters';
-import { TrendingUp, Percent, Landmark, ReceiptText, ArrowUpRight } from 'lucide-react';
+import { TrendingUp, Percent, Landmark, ReceiptText, ArrowUpRight, AlertTriangle, CheckCircle2, Check } from 'lucide-react';
+import { comissaoService } from '../../services/comissaoService';
+import { authService } from '../../services/authService';
 
 interface ComissaoCardProps {
     comissao: ComissaoCalculada;
+    onQuitado?: () => void;
 }
 
-export const ComissaoCard: React.FC<ComissaoCardProps> = ({ comissao }) => {
+export const ComissaoCard: React.FC<ComissaoCardProps> = ({ comissao, onQuitado }) => {
     const isPositivo = comissao.saldoAReceber >= 0;
+    const temSaldoAnterior = comissao.saldoAnterior && comissao.saldoAnterior !== 0;
+    const user = authService.getCurrentUser();
+    const isAdmin = user?.role === 'ROLE_ADMIN_EMPRESA' || user?.role === 'ADMIN_EMPRESA';
+    const [isQuitando, setIsQuitando] = useState(false);
+
+    const handleQuitar = async () => {
+        if (!comissao.id) return;
+        setIsQuitando(true);
+        try {
+            await comissaoService.quitarComissao(comissao.id);
+            onQuitado?.();
+        } catch (error) {
+            console.error('Erro ao quitar:', error);
+        } finally {
+            setIsQuitando(false);
+        }
+    };
 
     return (
         <div className="space-y-8 view-transition p-1">
@@ -21,6 +41,11 @@ export const ComissaoCard: React.FC<ComissaoCardProps> = ({ comissao }) => {
                         <div className="flex items-center gap-3">
                             <span className="hud-tag">FEED_ESTÁVEL</span>
                             <span className="text-[10px] font-mono text-cyber-gold/40">ID_NÓ: 0x{comissao.anoMesReferencia}</span>
+                            {comissao.quitado && (
+                                <span className="hud-tag bg-green-500/20 text-green-400 border-green-500/40 flex items-center gap-1">
+                                    <CheckCircle2 className="w-3 h-3" /> QUITADO
+                                </span>
+                            )}
                         </div>
                         <h3 className="text-3xl font-black text-cyber-gold tracking-tighter italic mt-1">
                             CRYSTAL_{comissao.anoMesReferencia}
@@ -35,6 +60,19 @@ export const ComissaoCard: React.FC<ComissaoCardProps> = ({ comissao }) => {
                 </div>
 
                 <div className="p-8 relative">
+                    {/* Saldo Anterior (Carryover) */}
+                    {temSaldoAnterior && (
+                        <div className="mb-6 p-4 border border-amber-500/30 bg-amber-500/5 flex items-center gap-3">
+                            <AlertTriangle className="w-5 h-5 text-amber-400" />
+                            <div>
+                                <span className="hud-label text-amber-400/80">SALDO_ANTERIOR (CARRYOVER)</span>
+                                <p className="text-lg font-black text-amber-400 italic tabular-nums">
+                                    {formatarMoeda(comissao.saldoAnterior || 0)}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                         {[
                             { label: 'FATUR_GERAL', value: formatarMoeda(comissao.faturamentoMensal), icon: TrendingUp },
@@ -72,11 +110,29 @@ export const ComissaoCard: React.FC<ComissaoCardProps> = ({ comissao }) => {
                             <p className={`text-7xl font-black tracking-tighter italic ${isPositivo ? 'text-cyber-gold italic-shadow' : 'text-cyber-error'}`}>
                                 {formatarMoeda(comissao.saldoAReceber)}
                             </p>
+                            {comissao.quitado && comissao.dataQuitacao && (
+                                <p className="text-xs font-mono text-green-400/60 mt-2">
+                                    Quitado em: {new Date(comissao.dataQuitacao).toLocaleDateString('pt-BR')}
+                                </p>
+                            )}
                         </div>
 
-                        <div className={`p-6 border-2 ${isPositivo ? 'border-cyber-gold/40 text-cyber-gold' : 'border-cyber-error/40 text-cyber-error'} bg-black/40 relative z-10 overflow-hidden`}>
-                            <ArrowUpRight className={`w-12 h-12 ${!isPositivo && 'rotate-90'}`} />
-                            <div className="absolute -bottom-1 -right-1 text-[6px] font-mono opacity-40">MOVE_0x1</div>
+                        <div className="flex flex-col gap-4 items-center">
+                            <div className={`p-6 border-2 ${isPositivo ? 'border-cyber-gold/40 text-cyber-gold' : 'border-cyber-error/40 text-cyber-error'} bg-black/40 relative z-10 overflow-hidden`}>
+                                <ArrowUpRight className={`w-12 h-12 ${!isPositivo && 'rotate-90'}`} />
+                                <div className="absolute -bottom-1 -right-1 text-[6px] font-mono opacity-40">MOVE_0x1</div>
+                            </div>
+
+                            {/* Botão Quitar - apenas para Admin */}
+                            {isAdmin && !comissao.quitado && comissao.saldoAReceber > 0 && comissao.id && (
+                                <button
+                                    onClick={handleQuitar}
+                                    disabled={isQuitando}
+                                    className="hud-button text-xs bg-green-500/20 border-green-500/40 text-green-400 hover:bg-green-500/30 disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    {isQuitando ? 'PROCESSANDO...' : <><Check className="w-3 h-3" /> QUITAR COMISSÃO</>}
+                                </button>
+                            )}
                         </div>
 
                         <div className="absolute -bottom-6 -right-6 text-9xl font-black opacity-[0.02] select-none pointer-events-none italic">

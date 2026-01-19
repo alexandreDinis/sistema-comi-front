@@ -109,6 +109,11 @@ export const osService = {
         return response.data;
     },
 
+    deletePeca: async (id: number): Promise<OrdemServico> => {
+        const response = await api.delete<OrdemServico>(`/ordens-servico/pecas/${id}`);
+        return response.data;
+    },
+
     updateStatus: async (id: number, status: OSStatus): Promise<OrdemServico> => {
         const payload: UpdateOSStatusRequest = { status };
         const response = await api.patch<OrdemServico>(`/ordens-servico/${id}/status`, payload);

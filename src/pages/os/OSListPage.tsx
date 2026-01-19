@@ -10,13 +10,13 @@ export const OrdemServicoListPage: React.FC = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<'iniciadas' | 'finalizadas' | 'canceladas'>('iniciadas');
+    const [activeTab, setActiveTab] = useState<'iniciadas' | 'finalizadas' | 'canceladas' | 'atrasadas'>('iniciadas');
     const [searchTerm, setSearchTerm] = useState('');
     const [dateFilter, setDateFilter] = useState('');
 
     const [newOSData, setNewOSData] = useState<CreateOSRequest>({
-        clienteId: 0,
-        data: new Date().toISOString().split('T')[0]
+        clienteId: 0, data: new Date().toISOString().split('T')[0],
+        dataVencimento: new Date().toISOString().split('T')[0]
     });
 
     const { data: osList, isLoading } = useQuery({
@@ -65,6 +65,7 @@ export const OrdemServicoListPage: React.FC = () => {
             if (activeTab === 'iniciadas') statusMatch = (os.status === 'ABERTA' || os.status === 'EM_EXECUCAO');
             else if (activeTab === 'finalizadas') statusMatch = (os.status === 'FINALIZADA');
             else if (activeTab === 'canceladas') statusMatch = (os.status === 'CANCELADA');
+            else if (activeTab === 'atrasadas') statusMatch = os.atrasado === true;
 
             // 2. Client Name Filter
             const clientMatch =
@@ -113,6 +114,12 @@ export const OrdemServicoListPage: React.FC = () => {
                     className={`flex items-center gap-2 px-4 py-2 font-oxanium transition-all ${activeTab === 'canceladas' ? 'text-cyber-gold border-b-2 border-cyber-gold' : 'text-gray-500 hover:text-white'}`}
                 >
                     <Ban size={16} /> CANCELADAS
+                </button>
+                <button
+                    onClick={() => setActiveTab('atrasadas')}
+                    className={`flex items-center gap-2 px-4 py-2 font-oxanium transition-all ${activeTab === 'atrasadas' ? 'text-red-400 border-b-2 border-red-400' : 'text-gray-500 hover:text-red-400'}`}
+                >
+                    <Clock size={16} /> ATRASADAS
                 </button>
             </div>
 
@@ -168,6 +175,16 @@ export const OrdemServicoListPage: React.FC = () => {
                                     onChange={e => setNewOSData({ ...newOSData, data: e.target.value })}
                                     required
                                 />
+                            </div>
+                            <div>
+                                <label className="text-cyber-gold font-oxanium text-sm">Prazo de Pagamento</label>
+                                <input
+                                    type="date"
+                                    className="w-full bg-black/60 border border-cyber-gold/30 text-white p-3 focus:border-cyber-gold outline-none"
+                                    value={newOSData.dataVencimento}
+                                    onChange={e => setNewOSData({ ...newOSData, dataVencimento: e.target.value })}
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Deixe vazio para usar a data atual.</p>
                             </div>
 
 
@@ -226,8 +243,15 @@ export const OrdemServicoListPage: React.FC = () => {
                             </div>
 
                             <div className="flex items-center gap-8">
-                                <div className={`px-3 py-1 rounded border text-xs font-bold font-oxanium tracking-wide ${getStatusColor(os.status)}`}>
-                                    {os.status}
+                                <div className="flex items-center gap-2">
+                                    <div className={`px-3 py-1 rounded border text-xs font-bold font-oxanium tracking-wide ${getStatusColor(os.status)}`}>
+                                        {os.status}
+                                    </div>
+                                    {os.atrasado && (
+                                        <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs font-bold rounded border border-red-500/50 animate-pulse">
+                                            ATRASADO
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="text-right">
                                     <div className="text-xs text-gray-500 font-oxanium">VALOR TOTAL</div>

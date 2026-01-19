@@ -27,5 +27,13 @@ export const relatorioService = {
         link.remove();
         window.URL.revokeObjectURL(url);
     },
+
+    getRankingClientes: async (ano: number, mes?: number): Promise<import('../types').RankingCliente[]> => {
+        const params: any = { ano };
+        if (mes) params.mes = mes;
+
+        const response = await api.get<import('../types').RankingCliente[]>('relatorios/ranking-clientes', { params });
+        return response.data;
+    },
 };
 

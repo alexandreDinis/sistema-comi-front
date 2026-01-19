@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { RelatorioConsolidado } from '../components/reports/RelatorioConsolidado';
-import { ClientRankingWidget } from '../components/relatorios/ClientRankingWidget';
+import { ClientRankingWidget } from '../../components/relatorios/ClientRankingWidget';
 import { ChevronRight, Home } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 
-export const RelatorioFinanceiroPage: React.FC = () => {
+export const RankingClientesPage: React.FC = () => {
     const [searchParams] = useSearchParams();
     const today = new Date();
 
@@ -12,6 +11,7 @@ export const RelatorioFinanceiroPage: React.FC = () => {
     const initialAno = searchParams.get('ano') ? parseInt(searchParams.get('ano')!) : today.getFullYear();
     const initialMes = searchParams.get('mes') ? parseInt(searchParams.get('mes')!) : today.getMonth() + 1;
 
+    // Local state for the page's controls (which feed the widget)
     const [mes, setMes] = useState(initialMes);
     const [ano, setAno] = useState(initialAno);
 
@@ -42,29 +42,21 @@ export const RelatorioFinanceiroPage: React.FC = () => {
                         RELATÓRIOS
                     </Link>
                     <ChevronRight className="w-2.5 h-2.5 opacity-20" />
-                    <span className="text-cyber-gold/60">CONSOLIDAÇÃO_LOG_AUDITORIA</span>
+                    <span className="text-cyber-gold/60">RANKING_CLIENTES</span>
                 </nav>
 
                 <div className="flex flex-col md:flex-row justify-between items-end gap-6 relative">
                     <div className="relative">
                         <div className="absolute -left-4 top-0 bottom-0 w-px bg-cyber-gold/20"></div>
                         <h1 className="text-5xl font-black text-cyber-gold tracking-tighter italic italic-shadow uppercase glitch">
-                            Auditoria Financeira
+                            Ranking de Clientes
                         </h1>
                         <p className="text-cyber-gold/40 text-[10px] font-mono tracking-[0.2em] mt-3 uppercase">
-                            FLUXO_CONSOLIDAÇÃO_SISTEMA // VERIFICANDO_SYMLINKS_COMISSÃO_E_IMPOSTO
+                            ANÁLISE_FATURAMENTO_CLIENTE // TOP_PERFORMANCE
                         </p>
                     </div>
 
                     <div className="flex items-center gap-4 bg-black/40 border border-cyber-gold/20 p-1 relative">
-                        <button
-                            onClick={() => import('../services/osService').then(m => m.osService.downloadRelatorioPdf(ano, mes))}
-                            className="px-4 h-12 flex items-center justify-center hover:bg-cyber-gold hover:text-black transition-all font-bold text-xs tracking-wider border-r border-cyber-gold/10 font-oxanium text-cyber-gold"
-                            title="Exportar Relatório em PDF"
-                        >
-                            <span className="mr-2">PDF</span>
-                            EXPORT
-                        </button>
                         <div className="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-cyber-gold/40"></div>
                         <button
                             onClick={handlePreviousMonth}
@@ -73,7 +65,7 @@ export const RelatorioFinanceiroPage: React.FC = () => {
                             {'<'}
                         </button>
                         <div className="px-8 flex flex-col items-center">
-                            <span className="text-[8px] font-mono text-cyber-gold/40 tracking-[0.3em]">PERÍODO_AUDITORIA</span>
+                            <span className="text-[8px] font-mono text-cyber-gold/40 tracking-[0.3em]">PERÍODO_BASE</span>
                             <span className="text-lg font-black italic tracking-widest text-cyber-gold">
                                 {mes.toString().padStart(2, '0')}.{ano}
                             </span>
@@ -88,9 +80,7 @@ export const RelatorioFinanceiroPage: React.FC = () => {
                 </div>
             </div>
 
-            <RelatorioConsolidado ano={ano} mes={mes} />
-
-            <div className="mt-8 h-[500px]">
+            <div className="h-[600px]">
                 <ClientRankingWidget selectedAno={ano} selectedMes={mes} />
             </div>
         </div>

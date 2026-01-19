@@ -108,7 +108,7 @@ export const YoYRevenueWidget: React.FC = () => {
 
             {/* Bar Chart */}
             {yoyData.temDadosAnoAnterior && (
-                <div className="h-32">
+                <div className="h-32 min-h-[128px]">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={chartData}>
                             <XAxis

@@ -11,5 +11,10 @@ export const comissaoService = {
         const response = await api.get<ComparacaoFaturamentoDTO>(`dashboard/yoy/${ano}/${mes}`);
         return response.data;
     },
+
+    async quitarComissao(id: number): Promise<string> {
+        const response = await api.post<string>(`comissao/quitar/${id}`);
+        return response.data;
+    },
 };
 

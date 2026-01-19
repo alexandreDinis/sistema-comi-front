@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2, DollarSign, Percent, Briefcase, AlertCircle } from 'lucide-react';
+import { Loader2, DollarSign, Percent, Briefcase, AlertCircle, Check } from 'lucide-react';
 import { salarioFuncionarioService } from '../../services/salarioFuncionarioService';
 import type { TipoRemuneracao, SalarioFuncionarioRequest } from '../../types';
 
@@ -97,8 +97,8 @@ export const SalarioFuncionarioForm: React.FC<SalarioFuncionarioFormProps> = ({
                         type="button"
                         onClick={() => setTipoRemuneracao(option.value)}
                         className={`p-3 border text-left transition-all ${tipoRemuneracao === option.value
-                                ? 'border-cyber-gold bg-cyber-gold/10'
-                                : 'border-cyber-gold/30 hover:border-cyber-gold/60 bg-black/40'
+                            ? 'border-cyber-gold bg-cyber-gold/10'
+                            : 'border-cyber-gold/30 hover:border-cyber-gold/60 bg-black/40'
                             }`}
                     >
                         <div className="flex items-center gap-2 mb-1">
@@ -198,8 +198,8 @@ export const SalarioFuncionarioForm: React.FC<SalarioFuncionarioFormProps> = ({
             )}
 
             {saveMutation.isSuccess && (
-                <div className="text-green-400 text-xs font-mono bg-green-400/10 border border-green-400/30 p-2">
-                    ✓ Configuração salva com sucesso!
+                <div className="text-green-400 text-xs font-mono bg-green-400/10 border border-green-400/30 p-2 flex items-center gap-2">
+                    <Check className="w-4 h-4" /> Configuração salva com sucesso!
                 </div>
             )}
         </div>

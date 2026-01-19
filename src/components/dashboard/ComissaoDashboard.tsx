@@ -105,7 +105,7 @@ export const ComissaoDashboard: React.FC = () => {
                     </div>
                 </div>
             ) : comissao ? (
-                <ComissaoCard comissao={comissao} />
+                <ComissaoCard comissao={comissao} onQuitado={handleRefresh} />
             ) : (
                 <div className="hud-card top-brackets bottom-brackets p-16 text-center group bg-black/40">
                     <div className="static-overlay opacity-5"></div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { Feature } from './types/features';
 import { HomePage } from './pages/HomePage';
@@ -10,6 +10,7 @@ import { DespesaPage } from './pages/DespesaPage';
 import { RelatoriosHubPage } from './pages/RelatoriosHubPage';
 import { RelatorioFinanceiroPage } from './pages/RelatorioFinanceiroPage';
 import { RelatorioAnualPage } from './pages/RelatorioAnualPage';
+import { RankingClientesPage } from './pages/relatorios/RankingClientesPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -27,24 +28,20 @@ import { CompanySettings } from './pages/settings/CompanySettings';
 import { TeamSettings } from './pages/settings/TeamSettings';
 import { SubscriptionSettings } from './pages/settings/SubscriptionSettings';
 import { ComissaoRulesPage } from './pages/settings/ComissaoRulesPage';
+import TributacaoPage from './pages/admin/TributacaoPage';
 import { ChangePasswordPage } from './pages/auth/ChangePasswordPage';
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
+import FinanceiroDashboard from './pages/financeiro/FinanceiroDashboard';
+import ContasPagarPage from './pages/financeiro/ContasPagarPage';
+import ContasReceberPage from './pages/financeiro/ContasReceberPage';
+import CartoesPage from './pages/financeiro/CartoesPage';
+import FaturasPage from './pages/financeiro/FaturasPage';
 import { AppLayout } from './layouts/AppLayout';
 import { PlatformLayout } from './layouts/PlatformLayout';
 import './index.css';
 
-// ✅ Configurar QueryClient com opções apropriadas
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // Cache por 5 minutos (evita fetch excessivo)
-      gcTime: 1000 * 60 * 10,
-      retry: 0, // Não retry em dev/erro 500 para evitar loops
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+import { queryClient } from './lib/react-query';
 
 export const App: React.FC = () => {
   return (
@@ -101,6 +98,11 @@ export const App: React.FC = () => {
                 <SubscriptionSettings />
               </ProtectedRoute>
             } />
+            <Route path="/settings/tributacao" element={
+              <ProtectedRoute requiredFeature={Feature.ADMIN_CONFIG}>
+                <TributacaoPage />
+              </ProtectedRoute>
+            } />
             <Route path="/settings/comissao" element={
               <ProtectedRoute requiredFeature={Feature.ADMIN_CONFIG}>
                 <ComissaoRulesPage />
@@ -123,6 +125,34 @@ export const App: React.FC = () => {
             <Route path="/despesa" element={
               <ProtectedRoute requiredFeature={Feature.RELATORIO_FINANCEIRO_VIEW}>
                 <DespesaPage />
+              </ProtectedRoute>
+            } />
+
+            {/* Módulo Financeiro - Contas a Pagar/Receber */}
+            <Route path="/financeiro" element={
+              <ProtectedRoute requiredFeature={Feature.RELATORIO_FINANCEIRO_VIEW}>
+                <FinanceiroDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/financeiro/contas-pagar" element={
+              <ProtectedRoute requiredFeature={Feature.RELATORIO_FINANCEIRO_VIEW}>
+                <ContasPagarPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/financeiro/contas-receber" element={
+              <ProtectedRoute requiredFeature={Feature.RELATORIO_FINANCEIRO_VIEW}>
+                <ContasReceberPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/financeiro/cartoes" element={
+              <ProtectedRoute requiredFeature={Feature.RELATORIO_FINANCEIRO_VIEW}>
+                <CartoesPage />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/financeiro/faturas" element={
+              <ProtectedRoute requiredFeature={Feature.RELATORIO_FINANCEIRO_VIEW}>
+                <FaturasPage />
               </ProtectedRoute>
             } />
 
@@ -163,6 +193,12 @@ export const App: React.FC = () => {
             <Route path="/relatorio/anual" element={
               <ProtectedRoute requiredFeature={Feature.RELATORIO_FINANCEIRO_VIEW}>
                 <RelatorioAnualPage />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/relatorio/ranking" element={
+              <ProtectedRoute requiredFeature={Feature.RELATORIO_FINANCEIRO_VIEW}>
+                <RankingClientesPage />
               </ProtectedRoute>
             } />
 

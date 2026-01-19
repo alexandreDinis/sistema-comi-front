@@ -3,7 +3,7 @@ import { formatarData } from '../../utils/formatters';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { osService } from '../../services/osService';
-import { ArrowLeft, Car, Wrench, CheckCircle, Plus, Ban, History, FileDown } from 'lucide-react';
+import { ArrowLeft, Car, Wrench, CheckCircle, Plus, Ban, History, FileDown, Trash2 } from 'lucide-react';
 import { VehicleHistoryModal } from '../../components/modals/VehicleHistoryModal';
 import { DuplicatePlateModal } from '../../components/modals/DuplicatePlateModal';
 import { ActionModal } from '../../components/modals/ActionModal';
@@ -43,7 +43,7 @@ export const OSDetailsPage: React.FC = () => {
 
     // Forms State
     const [veiculoForm, setVeiculoForm] = useState({ placa: '', modelo: '', cor: '' });
-    const [pecaForm, setPecaForm] = useState({ tipoPecaId: '', valorCobrado: '' });
+    const [pecaForm, setPecaForm] = useState({ tipoPecaId: '', valorCobrado: '', descricao: '' });
 
     const { data: os, isLoading } = useQuery({
         queryKey: ['ordem-servico', osId],
@@ -103,7 +103,34 @@ export const OSDetailsPage: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['ordem-servico', osId] });
             setPecaModalOpen({ isOpen: false, veiculoId: null });
-            setPecaForm({ tipoPecaId: '', valorCobrado: '' });
+            setPecaForm({ tipoPecaId: '', valorCobrado: '', descricao: '' });
+        }
+    });
+
+    const deletePecaMutation = useMutation({
+        mutationFn: osService.deletePeca,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['ordem-servico', osId] });
+            setActionModal({
+                isOpen: true,
+                type: 'success',
+                title: 'Serviço Removido',
+                message: 'O serviço foi removido com sucesso!',
+                showCancel: false,
+                confirmText: 'OK',
+                onConfirm: () => setActionModal(prev => ({ ...prev, isOpen: false }))
+            });
+        },
+        onError: (error: any) => {
+            setActionModal({
+                isOpen: true,
+                type: 'danger',
+                title: 'Erro',
+                message: error.response?.data?.message || 'Não foi possível remover o serviço.',
+                showCancel: false,
+                confirmText: 'FECHAR',
+                onConfirm: () => setActionModal(prev => ({ ...prev, isOpen: false }))
+            });
         }
     });
 
@@ -129,8 +156,8 @@ export const OSDetailsPage: React.FC = () => {
                 console.log('🔄 [SYNC] Hard Resetting system caches...');
 
                 // Resetting queries clears the cache and forces a hard loading state on next fetch
-                // This is more aggressive than invalidate
-                queryClient.resetQueries({ queryKey: ['os-list'] });
+                // This is more aggressive than invalidation
+                queryClient.invalidateQueries({ queryKey: ['ordens-servico'] });
 
                 queryClient.resetQueries({
                     queryKey: ['comissao'],
@@ -240,7 +267,8 @@ export const OSDetailsPage: React.FC = () => {
         addPecaMutation.mutate({
             veiculoId: isPecaModalOpen.veiculoId!,
             tipoPecaId: parseInt(pecaForm.tipoPecaId),
-            valorCobrado: valorToSend
+            valorCobrado: valorToSend,
+            descricao: pecaForm.descricao || undefined
         });
     };
 
@@ -249,7 +277,8 @@ export const OSDetailsPage: React.FC = () => {
         const item = catalogo?.find(t => t.id === id);
         setPecaForm({
             tipoPecaId: e.target.value,
-            valorCobrado: item ? item.valorPadrao.toString() : ''
+            valorCobrado: item ? item.valorPadrao.toString() : '',
+            descricao: ''
         });
     };
 
@@ -319,6 +348,14 @@ export const OSDetailsPage: React.FC = () => {
                     <ArrowLeft className="w-4 h-4" /> VOLTAR
                 </button>
                 <div className="flex gap-3">
+                    {/* PDF Download - disponível para todos os status */}
+                    <button
+                        onClick={() => osService.downloadOSPdf(osId)}
+                        className="bg-cyber-gold/20 text-cyber-gold border border-cyber-gold/50 px-4 py-2 rounded hover:bg-cyber-gold hover:text-black transition-all font-oxanium flex items-center gap-2"
+                    >
+                        <FileDown className="w-4 h-4" /> BAIXAR PDF
+                    </button>
+
                     {os.status === 'ABERTA' && (
                         <>
                             <button
@@ -353,17 +390,9 @@ export const OSDetailsPage: React.FC = () => {
                         </button>
                     )}
                     {isFinalized && (
-                        <>
-                            <div className="text-green-500 font-bold font-oxanium border border-green-500/50 bg-green-500/10 px-4 py-2 rounded flex items-center gap-2">
-                                <CheckCircle className="w-4 h-4" /> FINALIZADA
-                            </div>
-                            <button
-                                onClick={() => osService.downloadOSPdf(osId)}
-                                className="bg-cyber-gold/20 text-cyber-gold border border-cyber-gold/50 px-4 py-2 rounded hover:bg-cyber-gold hover:text-black transition-all font-oxanium flex items-center gap-2"
-                            >
-                                <FileDown className="w-4 h-4" /> BAIXAR PDF
-                            </button>
-                        </>
+                        <div className="text-green-500 font-bold font-oxanium border border-green-500/50 bg-green-500/10 px-4 py-2 rounded flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4" /> FINALIZADA
+                        </div>
                     )}
                     {os.status === 'CANCELADA' && (
                         <div className="text-red-500 font-bold font-oxanium border border-red-500/50 bg-red-500/10 px-4 py-2 rounded flex items-center gap-2">
@@ -423,11 +452,26 @@ export const OSDetailsPage: React.FC = () => {
 
                 {/* Data */}
                 <div className="bg-black/40 border border-white/10 p-6 rounded-lg flex flex-col justify-center">
-                    <h3 className="text-gray-400 text-sm font-oxanium uppercase tracking-wide">Data de Criação</h3>
-                    <div className="text-2xl text-white font-bold font-orbitron mt-2">
-                        {formatarData(os.data)}
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <h3 className="text-gray-400 text-sm font-oxanium uppercase tracking-wide">Data de Criação</h3>
+                            <div className="text-2xl text-white font-bold font-orbitron mt-2">
+                                {formatarData(os.data)}
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <h3 className="text-gray-400 text-sm font-oxanium uppercase tracking-wide">Prazo Pagamento</h3>
+                            <div className={`text-2xl font-bold font-orbitron mt-2 ${os.atrasado ? 'text-red-400' : 'text-white'}`}>
+                                {os.dataVencimento ? formatarData(os.dataVencimento) : '—'}
+                            </div>
+                            {os.atrasado && (
+                                <span className="inline-block px-2 py-0.5 bg-red-500/20 text-red-400 text-xs font-bold rounded border border-red-500/50 animate-pulse mt-1">
+                                    ATRASADO
+                                </span>
+                            )}
+                        </div>
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">ID: #{os.id}</div>
+                    <div className="text-xs text-gray-500 mt-2">ID: #{os.id}</div>
                 </div>
             </div>
 
@@ -492,10 +536,37 @@ export const OSDetailsPage: React.FC = () => {
                                     <tbody className="text-sm text-gray-300">
                                         {v.pecas.map(p => (
                                             <tr key={p.id} className="border-b border-white/5 last:border-0 hover:bg-white/5">
-                                                <td className="py-3 pl-2">{p.nomePeca}</td>
+                                                <td className="py-3 pl-2">
+                                                    <div>{p.nomePeca}</div>
+                                                    {p.descricao && (
+                                                        <div className="text-xs text-gray-500 mt-1 italic">
+                                                            {p.descricao}
+                                                        </div>
+                                                    )}
+                                                </td>
                                                 <td className="py-3 text-right pr-2 font-mono">
                                                     {p.valorCobrado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                                                 </td>
+                                                {!isFinalized && (
+                                                    <td className="py-3 pr-2 text-right w-10">
+                                                        <button
+                                                            onClick={() => {
+                                                                setActionModal({
+                                                                    isOpen: true,
+                                                                    title: 'Remover Serviço?',
+                                                                    message: `Deseja remover "${p.nomePeca}" deste veículo?`,
+                                                                    type: 'warning',
+                                                                    confirmText: 'SIM, REMOVER',
+                                                                    onConfirm: () => deletePecaMutation.mutate(p.id)
+                                                                });
+                                                            }}
+                                                            className="text-red-400 hover:text-red-300 p-1 rounded hover:bg-red-500/20 transition-all"
+                                                            title="Remover serviço"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </td>
+                                                )}
                                             </tr>
                                         ))}
                                         {v.pecas.length === 0 && (
@@ -588,6 +659,16 @@ export const OSDetailsPage: React.FC = () => {
                                         onChange={e => setPecaForm({ ...pecaForm, valorCobrado: e.target.value })}
                                     />
                                     <p className="text-[10px] text-gray-500 italic">Deixe vazio para usar o valor padrão.</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs text-gray-500">Observações (opcional)</label>
+                                    <textarea
+                                        className="w-full bg-black/60 border border-white/20 text-white p-2 text-sm resize-none"
+                                        rows={3}
+                                        placeholder="Ex: Cliente solicitou serviço mesmo sabendo das condições..."
+                                        value={pecaForm.descricao}
+                                        onChange={e => setPecaForm({ ...pecaForm, descricao: e.target.value })}
+                                    />
                                 </div>
                             </div>
                             <div className="flex justify-end gap-2 mt-4">

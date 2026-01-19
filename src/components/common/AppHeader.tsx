@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown, Wrench, Briefcase, Settings } from 'lucide-react';
+import { Menu, X, ChevronDown, Wrench, Settings, LayoutDashboard, FileText, Edit, DollarSign, BarChart2 } from 'lucide-react';
 import { usePermission } from '../../hooks/usePermission';
 import { Feature } from '../../types/features';
 import { UserMenu } from './UserMenu';
@@ -14,8 +14,9 @@ export const AppHeader: React.FC = () => {
     const isActive = (path: string) => location.pathname === path;
     const isSectionActive = (paths: string[]) => paths.some(path => location.pathname.startsWith(path));
 
-    // Definição dos Grupos de Navegação com Features
+    // Definição dos Grupos de Navegação com Features - Estrutura ERP
     const allNavGroups = [
+        // OPERAÇÃO - mantém igual
         {
             label: 'OPERAÇÃO',
             icon: Wrench,
@@ -26,24 +27,68 @@ export const AppHeader: React.FC = () => {
                 { label: 'CATÁLOGO', path: '/catalogo', feature: Feature.PRODUTO_READ },
             ]
         },
+        // FINANCEIRO - Dashboard apenas
         {
             label: 'FINANCEIRO',
-            icon: Briefcase,
-            requiredFeature: [Feature.RELATORIO_FINANCEIRO_VIEW, Feature.RELATORIO_COMISSAO_VIEW],
+            icon: LayoutDashboard,
+            requiredFeature: [Feature.RELATORIO_FINANCEIRO_VIEW],
             items: [
-                { label: 'MINHA COMISSÃO', path: '/minha-comissao', feature: Feature.RELATORIO_COMISSAO_VIEW },
-                { label: 'FATURAMENTO', path: '/faturamento', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
-                { label: 'ADIANTAMENTOS', path: '/adiantamento', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
-                { label: 'DESPESAS', path: '/despesa', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
-                { label: 'RELATÓRIOS', path: '/relatorio', feature: Feature.RELATORIO_FINANCEIRO_VIEW }
+                { label: 'DASHBOARD', path: '/financeiro', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
             ]
         },
+        // CONTAS - Fluxo de Recebíveis/Pagáveis
+        {
+            label: 'CONTAS',
+            icon: FileText,
+            requiredFeature: [Feature.RELATORIO_FINANCEIRO_VIEW],
+            items: [
+                { label: 'CONTAS A RECEBER', path: '/financeiro/contas-receber', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
+                { label: 'CONTAS A PAGAR', path: '/financeiro/contas-pagar', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
+                { label: 'CARTÕES CORPORATIVOS', path: '/financeiro/cartoes', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
+                { label: 'FATURAS DE CARTÃO', path: '/financeiro/faturas', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
+            ]
+        },
+        // LANÇAMENTOS - Entrada de dados
+        {
+            label: 'LANÇAMENTOS',
+            icon: Edit,
+            requiredFeature: [Feature.RELATORIO_FINANCEIRO_VIEW],
+            items: [
+                { label: 'DESPESAS', path: '/despesa', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
+                { label: 'FATURAMENTO MANUAL', path: '/faturamento', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
+                { label: 'ADIANTAMENTOS', path: '/adiantamento', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
+            ]
+        },
+        // COMISSÕES - Gestão
+        {
+            label: 'COMISSÕES',
+            icon: DollarSign,
+            requiredFeature: [Feature.RELATORIO_COMISSAO_VIEW, Feature.ADMIN_CONFIG],
+            items: [
+                { label: 'MINHAS COMISSÕES', path: '/minha-comissao', feature: Feature.RELATORIO_COMISSAO_VIEW },
+                { label: 'GESTÃO DE COMISSÕES', path: '/settings/comissao', feature: Feature.ADMIN_CONFIG },
+            ]
+        },
+        // RELATÓRIOS - Análise
+        {
+            label: 'RELATÓRIOS',
+            icon: BarChart2,
+            requiredFeature: [Feature.RELATORIO_FINANCEIRO_VIEW],
+            items: [
+                { label: 'HUB DE RELATÓRIOS', path: '/relatorio', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
+                { label: 'FLUXO DE CAIXA', path: '/relatorio/financeiro', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
+                { label: 'DRE / VISÃO ANUAL', path: '/relatorio/anual', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
+                { label: 'RANKING CLIENTES', path: '/relatorio/ranking', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
+            ]
+        },
+        // CONFIGURAÇÕES
         {
             label: 'CONFIGURAÇÕES',
             icon: Settings,
             requiredFeature: [Feature.ADMIN_CONFIG, Feature.ADMIN_USERS_READ],
             items: [
                 { label: 'ADMINISTRAÇÃO', path: '/settings', feature: Feature.ADMIN_CONFIG },
+                { label: 'TRIBUTAÇÃO', path: '/settings/tributacao', feature: Feature.ADMIN_CONFIG },
             ]
         }
     ];

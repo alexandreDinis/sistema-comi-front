@@ -38,7 +38,7 @@ export const UserMenu: React.FC = () => {
             case 'ADMIN_EMPRESA':
                 return { label: 'ADMINISTRADOR', color: 'text-cyber-gold bg-cyber-gold/10 border-cyber-gold/30' };
             case 'FUNCIONARIO':
-                return { label: 'FUNCIONÁRIO', color: 'text-gray-400 bg-gray-500/10 border-gray-500/30' };
+                return { label: 'USUÁRIO', color: 'text-gray-400 bg-gray-500/10 border-gray-500/30' };
             default:
                 return { label: 'USUÁRIO', color: 'text-gray-400 bg-gray-500/10 border-gray-500/30' };
         }

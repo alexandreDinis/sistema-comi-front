@@ -63,14 +63,14 @@ export const RelatorioAnualPage: React.FC = () => {
     }
 
     // Prepare chart data - Now safe to access relatorio
-    const chartData = relatorio.meses?.map((mes: MesFaturamentoDTO) => ({
+    const chartData = relatorio.mesesComFaturamento?.map((mes: MesFaturamentoDTO) => ({
         mes: mes.nomeMes,
-        atual: mes.faturamentoAtual,
+        atual: mes.faturamento,
         anterior: mes.faturamentoAnoAnterior,
     })) || [];
 
-    const isGrowth = relatorio.crescimentoAnual > 0;
-    const isFlat = relatorio.crescimentoAnual === 0;
+    const isGrowth = relatorio.crescimentoPercentualAnual > 0;
+    const isFlat = relatorio.crescimentoPercentualAnual === 0;
 
     return (
         <div className="p-8 space-y-6">
@@ -151,7 +151,7 @@ export const RelatorioAnualPage: React.FC = () => {
                         )}
                         <span className={`text-3xl font-bold font-orbitron ${isGrowth ? 'text-green-400' : isFlat ? 'text-gray-400' : 'text-red-400'
                             }`}>
-                            {isGrowth ? '+' : ''}{(relatorio.crescimentoAnual || 0).toFixed(2)}%
+                            {isGrowth ? '+' : ''}{(relatorio.crescimentoPercentualAnual || 0).toFixed(2)}%
                         </span>
                     </div>
                 </div>
@@ -238,23 +238,24 @@ export const RelatorioAnualPage: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody className="text-sm text-white">
-                            {(relatorio.meses || []).map((mes: MesFaturamentoDTO) => {
-                                const isPositive = mes.diferencaPercentual > 0;
-                                const isNeutral = mes.diferencaPercentual === 0;
+                            {(relatorio.mesesComFaturamento || []).map((mes: MesFaturamentoDTO) => {
+                                const variacaoPerc = mes.variacaoPercentual || 0;
+                                const isPositive = variacaoPerc > 0;
+                                const isNeutral = variacaoPerc === 0;
 
                                 return (
                                     <tr key={mes.mes} className="border-b border-white/5 hover:bg-white/5">
                                         <td className="py-3 px-4 font-oxanium">{mes.nomeMes}</td>
                                         <td className="py-3 px-4 text-right font-mono text-cyber-gold">
-                                            {mes.faturamentoAtual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                            {(mes.faturamento || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                                         </td>
                                         <td className="py-3 px-4 text-right font-mono text-gray-400">
-                                            {mes.faturamentoAnoAnterior.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                            {(mes.faturamentoAnoAnterior || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                                         </td>
                                         <td className={`py-3 px-4 text-right font-mono ${isPositive ? 'text-green-400' : isNeutral ? 'text-gray-400' : 'text-red-400'
                                             }`}>
                                             {isPositive ? '+' : ''}
-                                            {mes.diferencaAbsoluta.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                            {(mes.variacao || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                                         </td>
                                         <td className="py-3 px-4 text-right">
                                             <div className={`inline-flex items-center gap-1 px-2 py-1 rounded ${isPositive ? 'bg-green-500/20 text-green-400' :
@@ -269,7 +270,7 @@ export const RelatorioAnualPage: React.FC = () => {
                                                     <TrendingDown className="w-3 h-3" />
                                                 )}
                                                 <span className="text-xs font-bold">
-                                                    {isPositive ? '+' : ''}{mes.diferencaPercentual.toFixed(2)}%
+                                                    {isPositive ? '+' : ''}{variacaoPerc.toFixed(2)}%
                                                 </span>
                                             </div>
                                         </td>
@@ -305,7 +306,7 @@ export const RelatorioAnualPage: React.FC = () => {
                                             <TrendingDown className="w-4 h-4" />
                                         )}
                                         <span className="text-sm font-bold">
-                                            {isGrowth ? '+' : ''}{(relatorio.crescimentoAnual || 0).toFixed(2)}%
+                                            {isGrowth ? '+' : ''}{(relatorio.crescimentoPercentualAnual || 0).toFixed(2)}%
                                         </span>
                                     </div>
                                 </td>

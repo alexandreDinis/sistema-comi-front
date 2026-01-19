@@ -22,9 +22,11 @@ export interface AdiantamentoRequest {
     dataPagamento: string;
     valor: number;
     descricao?: string;
+    usuarioId?: number;
 }
 
 export interface ComissaoCalculada {
+    id?: number; // ID para quitação
     anoMesReferencia: string;
     faturamentoMensal: number;
     faixaComissao: string;
@@ -32,6 +34,9 @@ export interface ComissaoCalculada {
     valorBrutoComissao: number;
     valorAdiantado: number;
     saldoAReceber: number;
+    saldoAnterior?: number; // NOVO: Saldo do mês anterior (carryover)
+    quitado?: boolean; // NOVO: Se foi pago
+    dataQuitacao?: string; // NOVO: Data do pagamento
 }
 
 export type CategoriaDespesa = 'ALIMENTACAO' | 'COMBUSTIVEL' | 'FERRAMENTAS' | 'MARKETING' | 'INFRAESTRUTURA' | 'PROLABORE' | 'DIVERSOS' | 'OUTROS';
@@ -48,8 +53,12 @@ export interface Despesa {
 export interface DespesaRequest {
     dataDespesa: string;
     valor: number;
-    categoria: CategoriaDespesa;
-    descricao?: string;
+    categoria: string;
+    descricao: string;
+    pagoAgora?: boolean;
+    dataVencimento?: string;
+    meioPagamento?: string;
+    cartaoId?: number;
 }
 
 export interface RelatorioFinanceiro {
@@ -112,11 +121,21 @@ export interface Empresa {
 // Commission Mode Configuration
 export type ModoComissao = 'INDIVIDUAL' | 'COLETIVA';
 
+// Regimes Tributários
+export type RegimeTributario = 'SIMPLES_NACIONAL' | 'LUCRO_PRESUMIDO' | 'LUCRO_REAL' | 'MEI';
+
+// Estados do Brasil
+export type UF = 'AC' | 'AL' | 'AP' | 'AM' | 'BA' | 'CE' | 'DF' | 'ES' | 'GO' | 'MA' | 'MT' | 'MS' | 'MG' | 'PA' | 'PB' | 'PR' | 'PE' | 'PI' | 'RJ' | 'RN' | 'RS' | 'RO' | 'RR' | 'SC' | 'SP' | 'SE' | 'TO';
+
 export interface EmpresaConfig {
     id: number;
     nome: string;
     modoComissao: ModoComissao;
     logoUrl: string | null;
+    // Configuração Tributária
+    aliquotaImposto?: number; // Ex: 0.06 = 6%
+    regimeTributario?: RegimeTributario;
+    uf?: UF;
 }
 
 export interface UploadLogoResponse {
@@ -126,6 +145,10 @@ export interface UploadLogoResponse {
 
 export interface UpdateEmpresaConfigRequest {
     modoComissao?: ModoComissao;
+    // Configuração Tributária
+    aliquotaImposto?: number;
+    regimeTributario?: RegimeTributario;
+    uf?: UF;
 }
 
 export interface Feature {
@@ -217,6 +240,7 @@ export interface PecaOS {
     id: number;
     nomePeca: string;
     valorCobrado: number;
+    descricao?: string;
 }
 
 export interface VeiculoOS {
@@ -253,6 +277,8 @@ export type HistoricoResponse = HistoricoItem[];
 export interface OrdemServico {
     id: number;
     data: string;
+    dataVencimento?: string;
+    atrasado?: boolean;
     status: OSStatus;
     valorTotal: number;
     // New Discount Fields
@@ -267,6 +293,7 @@ export interface OrdemServico {
 export interface CreateOSRequest {
     clienteId: number;
     data: string;
+    dataVencimento?: string;
     tipoDesconto?: 'PERCENTUAL' | 'VALOR_FIXO';
     valorDesconto?: number;
 }
@@ -282,6 +309,7 @@ export interface AddPecaRequest {
     veiculoId: number;
     tipoPecaId: number;
     valorCobrado?: number; // Optional, uses default if null
+    descricao?: string; // Optional description/notes
 }
 
 export interface UpdateOSStatusRequest {
@@ -301,17 +329,19 @@ export interface ComparacaoFaturamentoDTO {
 export interface MesFaturamentoDTO {
     mes: number;
     nomeMes: string;
-    faturamentoAtual: number;
+    faturamento: number;
     faturamentoAnoAnterior: number;
-    diferencaAbsoluta: number;
-    diferencaPercentual: number;
+    variacao: number;
+    variacaoPercentual: number;
 }
 
 export interface RelatorioAnualDTO {
-    meses: MesFaturamentoDTO[];
+    ano: number;
+    mesesComFaturamento: MesFaturamentoDTO[];
     faturamentoTotalAno: number;
     faturamentoTotalAnoAnterior: number;
-    crescimentoAnual: number;
+    diferencaAnual: number;
+    crescimentoPercentualAnual: number;
 }
 
 // --- Sistema de Comissão Flexível ---
@@ -367,3 +397,85 @@ export interface SalarioFuncionarioRequest {
     dataInicio: string;
     dataFim?: string;
 }
+
+export interface RankingCliente {
+    clienteId: number;
+    nomeFantasia: string;
+    quantidadeOS: number;
+    valorTotal: number;
+}
+
+// ========================================
+// MÓDULO FINANCEIRO - CONTAS A PAGAR/RECEBER
+// ========================================
+
+export type StatusConta = 'PENDENTE' | 'PAGO' | 'CANCELADO';
+export type MeioPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'BOLETO' | 'TRANSFERENCIA' | 'CHEQUE';
+export type TipoContaPagar = 'DESPESA_OPERACIONAL' | 'COMISSAO_FUNCIONARIO' | 'ADIANTAMENTO' | 'SALARIO' | 'FORNECEDOR' | 'IMPOSTO' | 'FATURA_CARTAO' | 'OUTROS';
+export type TipoContaReceber = 'ORDEM_SERVICO' | 'VENDA_DIRETA' | 'OUTROS';
+
+export interface ContaPagar {
+    id: number;
+    descricao: string;
+    valor: number;
+    dataCompetencia: string;
+    dataVencimento: string;
+    dataPagamento?: string;
+    status: StatusConta;
+    tipo: TipoContaPagar;
+    meioPagamento?: MeioPagamento;
+    numeroParcela?: number;
+    totalParcelas?: number;
+    dataCriacao: string;
+}
+
+export interface ContaReceber {
+    id: number;
+    descricao: string;
+    valor: number;
+    dataCompetencia: string;
+    dataVencimento: string;
+    dataRecebimento?: string;
+    status: StatusConta;
+    tipo: TipoContaReceber;
+    meioPagamento?: MeioPagamento;
+    dataCriacao: string;
+}
+
+export interface ResumoFinanceiro {
+    totalAPagar: number;
+    totalAReceber: number;
+    contasVencendoProximos7Dias: number;
+    recebimentosVencendoProximos7Dias: number;
+    saldoProjetado: number;
+}
+
+export interface FluxoCaixa {
+    periodo: string;
+    entradas: number;
+    saidas: number;
+    saldo: number;
+}
+
+export interface PagarContaRequest {
+    dataPagamento?: string;
+    meioPagamento: MeioPagamento;
+}
+
+export interface ReceberContaRequest {
+    dataRecebimento?: string;
+    meioPagamento: MeioPagamento;
+}
+
+export interface CartaoCredito {
+    id: number;
+    nome: string;
+    diaVencimento: number;
+    ativo: boolean;
+}
+
+export interface CartaoCreditoRequest {
+    nome: string;
+    diaVencimento: number;
+}
+

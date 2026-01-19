@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, TrendingUp, DollarSign, Calendar, BarChart3, PieChart, ArrowLeft } from 'lucide-react';
+import { FileText, TrendingUp, DollarSign, Calendar, BarChart3, PieChart, ArrowLeft, Users } from 'lucide-react';
 import { usePermission } from '../hooks/usePermission';
 import { Feature } from '../types/features';
 
@@ -45,6 +45,15 @@ export const RelatoriosHubPage: React.FC = () => {
             color: 'purple',
             feature: Feature.DASHBOARD_VIEW,
             comingSoon: true,
+        },
+        {
+            id: 'ranking',
+            title: 'Ranking de Clientes',
+            description: 'Top clientes por faturamento e volume de OS (Mensal/Anual)',
+            icon: Users,
+            path: '/relatorio/ranking',
+            color: 'gold',
+            feature: Feature.RELATORIO_FINANCEIRO_VIEW,
         },
     ];
 

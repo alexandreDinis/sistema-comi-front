@@ -1,16 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useAdiantamento } from '../../hooks/useAdiantamento';
 import { useForm } from '../../hooks/useForm';
+import { userService } from '../../services/userService';
+import type { User } from '../../types';
 import { formatInputCurrency, parseCurrencyString } from '../../utils/formatters';
 
 export const AdiantamentoForm: React.FC = () => {
     const { registrar, isLoading, error, isSuccess } = useAdiantamento();
+
+    const [usuarios, setUsuarios] = useState<User[]>([]);
+
+    useEffect(() => {
+        userService.getUsers().then(setUsuarios).catch(console.error);
+    }, []);
 
     // Usando memo para estabilizar initialValues e evitar loop no reset
     const initialValues = React.useMemo(() => ({
         dataPagamento: new Date().toISOString().split('T')[0],
         valor: '', // Usamos string para o mask
         descricao: '',
+        usuarioId: '',
     }), []);
 
     const { values, reset, setValues, handleChange } = useForm<any>(initialValues);
@@ -43,10 +52,19 @@ export const AdiantamentoForm: React.FC = () => {
             return;
         }
 
+        // ✅ OBRIGATÓRIO: Funcionário deve ser selecionado
+        if (!values.usuarioId) {
+            alert('Por favor, selecione o funcionário para o adiantamento (obrigatório para auditoria)');
+            return;
+        }
+
+        const usuarioIdNumber = parseInt(values.usuarioId);
+
         registrar({
             dataPagamento: values.dataPagamento,
             valor: valorNumerico,
             descricao: values.descricao,
+            usuarioId: usuarioIdNumber,
         });
     };
 
@@ -92,6 +110,33 @@ export const AdiantamentoForm: React.FC = () => {
                             required
                             id="adiantamento-date"
                         />
+                        <div className="absolute bottom-0 left-0 w-0 h-px bg-cyber-gold group-focus-within/field:w-full transition-all duration-500"></div>
+                    </div>
+                </div>
+
+
+
+                <div className="relative group/field">
+                    <label className="hud-label group-focus-within/field:text-cyber-gold transition-colors">
+                        FUNCIONÁRIO (ALVO)
+                    </label>
+                    <div className="relative">
+                        <select
+                            name="usuarioId"
+                            value={values.usuarioId}
+                            onChange={handleChange as any}
+                            className="w-full bg-black/40 border border-cyber-gold/10 text-cyber-gold text-sm font-mono p-3 outline-none focus:border-cyber-gold focus:shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all appearance-none"
+                            id="adiantamento-usuario"
+                            required
+                        >
+                            <option value="">[SELECIONE_AGENTE... *OBRIGATÓRIO]</option>
+                            {usuarios.map(u => (
+                                <option key={u.id} value={u.id}>
+                                    {u.name || u.email}
+                                </option>
+                            ))}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-cyber-gold/40 text-[10px]">▼</div>
                         <div className="absolute bottom-0 left-0 w-0 h-px bg-cyber-gold group-focus-within/field:w-full transition-all duration-500"></div>
                     </div>
                 </div>

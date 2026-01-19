@@ -479,3 +479,22 @@ export interface CartaoCreditoRequest {
     diaVencimento: number;
 }
 
+// ========================================
+// PRESTADORES DE SERVIÇO EXTERNOS
+// ========================================
+
+export type TipoExecucao = 'INTERNO' | 'TERCEIRIZADO';
+
+export interface Prestador {
+    id: number;
+    nome: string;
+    telefone?: string;
+    chavePix?: string;
+    ativo: boolean;
+}
+
+export interface PrestadorRequest {
+    nome: string;
+    telefone?: string;
+    chavePix?: string;
+}

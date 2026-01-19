@@ -29,6 +29,7 @@ import { TeamSettings } from './pages/settings/TeamSettings';
 import { SubscriptionSettings } from './pages/settings/SubscriptionSettings';
 import { ComissaoRulesPage } from './pages/settings/ComissaoRulesPage';
 import TributacaoPage from './pages/admin/TributacaoPage';
+import PrestadoresPage from './pages/admin/PrestadoresPage';
 import { ChangePasswordPage } from './pages/auth/ChangePasswordPage';
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
@@ -106,6 +107,11 @@ export const App: React.FC = () => {
             <Route path="/settings/comissao" element={
               <ProtectedRoute requiredFeature={Feature.ADMIN_CONFIG}>
                 <ComissaoRulesPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/settings/prestadores" element={
+              <ProtectedRoute requiredFeature={Feature.ADMIN_CONFIG}>
+                <PrestadoresPage />
               </ProtectedRoute>
             } />
 

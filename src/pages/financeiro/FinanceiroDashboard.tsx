@@ -74,16 +74,24 @@ const FinanceiroDashboard = () => {
     return (
         <div className="min-h-[calc(100vh-64px)] py-6 space-y-8 animate-fadeIn">
             {/* Header */}
-            <header className="flex items-center gap-3">
-                <span className="w-2 h-10 bg-cyber-gold"></span>
-                <div>
-                    <h1 className="text-3xl font-black italic text-cyber-gold tracking-widest uppercase">
-                        Central Financeira
-                    </h1>
-                    <p className="text-cyber-gold/50 font-mono text-xs tracking-[0.3em] uppercase">
-                        // CONTROLE TOTAL DO CAIXA
-                    </p>
+            <header className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <span className="w-2 h-10 bg-cyber-gold"></span>
+                    <div>
+                        <h1 className="text-3xl font-black italic text-cyber-gold tracking-widest uppercase">
+                            Central Financeira
+                        </h1>
+                        <p className="text-cyber-gold/50 font-mono text-xs tracking-[0.3em] uppercase">
+                            // CONTROLE TOTAL DO CAIXA
+                        </p>
+                    </div>
                 </div>
+                <a
+                    href="/financeiro/distribuicao-lucros"
+                    className="hud-button flex items-center gap-2"
+                >
+                    💰 Distribuição de Lucros
+                </a>
             </header>
 
             {/* Resumo Cards */}

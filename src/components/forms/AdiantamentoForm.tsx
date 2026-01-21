@@ -186,6 +186,9 @@ export const AdiantamentoForm: React.FC = () => {
                     >
                         {isLoading ? '>>> CRIPTOGRAFANDO...' : 'CONFIRMAR_ALOCAÇÃO'}
                     </button>
+                    <p className="text-[9px] font-mono text-cyber-gold/60 text-center mt-3 tracking-wider">
+                        ⚠️ ATENÇÃO: ESTA AÇÃO GERA UMA <span className="text-cyber-gold font-bold">DESPESA PAGA</span> AUTOMATICAMENTE NO FINANCEIRO.
+                    </p>
                 </div>
 
                 <div className="flex justify-between items-center pt-2 text-[7px] text-cyber-gold/20 font-mono tracking-widest uppercase">

@@ -14,9 +14,14 @@ export const usePermission = () => {
     const hasFeature = (featureCode: Feature | string): boolean => {
         if (!user) return false;
 
+        // ✅ BYPASS: Administradores têm acesso total
+        if (['ROLE_ADMIN_EMPRESA', 'ADMIN_EMPRESA', 'ROLE_SUPER_ADMIN', 'SUPER_ADMIN'].includes(user.role || '')) {
+            return true;
+        }
+
         // Warn if user has no features assigned - this indicates a configuration issue
         if (!user.features || user.features.length === 0) {
-            console.warn('[usePermission] User has no features assigned:', user.email);
+            // console.warn('[usePermission] User has no features assigned:', user.email);
             return false;
         }
 

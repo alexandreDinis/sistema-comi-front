@@ -28,6 +28,7 @@ import { CompanySettings } from './pages/settings/CompanySettings';
 import { TeamSettings } from './pages/settings/TeamSettings';
 import { SubscriptionSettings } from './pages/settings/SubscriptionSettings';
 import { ComissaoRulesPage } from './pages/settings/ComissaoRulesPage';
+import { GestaoComissoesPage } from './pages/settings/GestaoComissoesPage';
 import TributacaoPage from './pages/admin/TributacaoPage';
 import PrestadoresPage from './pages/admin/PrestadoresPage';
 import { ChangePasswordPage } from './pages/auth/ChangePasswordPage';
@@ -38,6 +39,9 @@ import ContasPagarPage from './pages/financeiro/ContasPagarPage';
 import ContasReceberPage from './pages/financeiro/ContasReceberPage';
 import CartoesPage from './pages/financeiro/CartoesPage';
 import FaturasPage from './pages/financeiro/FaturasPage';
+import DistribuicaoLucrosPage from './pages/financeiro/DistribuicaoLucrosPage';
+import ReceitaCaixaPage from './pages/relatorios/ReceitaCaixaPage';
+import ImpostoPagoPage from './pages/financeiro/ImpostoPagoPage';
 import { AppLayout } from './layouts/AppLayout';
 import { PlatformLayout } from './layouts/PlatformLayout';
 import './index.css';
@@ -109,6 +113,11 @@ export const App: React.FC = () => {
                 <ComissaoRulesPage />
               </ProtectedRoute>
             } />
+            <Route path="/settings/comissao/pagamentos" element={
+              <ProtectedRoute requiredFeature={Feature.ADMIN_CONFIG}>
+                <GestaoComissoesPage />
+              </ProtectedRoute>
+            } />
             <Route path="/settings/prestadores" element={
               <ProtectedRoute requiredFeature={Feature.ADMIN_CONFIG}>
                 <PrestadoresPage />
@@ -162,6 +171,12 @@ export const App: React.FC = () => {
               </ProtectedRoute>
             } />
 
+            <Route path="/financeiro/distribuicao-lucros" element={
+              <ProtectedRoute requiredFeature={Feature.ADMIN_CONFIG}>
+                <DistribuicaoLucrosPage />
+              </ProtectedRoute>
+            } />
+
             {/* OS Module */}
             <Route path="/clientes" element={
               <ProtectedRoute requiredFeature={Feature.CLIENTE_READ}>
@@ -205,6 +220,18 @@ export const App: React.FC = () => {
             <Route path="/relatorio/ranking" element={
               <ProtectedRoute requiredFeature={Feature.RELATORIO_FINANCEIRO_VIEW}>
                 <RankingClientesPage />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/relatorio/receita-caixa" element={
+              <ProtectedRoute requiredFeature={Feature.RELATORIO_FINANCEIRO_VIEW}>
+                <ReceitaCaixaPage />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/financeiro/imposto-pago" element={
+              <ProtectedRoute requiredFeature={Feature.ADMIN_CONFIG}>
+                <ImpostoPagoPage />
               </ProtectedRoute>
             } />
 

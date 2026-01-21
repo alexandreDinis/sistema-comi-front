@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, TrendingUp, DollarSign, Calendar, BarChart3, PieChart, ArrowLeft, Users } from 'lucide-react';
+import { FileText, TrendingUp, DollarSign, Calendar, BarChart3, PieChart, ArrowLeft, Users, CreditCard, Receipt } from 'lucide-react';
 import { usePermission } from '../hooks/usePermission';
 import { Feature } from '../types/features';
 
@@ -54,6 +54,33 @@ export const RelatoriosHubPage: React.FC = () => {
             path: '/relatorio/ranking',
             color: 'gold',
             feature: Feature.RELATORIO_FINANCEIRO_VIEW,
+        },
+        {
+            id: 'faturas-cartao',
+            title: 'Faturas de Cartão',
+            description: 'Visualize e pague faturas de cartões corporativos consolidadas por mês',
+            icon: CreditCard,
+            path: '/financeiro/faturas',
+            color: 'cyan',
+            feature: Feature.RELATORIO_FINANCEIRO_VIEW,
+        },
+        {
+            id: 'receita-caixa',
+            title: 'Receita por Caixa (DAS)',
+            description: 'Relatório de recebimentos por caixa - Base para cálculo do Simples Nacional',
+            icon: Receipt,
+            path: '/relatorio/receita-caixa',
+            color: 'green',
+            feature: Feature.RELATORIO_FINANCEIRO_VIEW,
+        },
+        {
+            id: 'imposto-pago',
+            title: 'Pagamento de DAS',
+            description: 'Registre pagamentos de impostos (IMPOSTO_PAGO) - Não afeta DRE',
+            icon: Receipt,
+            path: '/financeiro/imposto-pago',
+            color: 'purple',
+            feature: Feature.ADMIN_CONFIG,
         },
     ];
 

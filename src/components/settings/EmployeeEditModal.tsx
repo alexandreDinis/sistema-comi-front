@@ -20,6 +20,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({ user, onCl
         email: '',
         password: '',
         role: 'FUNCIONARIO',
+        participaComissao: true,
         features: [] as string[] // To hold selected permissions
     });
 
@@ -33,6 +34,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({ user, onCl
                 email: user.email,
                 password: '',
                 role: user.role || 'FUNCIONARIO',
+                participaComissao: user.participaComissao !== undefined ? user.participaComissao : true,
                 features: userFeatures
             });
         }
@@ -52,6 +54,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({ user, onCl
                 // Update generic info + features
                 await userService.updateUser(user.id, {
                     name: data.name,
+                    participaComissao: data.participaComissao,
                     features: data.features
                 });
 
@@ -65,6 +68,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({ user, onCl
                     email: data.email,
                     password: data.password,
                     role: data.role,
+                    participaComissao: data.participaComissao,
                     features: data.features  // Include features so user isn't blocked
                 });
             }
@@ -245,6 +249,28 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({ user, onCl
                             />
                         </div>
                     )}
+
+                    {/* Commission Opt-In/Out */}
+                    <div className="space-y-4">
+                        <h3 className="text-xs font-bold text-cyber-gold/50 uppercase tracking-widest border-b border-cyber-gold/10 pb-1 mb-2">
+                            Configuração de Comissão
+                        </h3>
+                        <div className="flex items-center gap-3 bg-black/40 border border-cyber-gold/20 p-3 rounded-sm">
+                            <input
+                                type="checkbox"
+                                id="participaComissao"
+                                checked={formData.participaComissao}
+                                onChange={(e) => setFormData({ ...formData, participaComissao: e.target.checked })}
+                                className="w-4 h-4 accent-cyber-gold cursor-pointer"
+                            />
+                            <label htmlFor="participaComissao" className="text-cyber-gold font-mono text-sm cursor-pointer select-none">
+                                Participa do Sistema de Comissões
+                            </label>
+                        </div>
+                        <p className="text-[10px] text-cyber-gold/40">
+                            * Se desmarcado, este usuário será ignorado no cálculo de comissões.
+                        </p>
+                    </div>
 
                     {/* Footer */}
                     <div className="pt-4 flex justify-end gap-3 border-t border-cyber-gold/20 mt-6">

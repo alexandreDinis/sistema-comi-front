@@ -66,7 +66,8 @@ export const AppHeader: React.FC = () => {
             requiredFeature: [Feature.RELATORIO_COMISSAO_VIEW, Feature.ADMIN_CONFIG],
             items: [
                 { label: 'MINHAS COMISSÕES', path: '/minha-comissao', feature: Feature.RELATORIO_COMISSAO_VIEW },
-                { label: 'GESTÃO DE COMISSÕES', path: '/settings/comissao', feature: Feature.ADMIN_CONFIG },
+                { label: 'GESTÃO DE PAGAMENTOS', path: '/settings/comissao/pagamentos', feature: Feature.ADMIN_CONFIG },
+                { label: 'REGRAS DE COMISSÃO', path: '/settings/comissao', feature: Feature.ADMIN_CONFIG },
             ]
         },
         // RELATÓRIOS - Análise

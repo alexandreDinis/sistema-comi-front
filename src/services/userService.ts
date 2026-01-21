@@ -28,6 +28,7 @@ export const userService = {
         name?: string;
         empresaId?: number;       // Only for Super Admin
         features?: string[];      // Required - user will be blocked without features
+        participaComissao?: boolean;
     }): Promise<User> => {
         const response = await api.post<User>('/users', userData);
         return response.data;

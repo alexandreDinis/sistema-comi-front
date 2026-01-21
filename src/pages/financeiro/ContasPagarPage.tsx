@@ -65,7 +65,7 @@ const ContasPagarPage = () => {
     };
 
     const isVencido = (dataVencimento: string) => {
-        return new Date(dataVencimento) < new Date();
+        return new Date(dataVencimento + 'T12:00:00') < new Date();
     };
 
     if (loading) {
@@ -148,23 +148,23 @@ const ContasPagarPage = () => {
                                             <span className="hud-tag">{conta.tipo.replace(/_/g, ' ')}</span>
                                         </td>
                                         <td className="p-4 text-cyber-gold/60 font-mono text-sm">
-                                            {new Date(conta.dataCompetencia).toLocaleDateString('pt-BR')}
+                                            {new Date(conta.dataCompetencia + 'T12:00:00').toLocaleDateString('pt-BR')}
                                         </td>
                                         <td className={`p-4 font-mono text-sm ${isVencido(conta.dataVencimento) && conta.status === 'PENDENTE'
-                                                ? 'text-cyber-error'
-                                                : 'text-cyber-gold/60'
+                                            ? 'text-cyber-error'
+                                            : 'text-cyber-gold/60'
                                             }`}>
-                                            {new Date(conta.dataVencimento).toLocaleDateString('pt-BR')}
+                                            {new Date(conta.dataVencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
                                         </td>
                                         <td className="p-4 text-right text-cyber-error font-bold font-mono text-lg">
                                             {formatCurrency(conta.valor)}
                                         </td>
                                         <td className="p-4 text-center">
                                             <span className={`px-3 py-1 font-mono text-xs font-bold ${conta.status === 'PENDENTE'
-                                                    ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-                                                    : conta.status === 'PAGO'
-                                                        ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                                                        : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                                                ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                                                : conta.status === 'PAGO'
+                                                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                                                    : 'bg-red-500/20 text-red-400 border border-red-500/30'
                                                 }`}>
                                                 {conta.status}
                                             </span>

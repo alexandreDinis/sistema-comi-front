@@ -11,6 +11,7 @@ const CartoesPage = () => {
     // Form States
     const [nome, setNome] = useState('');
     const [diaVencimento, setDiaVencimento] = useState<number>(5);
+    const [diaFechamento, setDiaFechamento] = useState<number>(25);
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
@@ -33,10 +34,11 @@ const CartoesPage = () => {
         e.preventDefault();
         try {
             setSubmitting(true);
-            await cartaoService.criar({ nome, diaVencimento });
+            await cartaoService.criar({ nome, diaVencimento, diaFechamento });
             setModalOpen(false);
             setNome('');
             setDiaVencimento(5);
+            setDiaFechamento(25);
             loadCartoes();
         } catch (err) {
             console.error('Erro ao criar cartão:', err);
@@ -126,12 +128,12 @@ const CartoesPage = () => {
 
                         <div className="flex items-center gap-2 text-sm text-gray-400">
                             <Calendar size={16} />
-                            <span>Dia do Vencimento: <strong className="text-white">{cartao.diaVencimento}</strong></span>
+                            <span>Fecha dia <strong className="text-purple-400">{cartao.diaFechamento || 25}</strong>, vence dia <strong className="text-white">{cartao.diaVencimento}</strong></span>
                         </div>
 
                         <div className="pt-4 border-t border-white/5">
                             <p className="text-xs text-gray-500 font-mono">
-                                // Faturas são geradas automaticamente baseadas neste dia.
+                                // Despesas após o fechamento vão para a fatura do próximo mês.
                             </p>
                         </div>
                     </div>
@@ -179,8 +181,21 @@ const CartoesPage = () => {
                                     onChange={(e) => setDiaVencimento(Number(e.target.value))}
                                     className="hud-input w-full"
                                 />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-mono text-gray-400">DIA DE FECHAMENTO DA FATURA</label>
+                                <input
+                                    type="number"
+                                    required
+                                    min="1"
+                                    max="28"
+                                    value={diaFechamento}
+                                    onChange={(e) => setDiaFechamento(Number(e.target.value))}
+                                    className="hud-input w-full"
+                                />
                                 <p className="text-xs text-gray-500 font-mono">
-                                    * Escolha um dia entre 1 e 28.
+                                    * Despesas após este dia vão para a fatura do próximo mês.
                                 </p>
                             </div>
 

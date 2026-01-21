@@ -171,6 +171,7 @@ export interface User {
     empresaId?: number; // Direct empresaId from backend UserResponse
     features?: Feature[] | string[]; // Can be strings (legacy/mock) or objects (backend)
     mustChangePassword?: boolean;
+    participaComissao?: boolean;
 }
 
 // --- Módulo OS Definitions ---
@@ -310,6 +311,11 @@ export interface AddPecaRequest {
     tipoPecaId: number;
     valorCobrado?: number; // Optional, uses default if null
     descricao?: string; // Optional description/notes
+    // Campos para serviço terceirizado
+    tipoExecucao?: TipoExecucao;
+    prestadorId?: number;
+    custoPrestador?: number;
+    dataVencimentoPrestador?: string; // Data no formato ISO (YYYY-MM-DD)
 }
 
 export interface UpdateOSStatusRequest {
@@ -411,7 +417,7 @@ export interface RankingCliente {
 
 export type StatusConta = 'PENDENTE' | 'PAGO' | 'CANCELADO';
 export type MeioPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'BOLETO' | 'TRANSFERENCIA' | 'CHEQUE';
-export type TipoContaPagar = 'DESPESA_OPERACIONAL' | 'COMISSAO_FUNCIONARIO' | 'ADIANTAMENTO' | 'SALARIO' | 'FORNECEDOR' | 'IMPOSTO' | 'FATURA_CARTAO' | 'OUTROS';
+export type TipoContaPagar = 'DESPESA_OPERACIONAL' | 'COMISSAO_FUNCIONARIO' | 'ADIANTAMENTO' | 'SALARIO' | 'FORNECEDOR' | 'IMPOSTO' | 'IMPOSTO_PAGO' | 'DISTRIBUICAO_LUCROS' | 'FATURA_CARTAO' | 'OUTROS';
 export type TipoContaReceber = 'ORDEM_SERVICO' | 'VENDA_DIRETA' | 'OUTROS';
 
 export interface ContaPagar {
@@ -471,12 +477,14 @@ export interface CartaoCredito {
     id: number;
     nome: string;
     diaVencimento: number;
+    diaFechamento: number;
     ativo: boolean;
 }
 
 export interface CartaoCreditoRequest {
     nome: string;
     diaVencimento: number;
+    diaFechamento?: number;
 }
 
 // ========================================

@@ -3,6 +3,7 @@ import { formatarData } from '../../utils/formatters';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { osService } from '../../services/osService';
+import { prestadorService } from '../../services/prestadorService';
 import { ArrowLeft, Car, Wrench, CheckCircle, Plus, Ban, History, FileDown, Trash2 } from 'lucide-react';
 import { VehicleHistoryModal } from '../../components/modals/VehicleHistoryModal';
 import { DuplicatePlateModal } from '../../components/modals/DuplicatePlateModal';
@@ -10,7 +11,7 @@ import { ActionModal } from '../../components/modals/ActionModal';
 import { limparPlaca, validarPlaca } from '../../utils/validators';
 import { PlateInput } from '../../components/forms/PlateInput';
 import type { ActionModalType } from '../../components/modals/ActionModal';
-import type { OSStatus, VeiculoExistente } from '../../types';
+import type { OSStatus, VeiculoExistente, TipoExecucao } from '../../types';
 
 
 export const OSDetailsPage: React.FC = () => {
@@ -43,7 +44,23 @@ export const OSDetailsPage: React.FC = () => {
 
     // Forms State
     const [veiculoForm, setVeiculoForm] = useState({ placa: '', modelo: '', cor: '' });
-    const [pecaForm, setPecaForm] = useState({ tipoPecaId: '', valorCobrado: '', descricao: '' });
+    const [pecaForm, setPecaForm] = useState<{
+        tipoPecaId: string;
+        valorCobrado: string;
+        descricao: string;
+        tipoExecucao: TipoExecucao;
+        prestadorId: string;
+        custoPrestador: string;
+        dataVencimentoPrestador: string;
+    }>({
+        tipoPecaId: '',
+        valorCobrado: '',
+        descricao: '',
+        tipoExecucao: 'INTERNO',
+        prestadorId: '',
+        custoPrestador: '',
+        dataVencimentoPrestador: ''
+    });
 
     const { data: os, isLoading } = useQuery({
         queryKey: ['ordem-servico', osId],
@@ -54,6 +71,12 @@ export const OSDetailsPage: React.FC = () => {
     const { data: catalogo } = useQuery({
         queryKey: ['catalogo'],
         queryFn: osService.listTiposPeca
+    });
+
+    // Query para prestadores (para serviços terceirizados)
+    const { data: prestadores } = useQuery({
+        queryKey: ['prestadores'],
+        queryFn: () => prestadorService.listar(true)
     });
 
     // Mutations
@@ -103,7 +126,15 @@ export const OSDetailsPage: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['ordem-servico', osId] });
             setPecaModalOpen({ isOpen: false, veiculoId: null });
-            setPecaForm({ tipoPecaId: '', valorCobrado: '', descricao: '' });
+            setPecaForm({
+                tipoPecaId: '',
+                valorCobrado: '',
+                descricao: '',
+                tipoExecucao: 'INTERNO',
+                prestadorId: '',
+                custoPrestador: '',
+                dataVencimentoPrestador: ''
+            });
         }
     });
 
@@ -259,27 +290,43 @@ export const OSDetailsPage: React.FC = () => {
 
     const handleAddPeca = (e: React.FormEvent) => {
         e.preventDefault();
-        // Removed unused tipoPeca
+
         let valorToSend: number | undefined = undefined;
         if (pecaForm.valorCobrado) {
             valorToSend = parseFloat(pecaForm.valorCobrado);
         }
-        addPecaMutation.mutate({
+
+        // Montar o request com campos de terceirização
+        const requestData: any = {
             veiculoId: isPecaModalOpen.veiculoId!,
             tipoPecaId: parseInt(pecaForm.tipoPecaId),
             valorCobrado: valorToSend,
-            descricao: pecaForm.descricao || undefined
-        });
+            descricao: pecaForm.descricao || undefined,
+            tipoExecucao: pecaForm.tipoExecucao
+        };
+
+        // Se TERCEIRIZADO, adicionar dados do prestador
+        if (pecaForm.tipoExecucao === 'TERCEIRIZADO' && pecaForm.prestadorId) {
+            requestData.prestadorId = parseInt(pecaForm.prestadorId);
+            if (pecaForm.custoPrestador) {
+                requestData.custoPrestador = parseFloat(pecaForm.custoPrestador);
+            }
+            if (pecaForm.dataVencimentoPrestador) {
+                requestData.dataVencimentoPrestador = pecaForm.dataVencimentoPrestador;
+            }
+        }
+
+        addPecaMutation.mutate(requestData);
     };
 
     const onSelectPeca = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const id = parseInt(e.target.value);
         const item = catalogo?.find(t => t.id === id);
-        setPecaForm({
+        setPecaForm(prev => ({
+            ...prev,
             tipoPecaId: e.target.value,
-            valorCobrado: item ? item.valorPadrao.toString() : '',
-            descricao: ''
-        });
+            valorCobrado: item ? item.valorPadrao.toString() : ''
+        }));
     };
 
     const isFinalized = os.status === 'FINALIZADA';
@@ -631,10 +678,11 @@ export const OSDetailsPage: React.FC = () => {
             {/* Modal: Add Peca */}
             {isPecaModalOpen.isOpen && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-black/90 border border-cyber-gold/50 p-6 rounded-lg max-w-sm w-full">
+                    <div className="bg-black/90 border border-cyber-gold/50 p-6 rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
                         <h3 className="text-xl font-orbitron text-white mb-4">Adicionar Item</h3>
                         <form onSubmit={handleAddPeca}>
-                            <div className="space-y-3">
+                            <div className="space-y-4">
+                                {/* Item do Catálogo */}
                                 <div className="space-y-1">
                                     <label className="text-xs text-gray-500">Item do Catálogo</label>
                                     <select
@@ -649,6 +697,8 @@ export const OSDetailsPage: React.FC = () => {
                                         ))}
                                     </select>
                                 </div>
+
+                                {/* Valor Cobrado */}
                                 <div className="space-y-1">
                                     <label className="text-xs text-gray-500">Valor Cobrado (R$)</label>
                                     <input
@@ -660,11 +710,94 @@ export const OSDetailsPage: React.FC = () => {
                                     />
                                     <p className="text-[10px] text-gray-500 italic">Deixe vazio para usar o valor padrão.</p>
                                 </div>
+
+                                {/* Tipo de Execução */}
+                                <div className="space-y-2 bg-white/5 p-3 rounded border border-white/10">
+                                    <label className="text-xs text-cyber-gold font-bold">Tipo de Execução</label>
+                                    <div className="flex gap-4">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="tipoExecucao"
+                                                value="INTERNO"
+                                                checked={pecaForm.tipoExecucao === 'INTERNO'}
+                                                onChange={() => setPecaForm({ ...pecaForm, tipoExecucao: 'INTERNO', prestadorId: '', custoPrestador: '' })}
+                                                className="accent-cyber-gold"
+                                            />
+                                            <span className="text-sm text-white">Interno</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="tipoExecucao"
+                                                value="TERCEIRIZADO"
+                                                checked={pecaForm.tipoExecucao === 'TERCEIRIZADO'}
+                                                onChange={() => setPecaForm({ ...pecaForm, tipoExecucao: 'TERCEIRIZADO' })}
+                                                className="accent-cyber-gold"
+                                            />
+                                            <span className="text-sm text-white">Terceirizado</span>
+                                        </label>
+                                    </div>
+
+                                    {/* Campos de Prestador (visíveis apenas se TERCEIRIZADO) */}
+                                    {pecaForm.tipoExecucao === 'TERCEIRIZADO' && (
+                                        <div className="mt-3 space-y-3 animate-fadeIn">
+                                            <div className="space-y-1">
+                                                <label className="text-xs text-gray-400">Prestador</label>
+                                                <select
+                                                    className="w-full bg-black/60 border border-white/20 text-white p-2 text-sm"
+                                                    value={pecaForm.prestadorId}
+                                                    onChange={e => setPecaForm({ ...pecaForm, prestadorId: e.target.value })}
+                                                    required
+                                                >
+                                                    <option value="">Selecione o prestador...</option>
+                                                    {prestadores?.map(p => (
+                                                        <option key={p.id} value={p.id}>{p.nome}</option>
+                                                    ))}
+                                                </select>
+                                                {(!prestadores || prestadores.length === 0) && (
+                                                    <p className="text-[10px] text-yellow-400">
+                                                        Nenhum prestador cadastrado. <a href="/settings/prestadores" className="underline">Cadastrar</a>
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-xs text-gray-400">Custo do Prestador (R$)</label>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    placeholder="Valor a pagar ao prestador"
+                                                    className="w-full bg-black/60 border border-white/20 text-white p-2 text-sm"
+                                                    value={pecaForm.custoPrestador}
+                                                    onChange={e => setPecaForm({ ...pecaForm, custoPrestador: e.target.value })}
+                                                />
+                                                <p className="text-[10px] text-gray-500 italic">
+                                                    Valor que será pago ao prestador externo.
+                                                </p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-xs text-gray-400">Data de Vencimento</label>
+                                                <input
+                                                    type="date"
+                                                    className="w-full bg-black/60 border border-white/20 text-white p-2 text-sm"
+                                                    value={pecaForm.dataVencimentoPrestador}
+                                                    onChange={e => setPecaForm({ ...pecaForm, dataVencimentoPrestador: e.target.value })}
+                                                />
+                                                <p className="text-[10px] text-gray-500 italic">
+                                                    Data em que o prestador receberá. Se não informada, será 7 dias após a OS.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Observações */}
                                 <div className="space-y-1">
                                     <label className="text-xs text-gray-500">Observações (opcional)</label>
                                     <textarea
                                         className="w-full bg-black/60 border border-white/20 text-white p-2 text-sm resize-none"
-                                        rows={3}
+                                        rows={2}
                                         placeholder="Ex: Cliente solicitou serviço mesmo sabendo das condições..."
                                         value={pecaForm.descricao}
                                         onChange={e => setPecaForm({ ...pecaForm, descricao: e.target.value })}
@@ -673,7 +806,13 @@ export const OSDetailsPage: React.FC = () => {
                             </div>
                             <div className="flex justify-end gap-2 mt-4">
                                 <button type="button" onClick={() => setPecaModalOpen({ isOpen: false, veiculoId: null })} className="text-gray-500 hover:text-white px-3 py-1 font-oxanium text-sm">Cancelar</button>
-                                <button type="submit" className="bg-cyber-gold text-black px-4 py-1 rounded font-bold hover:bg-yellow-400 font-oxanium text-sm">Adicionar</button>
+                                <button
+                                    type="submit"
+                                    className="bg-cyber-gold text-black px-4 py-1 rounded font-bold hover:bg-yellow-400 font-oxanium text-sm disabled:opacity-50"
+                                    disabled={pecaForm.tipoExecucao === 'TERCEIRIZADO' && !pecaForm.prestadorId}
+                                >
+                                    Adicionar
+                                </button>
                             </div>
                         </form>
                     </div>

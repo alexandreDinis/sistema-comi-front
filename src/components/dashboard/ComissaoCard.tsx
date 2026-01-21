@@ -14,8 +14,12 @@ export const ComissaoCard: React.FC<ComissaoCardProps> = ({ comissao, onQuitado 
     const isPositivo = comissao.saldoAReceber >= 0;
     const temSaldoAnterior = comissao.saldoAnterior && comissao.saldoAnterior !== 0;
     const user = authService.getCurrentUser();
-    const isAdmin = user?.role === 'ROLE_ADMIN_EMPRESA' || user?.role === 'ADMIN_EMPRESA';
+
+    // Verificação de permissão
+    const isAdmin = ['ROLE_ADMIN_EMPRESA', 'ADMIN_EMPRESA', 'ROLE_ADMIN', 'ADMIN'].includes(user?.role || '');
+
     const [isQuitando, setIsQuitando] = useState(false);
+    const [isGerandoPagamento, setIsGerandoPagamento] = useState(false);
 
     const handleQuitar = async () => {
         if (!comissao.id) return;
@@ -27,6 +31,21 @@ export const ComissaoCard: React.FC<ComissaoCardProps> = ({ comissao, onQuitado 
             console.error('Erro ao quitar:', error);
         } finally {
             setIsQuitando(false);
+        }
+    };
+
+    const handleGerarPagamento = async () => {
+        if (!comissao.id) return;
+        setIsGerandoPagamento(true);
+        try {
+            await comissaoService.gerarPagamentoComissao(comissao.id);
+            onQuitado?.();
+            alert('Pagamento gerado no financeiro com sucesso! (Status: PENDENTE)');
+        } catch (error) {
+            console.error('Erro ao gerar pagamento:', error);
+            alert('Erro ao gerar pagamento.');
+        } finally {
+            setIsGerandoPagamento(false);
         }
     };
 
@@ -117,21 +136,39 @@ export const ComissaoCard: React.FC<ComissaoCardProps> = ({ comissao, onQuitado 
                             )}
                         </div>
 
-                        <div className="flex flex-col gap-4 items-center">
+                        <div className="flex flex-col gap-4 items-center max-w-[240px]">
                             <div className={`p-6 border-2 ${isPositivo ? 'border-cyber-gold/40 text-cyber-gold' : 'border-cyber-error/40 text-cyber-error'} bg-black/40 relative z-10 overflow-hidden`}>
                                 <ArrowUpRight className={`w-12 h-12 ${!isPositivo && 'rotate-90'}`} />
                                 <div className="absolute -bottom-1 -right-1 text-[6px] font-mono opacity-40">MOVE_0x1</div>
                             </div>
 
-                            {/* Botão Quitar - apenas para Admin */}
-                            {isAdmin && !comissao.quitado && comissao.saldoAReceber > 0 && comissao.id && (
-                                <button
-                                    onClick={handleQuitar}
-                                    disabled={isQuitando}
-                                    className="hud-button text-xs bg-green-500/20 border-green-500/40 text-green-400 hover:bg-green-500/30 disabled:opacity-50 flex items-center gap-2"
-                                >
-                                    {isQuitando ? 'PROCESSANDO...' : <><Check className="w-3 h-3" /> QUITAR COMISSÃO</>}
-                                </button>
+                            {/* Área de Ações */}
+                            {isAdmin && comissao.id && (
+                                <div className="flex flex-col gap-3 w-full">
+                                    <button
+                                        onClick={handleGerarPagamento}
+                                        disabled={isGerandoPagamento || !!comissao.quitado || comissao.saldoAReceber <= 0}
+                                        className="hud-button text-[10px] py-3 bg-blue-500/20 border-blue-500/40 text-blue-400 hover:bg-blue-500/30 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 w-full transition-all"
+                                        title={comissao.quitado ? "Já quitado" : comissao.saldoAReceber <= 0 ? "Saldo insuficiente" : "Gerar conta no financeiro"}
+                                    >
+                                        {isGerandoPagamento ? '...' : <><ReceiptText className="w-3 h-3" /> GERAR PAGAMENTO FINANCEIRO</>}
+                                    </button>
+
+                                    <button
+                                        onClick={handleQuitar}
+                                        disabled={isQuitando || !!comissao.quitado || comissao.saldoAReceber <= 0}
+                                        className="hud-button text-[10px] py-2 bg-green-500/10 border-green-500/20 text-green-600 hover:bg-green-500/20 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 w-full transition-all"
+                                        title="Baixa a comissão sem gerar financeiro"
+                                    >
+                                        {isQuitando ? '...' : <><Check className="w-3 h-3" /> APENAS MARCAR COMO PAGO</>}
+                                    </button>
+
+                                    {(!!comissao.quitado || comissao.saldoAReceber <= 0) && (
+                                        <p className="text-[9px] font-mono text-center text-cyber-gold/40 mt-1">
+                                            {!!comissao.quitado ? '[STATUS: JÁ QUITADO]' : '[SALDO INSUFICIENTE]'}
+                                        </p>
+                                    )}
+                                </div>
                             )}
                         </div>
 

@@ -1,9 +1,45 @@
 import React from 'react';
 import { DespesaForm } from '../components/forms/DespesaForm';
-import { ChevronRight, Home } from 'lucide-react';
+import { ChevronRight, Home, Trash2, Calendar, Tag, CreditCard } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { despesaService } from '../services/despesaService';
 
 export const DespesaPage: React.FC = () => {
+    const queryClient = useQueryClient();
+
+    const { data: despesas = [], isLoading } = useQuery({
+        queryKey: ['despesas'],
+        queryFn: despesaService.listar
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: despesaService.excluir,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['despesas'] });
+            queryClient.invalidateQueries({ queryKey: ['financeiro'] });
+            queryClient.invalidateQueries({ queryKey: ['comissao'] });
+            queryClient.invalidateQueries({ queryKey: ['relatorio'] });
+        },
+        onError: (error) => {
+            alert('Erro ao excluir despesa. Verifique o console.');
+            console.error(error);
+        }
+    });
+
+    const handleDelete = (id: number) => {
+        if (confirm('⚠️ EXCLUSÃO DE DESPESA\n\nIsso pode alterar faturas de cartão e fluxos de caixa associados.\nDeseja continuar?')) {
+            deleteMutation.mutate(id);
+        }
+    };
+
+    // Ordenar despesas por data (mais recentes primeiro) e pegar as ultimas 10
+    const ultimasDespesas = [...despesas]
+        .sort((a, b) => new Date(b.dataDespesa).getTime() - new Date(a.dataDespesa).getTime())
+        .slice(0, 20);
+
+    const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+
     return (
         <div className="container mx-auto px-4 py-12">
             <div className="max-w-xl mx-auto mb-10">
@@ -22,12 +58,74 @@ export const DespesaPage: React.FC = () => {
                         Console de Despesas
                     </h1>
                     <p className="text-cyber-gold/40 text-[10px] font-mono tracking-[0.2em] mt-3 uppercase max-w-lg">
-                        ALOCAR_CUSTOS_OPERACIONAIS // SINCR_FLUXOS_PARA_AUDITORIA_V2.5
+                        ALOCAR_CUSTOS_OPERACIONAIS // RECÁLCULO_AUTOMÁTICO_FATURAS
                     </p>
                 </div>
             </div>
 
             <DespesaForm />
+
+            {/* LISTA DE DESPESAS */}
+            <div className="max-w-2xl mx-auto mt-16">
+                <h3 className="text-cyber-gold text-lg font-black italic mb-6 border-b border-cyber-gold/20 pb-2">
+                    ÚLTIMOS LANÇAMENTOS // LOG_STREAM
+                </h3>
+
+                {isLoading ? (
+                    <div className="text-cyber-gold/30 text-xs font-mono animate-pulse">CARREGANDO_STREAM...</div>
+                ) : (
+                    <div className="space-y-3">
+                        {ultimasDespesas.length === 0 ? (
+                            <div className="text-cyber-gold/30 text-xs font-mono">NENHUM REGISTRO ENCONTRADO. SISTEMA OCIOSO.</div>
+                        ) : (
+                            ultimasDespesas.map((despesa) => (
+                                <div key={despesa.id} className="group relative bg-black/40 border border-cyber-gold/10 p-4 hover:border-cyber-gold/30 transition-all flex items-center justify-between">
+                                    <div className="flex items-start gap-4">
+                                        <div className="p-2 bg-cyber-gold/5 rounded text-cyber-gold/60">
+                                            {despesa.cartao ? <CreditCard size={16} /> : <Tag size={16} />}
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="text-xs font-black text-cyber-gold uppercase">
+                                                    {despesa.descricao || 'SEM_DESCRIÇÃO'}
+                                                </span>
+                                                {despesa.cartao && (
+                                                    <span className="text-[9px] bg-purple-500/10 text-purple-400 px-1 rounded border border-purple-500/20">
+                                                        CARTÃO
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-3 text-[10px] text-cyber-gold/40 font-mono">
+                                                <span className="flex items-center gap-1">
+                                                    <Calendar size={10} />
+                                                    {new Date(despesa.dataDespesa).toLocaleDateString('pt-BR')}
+                                                </span>
+                                                <span className="uppercase">{despesa.categoria?.replace('_', ' ')}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-6">
+                                        <div className="text-right">
+                                            <span className="text-sm font-black text-cyber-gold">
+                                                {formatCurrency(despesa.valor)}
+                                            </span>
+                                        </div>
+
+                                        <button
+                                            onClick={() => handleDelete(despesa.id)}
+                                            className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-red-500/10 text-red-500/50 hover:text-red-500 border border-transparent hover:border-red-500/30 rounded"
+                                            title="Excluir Registro"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

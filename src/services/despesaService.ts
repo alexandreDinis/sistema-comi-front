@@ -6,4 +6,12 @@ export const despesaService = {
         const response = await api.post<Despesa>('despesas', despesa);
         return response.data;
     },
+    listar: async (): Promise<Despesa[]> => {
+        const response = await api.get<Despesa[]>('despesas');
+        return response.data;
+    },
+
+    excluir: async (id: number): Promise<void> => {
+        await api.delete(`despesas/${id}`);
+    }
 };

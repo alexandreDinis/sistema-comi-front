@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { financeiroService } from '../../services/financeiroService';
 import type { ContaPagar, MeioPagamento } from '../../types';
+import { useQueryClient } from '@tanstack/react-query';
 
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -20,6 +21,7 @@ const MEIOS_PAGAMENTO: { value: MeioPagamento; label: string }[] = [
 ];
 
 const ContasPagarPage = () => {
+    const queryClient = useQueryClient();
     const [contas, setContas] = useState<ContaPagar[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -54,6 +56,13 @@ const ContasPagarPage = () => {
                 meioPagamento,
                 dataPagamento: new Date().toISOString().split('T')[0]
             });
+
+            // Invalidate Report Cache to update Cash Flow immediately
+            queryClient.invalidateQueries({ queryKey: ['relatorio'] });
+            queryClient.invalidateQueries({ queryKey: ['despesas'] });
+            queryClient.invalidateQueries({ queryKey: ['financeiro'] });
+            queryClient.invalidateQueries({ queryKey: ['faturas'] });
+
             setModalPagar(null);
             loadContas();
         } catch (err) {

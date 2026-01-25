@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { osService } from '../../services/osService';
 import type { ClienteRequest, StatusCliente, ClienteFiltros } from '../../types';
 import { Users, Plus, Save, MapPin, Phone, Mail, Building2, Trash2, Search, Filter } from 'lucide-react';
-import { formatCNPJ, formatTelefone, formatCEP } from '../../utils/formatters';
+import { formatCNPJ, formatCPF, formatTelefone, formatCEP } from '../../utils/formatters';
 import { usePermission } from '../../hooks/usePermission';
 import { Feature } from '../../types/features';
 
@@ -59,7 +59,10 @@ export const ClientesPage: React.FC = () => {
         bairro: '',
         cidade: '',
         estado: '',
-        cep: ''
+        estado: '',
+        cep: '',
+        tipoPessoa: 'JURIDICA',
+        cpf: ''
     };
 
     const [formData, setFormData] = useState<ClienteRequest>(initialFormState);
@@ -174,7 +177,9 @@ export const ClientesPage: React.FC = () => {
             bairro: cliente.bairro || '',
             cidade: cliente.cidade || '',
             estado: cliente.estado || '',
-            cep: cliente.cep || ''
+            cep: cliente.cep || '',
+            tipoPessoa: cliente.tipoPessoa || 'JURIDICA',
+            cpf: cliente.cpf ? formatCPF(cliente.cpf) : ''
         });
         setIsFormOpen(true);
     };
@@ -195,7 +200,10 @@ export const ClientesPage: React.FC = () => {
             cnpj: formData.cnpj.replace(/\D/g, ''),
             contato: formData.contato.replace(/\D/g, ''),
             cep: formData.cep.replace(/\D/g, ''),
-            endereco: formData.logradouro
+            endereco: formData.logradouro,
+            tipoPessoa: formData.tipoPessoa || 'JURIDICA',
+            cpf: formData.tipoPessoa === 'FISICA' ? (formData.cpf || '').replace(/\D/g, '') : undefined,
+            cnpj: formData.tipoPessoa === 'JURIDICA' ? formData.cnpj.replace(/\D/g, '') : undefined
         };
 
         if (editingId) {
@@ -306,9 +314,34 @@ export const ClientesPage: React.FC = () => {
                         )}
                     </div>
 
+                    <div className="md:col-span-3 mb-4 flex gap-6 bg-black/60 p-3 rounded border border-cyber-gold/20">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="radio"
+                                name="tipoPessoa"
+                                checked={formData.tipoPessoa !== 'FISICA'} // Default JURIDICA
+                                onChange={() => setFormData({ ...formData, tipoPessoa: 'JURIDICA' })}
+                                className="text-cyber-gold focus:ring-cyber-gold"
+                            />
+                            <span className="text-white font-oxanium text-sm">Pessoa Jurídica (PJ)</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="radio"
+                                name="tipoPessoa"
+                                checked={formData.tipoPessoa === 'FISICA'}
+                                onChange={() => setFormData({ ...formData, tipoPessoa: 'FISICA' })}
+                                className="text-cyber-gold focus:ring-cyber-gold"
+                            />
+                            <span className="text-white font-oxanium text-sm">Pessoa Física (PF)</span>
+                        </label>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div className="space-y-2">
-                            <label className="text-cyber-gold font-oxanium text-sm">Razão Social</label>
+                            <label className="text-cyber-gold font-oxanium text-sm">
+                                {formData.tipoPessoa === 'FISICA' ? 'Nome Completo' : 'Razão Social'}
+                            </label>
                             <input
                                 type="text"
                                 required
@@ -318,24 +351,34 @@ export const ClientesPage: React.FC = () => {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-cyber-gold font-oxanium text-sm">Nome Fantasia</label>
+                            <label className="text-cyber-gold font-oxanium text-sm">
+                                {formData.tipoPessoa === 'FISICA' ? 'Apelido (Opcional)' : 'Nome Fantasia'}
+                            </label>
                             <input
                                 type="text"
-                                required
+                                required={formData.tipoPessoa !== 'FISICA'}
                                 className="w-full bg-black/60 border border-cyber-gold/30 text-white p-2 focus:border-cyber-gold focus:outline-none transition-all"
                                 value={formData.nomeFantasia}
                                 onChange={e => setFormData({ ...formData, nomeFantasia: e.target.value })}
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-cyber-gold font-oxanium text-sm">CNPJ</label>
+                            <label className="text-cyber-gold font-oxanium text-sm">
+                                {formData.tipoPessoa === 'FISICA' ? 'CPF' : 'CNPJ'}
+                            </label>
                             <input
                                 type="text"
                                 required
                                 className="w-full bg-black/60 border border-cyber-gold/30 text-white p-2 focus:border-cyber-gold focus:outline-none transition-all"
-                                value={formData.cnpj}
-                                onChange={e => setFormData({ ...formData, cnpj: formatCNPJ(e.target.value) })}
-                                placeholder="00.000.000/0000-00"
+                                value={formData.tipoPessoa === 'FISICA' ? (formData.cpf || '') : formData.cnpj}
+                                onChange={e => {
+                                    if (formData.tipoPessoa === 'FISICA') {
+                                        setFormData({ ...formData, cpf: formatCPF(e.target.value) })
+                                    } else {
+                                        setFormData({ ...formData, cnpj: formatCNPJ(e.target.value) })
+                                    }
+                                }}
+                                placeholder={formData.tipoPessoa === 'FISICA' ? '000.000.000-00' : '00.000.000/0000-00'}
                                 maxLength={18}
                             />
                         </div>
@@ -506,7 +549,9 @@ export const ClientesPage: React.FC = () => {
                                             <Building2 className="w-3 h-3" />
                                             {cliente.razaoSocial}
                                         </div>
-                                        <div className="text-gray-500 text-[10px] mt-0.5 font-mono">{cliente.cnpj}</div>
+                                        <div className="text-gray-500 text-[10px] mt-0.5 font-mono">
+                                            {cliente.tipoPessoa === 'FISICA' ? (cliente.cpf || 'SEM CPF') : (cliente.cnpj || 'SEM CNPJ')}
+                                        </div>
                                     </td>
 
                                     <td className="p-4">

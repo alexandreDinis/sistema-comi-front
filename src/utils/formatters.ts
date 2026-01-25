@@ -50,6 +50,16 @@ export const formatCNPJ = (value: string) => {
         .slice(0, 18);
 };
 
+export const formatCPF = (value: string) => {
+    const v = value.replace(/\D/g, '');
+    return v
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+        .replace(/(\d{2})$/, '$1')
+        .slice(0, 14);
+};
+
 export const formatTelefone = (value: string) => {
     const v = value.replace(/\D/g, '');
     // (11) 99999-9999

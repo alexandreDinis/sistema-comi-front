@@ -48,6 +48,7 @@ export interface Despesa {
     categoria: CategoriaDespesa;
     descricao?: string;
     dataCriacao: string;
+    cartao?: CartaoCredito;
 }
 
 export interface DespesaRequest {
@@ -180,11 +181,15 @@ export type OSStatus = 'ABERTA' | 'EM_EXECUCAO' | 'FINALIZADA' | 'CANCELADA';
 
 export type StatusCliente = 'ATIVO' | 'INATIVO' | 'EM_PROSPECCAO';
 
+export type TipoPessoa = 'FISICA' | 'JURIDICA';
+
 export interface Cliente {
     id: number;
     razaoSocial: string;
     nomeFantasia: string;
-    cnpj: string;
+    cnpj?: string;
+    cpf?: string;
+    tipoPessoa?: TipoPessoa;
     endereco?: string; // Mantido para retrocompatibilidade visual se necessario, mas o foco agora são os campos detalhados
     contato: string;
     email: string;
@@ -203,7 +208,9 @@ export interface Cliente {
 export interface ClienteRequest {
     razaoSocial: string;
     nomeFantasia: string;
-    cnpj: string;
+    cnpj?: string;
+    cpf?: string;
+    tipoPessoa?: TipoPessoa;
     endereco?: string;
     contato: string;
     email: string;
@@ -478,6 +485,7 @@ export interface CartaoCredito {
     nome: string;
     diaVencimento: number;
     diaFechamento: number;
+    limite?: number;
     ativo: boolean;
 }
 
@@ -485,6 +493,13 @@ export interface CartaoCreditoRequest {
     nome: string;
     diaVencimento: number;
     diaFechamento?: number;
+    limite?: number;
+}
+
+export interface LimiteDisponivelDTO {
+    limiteTotal: number | null;
+    limiteDisponivel: number | null;
+    limiteUtilizado: number | null;
 }
 
 // ========================================

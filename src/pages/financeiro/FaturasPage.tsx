@@ -10,7 +10,10 @@ const formatCurrency = (value: number) => {
     }).format(value);
 };
 
+import { useQueryClient } from '@tanstack/react-query';
+
 const FaturasPage = () => {
+    const queryClient = useQueryClient();
     const [faturas, setFaturas] = useState<ContaPagar[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -41,6 +44,12 @@ const FaturasPage = () => {
                 meioPagamento: 'TRANSFERENCIA', // Defaulting to Transferencia for invoice payment
                 dataPagamento: new Date().toISOString().split('T')[0]
             });
+
+            // Invalidate Report Cache
+            queryClient.invalidateQueries({ queryKey: ['relatorio'] });
+            queryClient.invalidateQueries({ queryKey: ['despesas'] });
+            queryClient.invalidateQueries({ queryKey: ['financeiro'] });
+
             loadFaturas();
         } catch (err) {
             console.error('Erro ao pagar fatura:', err);

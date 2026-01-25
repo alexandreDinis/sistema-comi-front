@@ -158,9 +158,9 @@ export const ComissaoCard: React.FC<ComissaoCardProps> = ({ comissao, onQuitado 
                                         onClick={handleQuitar}
                                         disabled={isQuitando || !!comissao.quitado || comissao.saldoAReceber <= 0}
                                         className="hud-button text-[10px] py-2 bg-green-500/10 border-green-500/20 text-green-600 hover:bg-green-500/20 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 w-full transition-all"
-                                        title="Baixa a comissão sem gerar financeiro"
+                                        title="Baixa a comissão e lança o pagamento no caixa (Status: PAGO)"
                                     >
-                                        {isQuitando ? '...' : <><Check className="w-3 h-3" /> APENAS MARCAR COMO PAGO</>}
+                                        {isQuitando ? '...' : <><Check className="w-3 h-3" /> QUITAR E LANÇAR NO CAIXA</>}
                                     </button>
 
                                     {(!!comissao.quitado || comissao.saldoAReceber <= 0) && (

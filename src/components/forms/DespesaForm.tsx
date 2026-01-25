@@ -40,6 +40,7 @@ export const DespesaForm: React.FC = () => {
             });
             queryClient.invalidateQueries({ queryKey: ['comissao'] });
             queryClient.invalidateQueries({ queryKey: ['relatorio'] });
+            queryClient.invalidateQueries({ queryKey: ['despesas'] });
             setTimeout(() => setSuccessMessage(false), 3000);
         },
         onError: (err: any) => {

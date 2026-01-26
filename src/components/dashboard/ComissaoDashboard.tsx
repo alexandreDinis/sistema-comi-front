@@ -7,7 +7,7 @@ export const ComissaoDashboard: React.FC = () => {
     const [ano, setAno] = useState(today.getFullYear());
     const [mes, setMes] = useState(today.getMonth() + 1);
 
-    const { comissao, isLoading, error, refetch, invalidate } = useComissao(ano, mes);
+    const { comissao, isLoading, error, forceSync } = useComissao(ano, mes);
 
     const handlePreviousMonth = () => {
         if (mes === 1) {
@@ -27,10 +27,9 @@ export const ComissaoDashboard: React.FC = () => {
         }
     };
 
-    const handleRefresh = () => {
-        console.log('🔄 Atualizando dados...');
-        invalidate();
-        setTimeout(() => refetch(), 100);
+    const handleRefresh = async () => {
+        console.log('🔄 Forçando sincronização...');
+        await forceSync();
     };
 
     return (

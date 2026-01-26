@@ -10,7 +10,7 @@ export const RelatoriosHubPage: React.FC = () => {
     const reports = [
         {
             id: 'financeiro',
-            title: 'Relatório Financeiro Mensal',
+            title: 'Relatório Financeiro Mensal (DRE)',
             description: 'Visão consolidada do mês: faturamento, despesas, comissões e lucro líquido',
             icon: DollarSign,
             path: '/relatorio/financeiro',
@@ -19,7 +19,7 @@ export const RelatoriosHubPage: React.FC = () => {
         },
         {
             id: 'anual',
-            title: 'Relatório Anual YoY',
+            title: 'Relatório Anual YoY (DRE Anual)',
             description: 'Comparação Year-over-Year com 12 meses de faturamento e crescimento anual',
             icon: TrendingUp,
             path: '/relatorio/anual',
@@ -28,7 +28,7 @@ export const RelatoriosHubPage: React.FC = () => {
         },
         {
             id: 'comissoes',
-            title: 'Relatório de Comissões',
+            title: 'Relatório de Comissões (Analítico)',
             description: 'Análise detalhada de comissões por período e usuário',
             icon: BarChart3,
             path: '/relatorio/comissoes',
@@ -38,7 +38,7 @@ export const RelatoriosHubPage: React.FC = () => {
         },
         {
             id: 'desempenho',
-            title: 'Relatório de Desempenho',
+            title: 'Relatório de Desempenho (KPIs)',
             description: 'Métricas operacionais: OS finalizadas, veículos atendidos, produtividade',
             icon: Calendar,
             path: '/relatorio/desempenho',
@@ -48,7 +48,7 @@ export const RelatoriosHubPage: React.FC = () => {
         },
         {
             id: 'ranking',
-            title: 'Ranking de Clientes',
+            title: 'Ranking de Clientes (Curva ABC)',
             description: 'Top clientes por faturamento e volume de OS (Mensal/Anual)',
             icon: Users,
             path: '/relatorio/ranking',
@@ -57,7 +57,7 @@ export const RelatoriosHubPage: React.FC = () => {
         },
         {
             id: 'faturas-cartao',
-            title: 'Faturas de Cartão',
+            title: 'Faturas de Cartão (Contas a Pagar)',
             description: 'Visualize e pague faturas de cartões corporativos consolidadas por mês',
             icon: CreditCard,
             path: '/financeiro/faturas',
@@ -66,7 +66,7 @@ export const RelatoriosHubPage: React.FC = () => {
         },
         {
             id: 'receita-caixa',
-            title: 'Receita por Caixa (DAS)',
+            title: 'Receita por Caixa (Faturamento Fiscal)',
             description: 'Relatório de recebimentos por caixa - Base para cálculo do Simples Nacional',
             icon: Receipt,
             path: '/relatorio/receita-caixa',
@@ -75,12 +75,39 @@ export const RelatoriosHubPage: React.FC = () => {
         },
         {
             id: 'imposto-pago',
-            title: 'Pagamento de DAS',
+            title: 'Pagamento de DAS (Impostos)',
             description: 'Registre pagamentos de impostos (IMPOSTO_PAGO) - Não afeta DRE',
             icon: Receipt,
             path: '/financeiro/imposto-pago',
             color: 'purple',
             feature: Feature.ADMIN_CONFIG,
+        },
+        {
+            id: 'fluxo-caixa',
+            title: 'Relatório De Fluxo de Caixa (Mensal)',
+            description: 'Entradas, Saídas e Saldo (com Saldo Inicial Acumulado)',
+            icon: TrendingUp,
+            path: '/financeiro/fluxo-caixa',
+            color: 'gold',
+            feature: Feature.RELATORIO_FINANCEIRO_VIEW,
+        },
+        {
+            id: 'contas-pagar',
+            title: 'Relatório de Contas a Pagar',
+            description: 'Contas pagas, pendentes e vencidas no período',
+            icon: CreditCard,
+            path: '/financeiro/contas-pagar',
+            color: 'red', // Using red/error color theme manually or mapping to purple/custom
+            feature: Feature.RELATORIO_FINANCEIRO_VIEW,
+        },
+        {
+            id: 'distribuicao-lucros',
+            title: 'Relatório de Distribuição de Lucros',
+            description: 'Comprovante de retiradas de lucro (Mensal/Acumulado)',
+            icon: DollarSign,
+            path: '/financeiro/distribuicao-lucros',
+            color: 'green',
+            feature: Feature.RELATORIO_FINANCEIRO_VIEW,
         },
     ];
 
@@ -126,6 +153,13 @@ export const RelatoriosHubPage: React.FC = () => {
                 title: 'text-purple-300',
                 hover: 'hover:bg-purple-500/10 hover:border-purple-500/50',
             },
+            red: {
+                border: 'border-red-500/30',
+                bg: 'bg-red-500/5',
+                icon: 'text-red-400',
+                title: 'text-red-300',
+                hover: 'hover:bg-red-500/10 hover:border-red-500/50',
+            },
         };
         return colors[color] || colors.cyan;
     };
@@ -141,7 +175,7 @@ export const RelatoriosHubPage: React.FC = () => {
                 <div className="flex items-center gap-3 mb-2">
                     <FileText className="w-8 h-8 text-cyber-gold" />
                     <h1 className="text-3xl font-orbitron text-white font-bold">
-                        Central de Relatórios v2.0
+                        Central de Relatórios (Contábil)
                     </h1>
                 </div>
                 <p className="text-gray-400 text-sm ml-11">

@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { platformService } from '../../services/platformService';
-import type { TenantSummary } from '../../services/platformService';
-import { Ban, CheckCircle, Search, Plus, Building2, Calendar } from 'lucide-react';
+import type { TenantSummary, TenantUpdateRequest } from '../../services/platformService';
+import { Ban, CheckCircle, Search, Plus, Building2, Calendar, Pencil, X } from 'lucide-react';
 import { TenantOnboarding } from '../../components/platform/TenantOnboarding';
 
 export const PlatformTenants: React.FC = () => {
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
     const [showOnboarding, setShowOnboarding] = useState(false);
+    const [editingTenant, setEditingTenant] = useState<TenantSummary | null>(null);
 
     const { data: tenants, isLoading } = useQuery({
         queryKey: ['platform-tenants'],
@@ -19,6 +20,18 @@ export const PlatformTenants: React.FC = () => {
         mutationFn: platformService.toggleBlockTenant,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['platform-tenants'] });
+        }
+    });
+
+    const updateTenantMutation = useMutation({
+        mutationFn: (data: { id: number, req: TenantUpdateRequest }) => platformService.updateTenant(data.id, data.req),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['platform-tenants'] });
+            setEditingTenant(null);
+        },
+        onError: (err) => {
+            alert('Falha ao atualizar inquilino. Verifique os dados.');
+            console.error(err);
         }
     });
 
@@ -117,6 +130,13 @@ export const PlatformTenants: React.FC = () => {
                                     <td className="p-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             <button
+                                                onClick={() => setEditingTenant(tenant)}
+                                                className="p-2 rounded text-blue-400 hover:bg-blue-900/30 hover:text-blue-300 transition-colors"
+                                                title="Editar Inquilino"
+                                            >
+                                                <Pencil size={18} />
+                                            </button>
+                                            <button
                                                 onClick={() => handleToggleBlock(tenant)}
                                                 disabled={toggleBlockMutation.isPending}
                                                 className={`p-2 rounded transition-colors ${!tenant.ativo
@@ -143,6 +163,124 @@ export const PlatformTenants: React.FC = () => {
             )}
 
             {showOnboarding && <TenantOnboarding onClose={() => setShowOnboarding(false)} />}
+
+            {editingTenant && (
+                <EditTenantModal
+                    tenant={editingTenant}
+                    onClose={() => setEditingTenant(null)}
+                    onSave={(id, data) => updateTenantMutation.mutate({ id, req: data })}
+                    isSaving={updateTenantMutation.isPending}
+                />
+            )}
+        </div>
+    );
+};
+
+// Simple Edit Modal Component
+const EditTenantModal: React.FC<{
+    tenant: TenantSummary,
+    onClose: () => void,
+    onSave: (id: number, data: TenantUpdateRequest) => void,
+    isSaving: boolean
+}> = ({ tenant, onClose, onSave, isSaving }) => {
+    const [formData, setFormData] = useState<TenantUpdateRequest>({
+        nome: tenant.nome,
+        cnpj: tenant.cnpj,
+        plano: tenant.plano,
+        adminEmail: tenant.adminEmail || '' // Backend might not send this in list, but we can try to pre-fill or leave blank
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onSave(tenant.id, formData);
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div className="bg-slate-900 border border-slate-700 rounded-lg w-full max-w-md p-6 relative shadow-2xl">
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+                >
+                    <X size={20} />
+                </button>
+
+                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                    <Pencil size={20} className="text-blue-500" />
+                    Editar Inquilino
+                </h2>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-slate-400 text-xs font-bold uppercase mb-1">Nome da Empresa</label>
+                        <input
+                            type="text"
+                            value={formData.nome}
+                            onChange={e => setFormData({ ...formData, nome: e.target.value })}
+                            className="w-full bg-slate-800 border border-slate-700 text-slate-200 p-2 rounded focus:outline-none focus:border-blue-500"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-slate-400 text-xs font-bold uppercase mb-1">CNPJ</label>
+                        <input
+                            type="text"
+                            value={formData.cnpj}
+                            onChange={e => setFormData({ ...formData, cnpj: e.target.value })}
+                            className="w-full bg-slate-800 border border-slate-700 text-slate-200 p-2 rounded focus:outline-none focus:border-blue-500 font-mono"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-slate-400 text-xs font-bold uppercase mb-1">Plano Atual</label>
+                        <select
+                            value={formData.plano}
+                            onChange={e => setFormData({ ...formData, plano: e.target.value })}
+                            className="w-full bg-slate-800 border border-slate-700 text-slate-200 p-2 rounded focus:outline-none focus:border-blue-500"
+                        >
+                            <option value="BRONZE">BRONZE (Básico)</option>
+                            <option value="PRATA">PRATA (Profissional)</option>
+                            <option value="OURO">OURO (Enterprise)</option>
+                        </select>
+                        <p className="text-[10px] text-yellow-500/80 mt-1">
+                            ⚠️ Alterar o plano atualizará automaticamente as permissões e funcionalidades disponíveis.
+                        </p>
+                    </div>
+
+                    <div>
+                        <label className="block text-slate-400 text-xs font-bold uppercase mb-1">Email do Admin Principal</label>
+                        <input
+                            type="email"
+                            value={formData.adminEmail}
+                            onChange={e => setFormData({ ...formData, adminEmail: e.target.value })}
+                            className="w-full bg-slate-800 border border-slate-700 text-slate-200 p-2 rounded focus:outline-none focus:border-blue-500"
+                            placeholder="Deixe em branco para manter o atual"
+                        />
+                        <p className="text-[10px] text-slate-500 mt-1">
+                            Opcional. Preencha apenas se desejar transferir a conta admin para outro email.
+                        </p>
+                    </div>
+
+                    <div className="pt-4 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-4 py-2 bg-slate-800 text-slate-300 rounded hover:bg-slate-700"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isSaving}
+                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 disabled:opacity-50 flex items-center gap-2"
+                        >
+                            {isSaving ? 'Salvando...' : 'Salvar Alterações'}
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 };

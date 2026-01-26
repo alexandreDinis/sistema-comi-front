@@ -40,6 +40,7 @@ import ContasReceberPage from './pages/financeiro/ContasReceberPage';
 import CartoesPage from './pages/financeiro/CartoesPage';
 import FaturasPage from './pages/financeiro/FaturasPage';
 import DistribuicaoLucrosPage from './pages/financeiro/DistribuicaoLucrosPage';
+import FluxoCaixaPage from './pages/financeiro/FluxoCaixaPage';
 import ReceitaCaixaPage from './pages/relatorios/ReceitaCaixaPage';
 import ImpostoPagoPage from './pages/financeiro/ImpostoPagoPage';
 import { AppLayout } from './layouts/AppLayout';
@@ -168,6 +169,12 @@ export const App: React.FC = () => {
             <Route path="/financeiro/faturas" element={
               <ProtectedRoute requiredFeature={Feature.RELATORIO_FINANCEIRO_VIEW}>
                 <FaturasPage />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/financeiro/fluxo-caixa" element={
+              <ProtectedRoute requiredFeature={Feature.RELATORIO_FINANCEIRO_VIEW}>
+                <FluxoCaixaPage />
               </ProtectedRoute>
             } />
 

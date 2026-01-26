@@ -24,11 +24,23 @@ export const useComissao = (ano: number, mes: number) => {
         query.refetch();
     }, [query.refetch]);
 
+    const forceSync = useCallback(async () => {
+        try {
+            await comissaoService.obterComissaoMensal(ano, mes, true);
+            queryClient.invalidateQueries({
+                queryKey: ['comissao', ano, mes],
+            });
+        } catch (error) {
+            console.error('Erro ao forçar sincronização:', error);
+        }
+    }, [queryClient, ano, mes]);
+
     return {
         comissao: query.data,
         isLoading: query.isLoading,
         error: query.error ? 'Erro ao buscar comissão' : null,
         refetch: refetchComissao,
         invalidate: invalidateComissao,
+        forceSync,
     };
 };

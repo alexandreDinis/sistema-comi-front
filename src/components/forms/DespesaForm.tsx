@@ -9,7 +9,7 @@ export const DespesaForm: React.FC = () => {
     const [values, setValues] = useState<DespesaRequest>({
         dataDespesa: new Date().toISOString().split('T')[0],
         valor: '' as any,
-        categoria: 'ALIMENTACAO',
+        categoria: 'BENEFICIOS',
         descricao: '',
         pagoAgora: false, // Default: A Prazo
         meioPagamento: '',
@@ -32,7 +32,7 @@ export const DespesaForm: React.FC = () => {
             setValues({
                 dataDespesa: new Date().toISOString().split('T')[0],
                 valor: '' as any,
-                categoria: 'ALIMENTACAO',
+                categoria: 'BENEFICIOS',
                 descricao: '',
                 pagoAgora: false,
                 meioPagamento: '',
@@ -233,35 +233,38 @@ export const DespesaForm: React.FC = () => {
                             style={{ colorScheme: 'dark' }}
                             required
                         >
-                            <optgroup label="── OPERACIONAL ──">
-                                <option value="ALIMENTACAO">🍽️ ALIMENTAÇÃO</option>
-                                <option value="COMBUSTIVEL">⛽ COMBUSTÍVEL</option>
-                                <option value="FERRAMENTAS">🔧 FERRAMENTAS</option>
-                                <option value="MATERIAL_ESCRITORIO">📎 MATERIAL DE ESCRITÓRIO</option>
-                            </optgroup>
-                            <optgroup label="── INFRAESTRUTURA ──">
-                                <option value="ALUGUEL">🏠 ALUGUEL</option>
-                                <option value="ENERGIA_AGUA">💡 ENERGIA/ÁGUA</option>
-                                <option value="INTERNET_TELEFONE">📡 INTERNET/TELEFONE</option>
-                                <option value="MANUTENCAO">🔩 MANUTENÇÃO</option>
+                            <optgroup label="── SERVIÇOS PRESTADOS ──">
+                                <option value="MATERIAIS_APLICADOS">🔩 MATERIAIS APLICADOS</option>
+                                <option value="SERVICOS_TERCEIROS">👥 SERVIÇOS DE TERCEIROS</option>
                             </optgroup>
                             <optgroup label="── PESSOAL ──">
                                 <option value="SALARIOS">💰 SALÁRIOS</option>
                                 <option value="PROLABORE">👔 PRÓ-LABORE</option>
+                                <option value="COMISSOES">🤝 COMISSÕES</option>
                                 <option value="BENEFICIOS">🎁 BENEFÍCIOS</option>
+                                <option value="ADIANTAMENTOS">💸 ADIANTAMENTOS</option>
                             </optgroup>
-                            <optgroup label="── MARKETING/VENDAS ──">
+                            <optgroup label="── ADMINISTRATIVO ──">
+                                <option value="OCUPACAO">🏠 OCUPAÇÃO (ALUGUEL)</option>
+                                <option value="UTILIDADES">💡 UTILIDADES (LUZ/ÁGUA)</option>
+                                <option value="MANUTENCAO_PREDIAL">🔨 MANUTENÇÃO PREDIAL</option>
+                                <option value="MATERIAL_USO_CONSUMO">📎 MATERIAL DE USO E CONSUMO</option>
+                                <option value="SERVICOS_PROFISSIONAIS">⚖️ SERVIÇOS PROFISSIONAIS</option>
+                            </optgroup>
+                            <optgroup label="── COMERCIAL ──">
                                 <option value="MARKETING">📢 MARKETING</option>
-                                <option value="TAXAS_BANCARIAS">🏦 TAXAS BANCÁRIAS</option>
+                                <option value="VIAGENS_REPRESENTACAO">✈️ VIAGENS</option>
+                                <option value="COMBUSTIVEL">⛽ COMBUSTÍVEL</option>
                             </optgroup>
-                            <optgroup label="── FISCAL ──">
-                                <option value="IMPOSTOS">📋 IMPOSTOS</option>
-                                <option value="CONTABILIDADE">📊 CONTABILIDADE</option>
+                            <optgroup label="── FINANCEIRO ──">
+                                <option value="TARIFAS_BANCARIAS">🏦 TARIFAS BANCÁRIAS</option>
+                                <option value="JUROS_PASSIVOS">📉 JUROS PASSIVOS</option>
                             </optgroup>
-                            <optgroup label="── TERCEIROS ──">
-                                <option value="SERVICOS_TERCEIROS">👥 SERVIÇOS DE TERCEIROS</option>
+                            <optgroup label="── TRIBUTÁRIO ──">
+                                <option value="IMPOSTOS_SOBRE_VENDA">📋 IMPOSTOS SOBRE VENDA</option>
+                                <option value="TAXAS_DIVERSAS">🎫 TAXAS DIVERSAS</option>
                             </optgroup>
-                            <optgroup label="── GENÉRICO ──">
+                            <optgroup label="── OUTROS ──">
                                 <option value="DIVERSOS">📦 DIVERSOS</option>
                                 <option value="OUTROS">❓ OUTROS</option>
                             </optgroup>
@@ -315,7 +318,8 @@ export const DespesaForm: React.FC = () => {
                             name="meioPagamento"
                             value={values.meioPagamento || ''}
                             onChange={handleChange}
-                            className="w-full bg-black/40 border border-cyber-gold/10 text-cyber-gold text-xs font-mono p-3 outline-none focus:border-cyber-gold transition-all appearance-none cursor-pointer"
+                            className="w-full bg-black border border-cyber-gold/30 text-cyber-gold text-sm font-mono p-3 outline-none focus:border-cyber-gold transition-all appearance-none cursor-pointer"
+                            style={{ colorScheme: 'dark' }}
                             required={values.pagoAgora}
                         >
                             <option value="">SELECIONE...</option>

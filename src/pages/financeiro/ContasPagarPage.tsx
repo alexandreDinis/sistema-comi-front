@@ -103,6 +103,23 @@ const ContasPagarPage = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 bg-black/80 border border-cyber-gold/50 px-2 py-1 rounded">
+                        <select
+                            value={new Date().getMonth() + 1}
+                            onChange={(e) => {
+                                const mes = parseInt(e.target.value);
+                                const ano = new Date().getFullYear(); // Simplification: Current Year
+                                financeiroService.downloadContasPagarPdf(mes, ano);
+                            }}
+                            className="bg-transparent text-cyber-gold font-mono text-xs focus:outline-none"
+                        >
+                            <option value="" disabled selected>PDF MENSAL</option>
+                            {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                                <option key={m} value={m}>{new Date(0, m - 1).toLocaleDateString('pt-BR', { month: 'long' }).toUpperCase()}</option>
+                            ))}
+                        </select>
+                    </div>
+
                     <span className="hud-label">FILTRO:</span>
                     <select
                         value={filtroStatus}

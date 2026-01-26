@@ -39,7 +39,15 @@ export interface ComissaoCalculada {
     dataQuitacao?: string; // NOVO: Data do pagamento
 }
 
-export type CategoriaDespesa = 'ALIMENTACAO' | 'COMBUSTIVEL' | 'FERRAMENTAS' | 'MARKETING' | 'INFRAESTRUTURA' | 'PROLABORE' | 'DIVERSOS' | 'OUTROS';
+// DRE Categories (Standardized)
+export type CategoriaDespesa =
+    | 'MATERIAIS_APLICADOS' | 'SERVICOS_TERCEIROS'
+    | 'SALARIOS' | 'PROLABORE' | 'COMISSOES' | 'BENEFICIOS' | 'ENCARGOS_SOCIAIS' | 'ADIANTAMENTOS'
+    | 'OCUPACAO' | 'UTILIDADES' | 'MANUTENCAO_PREDIAL' | 'MATERIAL_USO_CONSUMO' | 'SERVICOS_PROFISSIONAIS' | 'DIVERSOS'
+    | 'MARKETING' | 'VIAGENS_REPRESENTACAO' | 'COMBUSTIVEL'
+    | 'TARIFAS_BANCARIAS' | 'JUROS_PASSIVOS'
+    | 'IMPOSTOS_SOBRE_VENDA' | 'TAXAS_DIVERSAS'
+    | 'OUTROS';
 
 export interface Despesa {
     id: number;
@@ -424,7 +432,17 @@ export interface RankingCliente {
 
 export type StatusConta = 'PENDENTE' | 'PAGO' | 'CANCELADO';
 export type MeioPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'BOLETO' | 'TRANSFERENCIA' | 'CHEQUE';
-export type TipoContaPagar = 'DESPESA_OPERACIONAL' | 'COMISSAO_FUNCIONARIO' | 'ADIANTAMENTO' | 'SALARIO' | 'FORNECEDOR' | 'IMPOSTO' | 'IMPOSTO_PAGO' | 'DISTRIBUICAO_LUCROS' | 'FATURA_CARTAO' | 'OUTROS';
+
+// Updated TipoContaPagar (Cash Flow Standard)
+export type TipoContaPagar =
+    | 'OPERACIONAL'
+    | 'FOLHA_PAGAMENTO'
+    | 'IMPOSTOS'
+    | 'EMPRESTIMOS'
+    | 'DISTRIBUICAO_LUCROS'
+    | 'FATURA_CARTAO'
+    | 'OUTROS';
+
 export type TipoContaReceber = 'ORDEM_SERVICO' | 'VENDA_DIRETA' | 'OUTROS';
 
 export interface ContaPagar {

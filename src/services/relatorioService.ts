@@ -13,19 +13,13 @@ export const relatorioService = {
     },
 
     downloadRelatorioAnualPdf: async (ano: number): Promise<void> => {
-        const response = await api.get(`relatorios/anual/${ano}/pdf`, {
-            responseType: 'blob',
-        });
-
-        // Create download link
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `relatorio-anual-${ano}.pdf`);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.URL.revokeObjectURL(url);
+        const userStr = localStorage.getItem('user');
+        const token = userStr ? JSON.parse(userStr).token : null;
+        console.log('[RelatorioService] User string found:', !!userStr);
+        console.log('[RelatorioService] Token parsed:', token ? token.substring(0, 10) + '...' : 'NULL');
+        const url = `${api.defaults.baseURL}relatorios/anual/${ano}/pdf?token=${token}`;
+        console.log('[RelatorioService] Opening URL:', url);
+        window.open(url, '_blank');
     },
 
     getRankingClientes: async (ano: number, mes?: number): Promise<import('../types').RankingCliente[]> => {

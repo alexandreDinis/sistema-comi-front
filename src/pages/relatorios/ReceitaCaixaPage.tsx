@@ -66,6 +66,13 @@ export const ReceitaCaixaPage: React.FC = () => {
                         Relatório de recebimentos para cálculo do Simples Nacional
                     </p>
                 </div>
+                <button
+                    onClick={() => financeiroService.downloadReceitaCaixaPdf(mes, ano)}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded font-bold transition-colors text-sm"
+                >
+                    <FileText className="w-4 h-4" />
+                    EXPORTAR PDF (DAS)
+                </button>
             </header>
 
             {/* Info Alert */}

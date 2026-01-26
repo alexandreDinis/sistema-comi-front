@@ -131,43 +131,24 @@ export const osService = {
     },
 
     // --- PDF ---
+    // --- PDF ---
     downloadRelatorioPdf: async (ano: number, mes: number) => {
-        const response = await api.get(`relatorios/${ano}/${mes}/pdf`, {
-            responseType: 'blob'
-        });
-        // Create a blob URL and trigger download
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `relatorio-${ano}-${mes}.pdf`);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+        const userStr = localStorage.getItem('user');
+        const token = userStr ? JSON.parse(userStr).token : null;
+        console.log('[OSService] User string found:', !!userStr);
+        console.log('[OSService] Token parsed:', token ? token.substring(0, 10) + '...' : 'NULL');
+        const url = `${api.defaults.baseURL}relatorios/${ano}/${mes}/pdf?token=${token}`;
+        console.log('[OSService] Opening URL:', url);
+        window.open(url, '_blank');
     },
 
     downloadOSPdf: async (osId: number) => {
-        const response = await api.get(`/ordens-servico/${osId}/pdf`, {
-            responseType: 'blob'
-        });
-
-        // Try to get filename from header
-        let filename = `OS-${osId}.pdf`;
-        const disposition = response.headers['content-disposition'];
-
-        if (disposition && disposition.indexOf('filename=') !== -1) {
-            const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
-            if (matches != null && matches[1]) {
-                filename = matches[1].replace(/['"]/g, '');
-            }
-        }
-
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', filename);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.URL.revokeObjectURL(url);
+        const userStr = localStorage.getItem('user');
+        const token = userStr ? JSON.parse(userStr).token : null;
+        console.log('[OSService] User string found:', !!userStr);
+        console.log('[OSService] Token parsed:', token ? token.substring(0, 10) + '...' : 'NULL');
+        const url = `${api.defaults.baseURL}ordens-servico/${osId}/pdf?token=${token}`;
+        console.log('[OSService] Opening URL:', url);
+        window.open(url, '_blank');
     }
 };

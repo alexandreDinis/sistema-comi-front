@@ -182,19 +182,21 @@ export const OSDetailsPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['ordem-servico', osId] });
 
             // ✅ Sync System: Update lists and financial data with delay to ensure backend commit
-            // Using setTimeout to allow backend transaction propagation
             setTimeout(() => {
                 console.log('🔄 [SYNC] Hard Resetting system caches...');
 
-                // Resetting queries clears the cache and forces a hard loading state on next fetch
-                // This is more aggressive than invalidation
                 queryClient.invalidateQueries({ queryKey: ['ordens-servico'] });
+
+                // Invalidate Financial Reports to show new revenue immediately
+                queryClient.invalidateQueries({ queryKey: ['relatorio'] });
+                queryClient.invalidateQueries({ queryKey: ['financeiro'] });
+                queryClient.invalidateQueries({ queryKey: ['faturamentos'] });
 
                 queryClient.resetQueries({
                     queryKey: ['comissao'],
-                    exact: false // Reset all commission related queries (any month/year)
+                    exact: false
                 });
-            }, 1500);
+            }, 1000); // Reduced delay slightly to 1s
             setIsFinalizeModalOpen(false);
         }
     });

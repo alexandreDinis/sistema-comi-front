@@ -2,8 +2,10 @@ import api from './api';
 import type { ComissaoCalculada, ComparacaoFaturamentoDTO } from '../types';
 
 export const comissaoService = {
-    async obterComissaoMensal(ano: number, mes: number): Promise<ComissaoCalculada> {
-        const response = await api.get<ComissaoCalculada>(`comissao/${ano}/${mes}`);
+    async obterComissaoMensal(ano: number, mes: number, force: boolean = false): Promise<ComissaoCalculada> {
+        const response = await api.get<ComissaoCalculada>(`comissao/${ano}/${mes}`, {
+            params: { force }
+        });
         return response.data;
     },
 

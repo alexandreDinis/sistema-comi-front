@@ -35,6 +35,17 @@ export const DistribuicaoLucrosPage: React.FC = () => {
         }
     });
 
+    const payMutation = useMutation({
+        mutationFn: (id: number) => financeiroService.pagarConta(id, {
+            dataPagamento: new Date().toISOString().split('T')[0],
+            meioPagamento: 'PIX' // Default to PIX for distributions
+        }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['distribuicoes-lucro'] });
+            queryClient.invalidateQueries({ queryKey: ['contas-pagar'] });
+        }
+    });
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         createMutation.mutate({
@@ -66,13 +77,31 @@ export const DistribuicaoLucrosPage: React.FC = () => {
                         Registre retiradas de lucros (dividendos) pelos sócios
                     </p>
                 </div>
-                <button
-                    onClick={() => setShowForm(!showForm)}
-                    className="flex items-center gap-2 px-4 py-2 bg-cyber-gold text-black font-bold rounded-sm hover:bg-cyber-gold/90 transition-colors"
-                >
-                    <Plus className="w-4 h-4" />
-                    Nova Retirada
-                </button>
+                <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 bg-black/80 border border-cyber-gold/50 px-2 py-1 rounded">
+                        <select
+                            value={new Date().getMonth() + 1}
+                            onChange={(e) => {
+                                const mes = parseInt(e.target.value);
+                                const ano = new Date().getFullYear();
+                                financeiroService.downloadDistribuicaoLucrosPdf(mes, ano);
+                            }}
+                            className="bg-transparent text-cyber-gold font-mono text-xs focus:outline-none"
+                        >
+                            <option value="" disabled selected>PDF MENSAL</option>
+                            {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                                <option key={m} value={m}>{new Date(0, m - 1).toLocaleDateString('pt-BR', { month: 'long' }).toUpperCase()}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <button
+                        onClick={() => setShowForm(!showForm)}
+                        className="flex items-center gap-2 px-4 py-2 bg-cyber-gold text-black font-bold rounded-sm hover:bg-cyber-gold/90 transition-colors"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Nova Retirada
+                    </button>
+                </div>
             </div>
 
             {/* Info Alert */}
@@ -195,11 +224,25 @@ export const DistribuicaoLucrosPage: React.FC = () => {
                                 <div className="text-right">
                                     <p className="text-lg font-bold text-cyber-gold">{formatCurrency(dist.valor)}</p>
                                     <span className={`text-xs px-2 py-0.5 rounded-sm ${dist.status === 'PAGO'
-                                            ? 'bg-green-900/30 text-green-400'
-                                            : 'bg-yellow-900/30 text-yellow-400'
+                                        ? 'bg-green-900/30 text-green-400'
+                                        : 'bg-yellow-900/30 text-yellow-400'
                                         }`}>
                                         {dist.status === 'PAGO' ? 'Pago' : 'Pendente'}
                                     </span>
+                                    {dist.status !== 'PAGO' && (
+                                        <button
+                                            onClick={() => {
+                                                if (window.confirm('Confirmar pagamento desta distribuição?')) {
+                                                    payMutation.mutate(dist.id);
+                                                }
+                                            }}
+                                            disabled={payMutation.isPending}
+                                            className="ml-2 p-1 bg-green-900/40 text-green-400 rounded hover:bg-green-900/60"
+                                            title="Marcar como Pago"
+                                        >
+                                            <DollarSign className="w-3 h-3" />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))}

@@ -154,8 +154,18 @@ const FinanceiroDashboard = () => {
                                 FLUXO DE CAIXA
                             </h2>
                         </div>
-                        <span className="hud-tag">{fluxoCaixa.periodo}</span>
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => financeiroService.downloadFluxoCaixaPdf(mesAtual, anoAtual)}
+                                className="text-xs text-cyber-gold/60 hover:text-cyber-gold font-mono uppercase tracking-wider flex items-center gap-2 border border-cyber-gold/20 px-3 py-1 hover:bg-cyber-gold/10 transition-colors"
+                            >
+                                <span className="w-1.5 h-1.5 bg-cyber-gold rounded-full"></span>
+                                Exportar PDF
+                            </button>
+                            <span className="hud-tag">{fluxoCaixa.periodo}</span>
+                        </div>
                     </div>
+
 
                     <div className="grid grid-cols-3 gap-8">
                         <div className="text-center">
@@ -179,7 +189,8 @@ const FinanceiroDashboard = () => {
                         </div>
                     </div>
                 </section>
-            )}
+            )
+            }
 
             {/* Grid de Listas */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -257,7 +268,7 @@ const FinanceiroDashboard = () => {
                     )}
                 </section>
             </div>
-        </div>
+        </div >
     );
 };
 

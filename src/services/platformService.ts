@@ -38,6 +38,13 @@ export interface PlanSummary {
     features?: string[];
 }
 
+export interface TenantUpdateRequest {
+    nome: string;
+    cnpj: string;
+    plano: string;
+    adminEmail?: string;
+}
+
 export const platformService = {
     // GET /api/v1/platform/stats
     getStats: async (): Promise<PlatformStats> => {
@@ -54,6 +61,12 @@ export const platformService = {
     // POST /api/v1/platform/tenants
     createTenant: async (data: TenantCreateRequest): Promise<TenantSummary> => {
         const response = await api.post<TenantSummary>(`${BASE_URL}/tenants`, data);
+        return response.data;
+    },
+
+    // PUT /api/v1/platform/tenants/{id}
+    updateTenant: async (id: number, data: TenantUpdateRequest): Promise<TenantSummary> => {
+        const response = await api.put<TenantSummary>(`${BASE_URL}/tenants/${id}`, data);
         return response.data;
     },
 

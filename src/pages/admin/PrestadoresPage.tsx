@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { prestadorService } from '../../services/prestadorService';
 import type { Prestador, PrestadorRequest } from '../../types';
 import { Users, Plus, Phone, QrCode, Trash2, Edit, X, Save } from 'lucide-react';
 
 export default function PrestadoresPage() {
-    const [prestadores, setPrestadores] = useState<Prestador[]>([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
     const [showModal, setShowModal] = useState(false);
     const [editando, setEditando] = useState<Prestador | null>(null);
     const [mostrarInativos, setMostrarInativos] = useState(false);
@@ -15,21 +15,40 @@ export default function PrestadoresPage() {
     const [telefone, setTelefone] = useState('');
     const [chavePix, setChavePix] = useState('');
 
-    useEffect(() => {
-        carregarPrestadores();
-    }, [mostrarInativos]);
+    // Query
+    const { data: prestadores = [], isLoading } = useQuery({
+        queryKey: ['prestadores', mostrarInativos],
+        queryFn: () => prestadorService.listar(!mostrarInativos),
+    });
 
-    const carregarPrestadores = async () => {
-        try {
-            setLoading(true);
-            const data = await prestadorService.listar(!mostrarInativos);
-            setPrestadores(data);
-        } catch (error) {
-            console.error('Erro ao carregar prestadores:', error);
-        } finally {
-            setLoading(false);
+    // Mutations
+    const saveMutation = useMutation({
+        mutationFn: async (data: PrestadorRequest) => {
+            if (editando) {
+                return prestadorService.atualizar(editando.id, data);
+            } else {
+                return prestadorService.criar(data);
+            }
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['prestadores'] });
+            fecharModal();
+        },
+        onError: (error) => {
+            console.error('Erro ao salvar prestador:', error);
+            alert('Erro ao salvar prestador.');
         }
-    };
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: prestadorService.desativar,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['prestadores'] });
+        },
+        onError: (error) => {
+            console.error('Erro ao desativar:', error);
+        }
+    });
 
     const abrirModal = (prestador?: Prestador) => {
         if (prestador) {
@@ -63,27 +82,12 @@ export default function PrestadoresPage() {
             chavePix: chavePix.trim() || undefined,
         };
 
-        try {
-            if (editando) {
-                await prestadorService.atualizar(editando.id, data);
-            } else {
-                await prestadorService.criar(data);
-            }
-            fecharModal();
-            carregarPrestadores();
-        } catch (error) {
-            console.error('Erro ao salvar prestador:', error);
-        }
+        saveMutation.mutate(data);
     };
 
     const desativar = async (id: number) => {
         if (!confirm('Deseja desativar este prestador?')) return;
-        try {
-            await prestadorService.desativar(id);
-            carregarPrestadores();
-        } catch (error) {
-            console.error('Erro ao desativar prestador:', error);
-        }
+        deleteMutation.mutate(id);
     };
 
     return (
@@ -118,7 +122,7 @@ export default function PrestadoresPage() {
             </label>
 
             {/* Lista */}
-            {loading ? (
+            {isLoading ? (
                 <div className="text-cyber-gold animate-pulse">Carregando...</div>
             ) : prestadores.length === 0 ? (
                 <div className="text-gray-500 text-center py-12">
@@ -225,11 +229,11 @@ export default function PrestadoresPage() {
 
                             <button
                                 onClick={salvar}
-                                disabled={!nome.trim()}
+                                disabled={!nome.trim() || saveMutation.isPending}
                                 className="w-full flex items-center justify-center gap-2 bg-cyber-gold text-black font-bold py-2 rounded hover:bg-yellow-400 disabled:opacity-50"
                             >
                                 <Save className="w-5 h-5" />
-                                {editando ? 'Salvar Alterações' : 'Cadastrar'}
+                                {saveMutation.isPending ? 'Salvando...' : (editando ? 'Salvar Alterações' : 'Cadastrar')}
                             </button>
                         </div>
                     </div>

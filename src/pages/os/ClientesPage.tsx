@@ -59,7 +59,6 @@ export const ClientesPage: React.FC = () => {
         bairro: '',
         cidade: '',
         estado: '',
-        estado: '',
         cep: '',
         tipoPessoa: 'JURIDICA',
         cpf: ''
@@ -197,13 +196,12 @@ export const ClientesPage: React.FC = () => {
         // FIX: Mapping logradouro to endereco to satisfy backend requirement
         const cleanData = {
             ...formData,
-            cnpj: formData.cnpj.replace(/\D/g, ''),
             contato: formData.contato.replace(/\D/g, ''),
             cep: formData.cep.replace(/\D/g, ''),
             endereco: formData.logradouro,
             tipoPessoa: formData.tipoPessoa || 'JURIDICA',
             cpf: formData.tipoPessoa === 'FISICA' ? (formData.cpf || '').replace(/\D/g, '') : undefined,
-            cnpj: formData.tipoPessoa === 'JURIDICA' ? formData.cnpj.replace(/\D/g, '') : undefined
+            cnpj: formData.tipoPessoa === 'JURIDICA' ? (formData.cnpj || '').replace(/\D/g, '') : undefined
         };
 
         if (editingId) {

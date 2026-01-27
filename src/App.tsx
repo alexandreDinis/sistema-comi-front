@@ -23,6 +23,9 @@ import { MinhaComissaoPage } from './pages/MinhaComissaoPage';
 import { PlatformDashboard } from './pages/platform/PlatformDashboard';
 import { PlatformTenants } from './pages/platform/PlatformTenants';
 import { PlatformPlans } from './pages/platform/PlatformPlans';
+import { PlatformLicensePlans } from './pages/platform/PlatformLicensePlans';
+import { PlatformResellers } from './pages/platform/PlatformResellers';
+import { PlatformOwnerDashboard } from './pages/platform/PlatformOwnerDashboard';
 // import { ChangePasswordPage } from './pages/auth/ChangePasswordPage'; // Moved down
 import { CompanySettings } from './pages/settings/CompanySettings';
 import { TeamSettings } from './pages/settings/TeamSettings';
@@ -69,7 +72,9 @@ export const App: React.FC = () => {
             <Route path="dashboard" element={<PlatformDashboard />} />
             <Route path="tenants" element={<PlatformTenants />} />
             <Route path="plans" element={<PlatformPlans />} />
-            {/* TODO: Add 'companies' and 'plans' routes here as we build them */}
+            <Route path="license-plans" element={<PlatformLicensePlans />} />
+            <Route path="resellers" element={<PlatformResellers />} />
+            <Route path="owner" element={<PlatformOwnerDashboard />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 

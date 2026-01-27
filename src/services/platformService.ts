@@ -80,5 +80,63 @@ export const platformService = {
     toggleBlockTenant: async (id: number): Promise<TenantSummary> => {
         const response = await api.put<TenantSummary>(`${BASE_URL}/tenants/${id}/toggle-status`);
         return response.data;
+    },
+
+    // ========================================
+    // OWNER DASHBOARD — Per-Reseller Stats
+    // ========================================
+
+    // GET /api/v1/platform/licencas
+    listLicencas: async (): Promise<LicencaSummary[]> => {
+        const response = await api.get<LicencaSummary[]>(`${BASE_URL}/licencas`);
+        return response.data;
+    },
+
+    // GET /api/v1/platform/licencas/{id}/stats
+    getLicencaStats: async (id: number): Promise<LicencaStats> => {
+        const response = await api.get<LicencaStats>(`${BASE_URL}/licencas/${id}/stats`);
+        return response.data;
+    },
+
+    // POST /api/v1/platform/licencas/{id}/rescindir
+    rescindirLicenca: async (id: number): Promise<void> => {
+        await api.post(`${BASE_URL}/licencas/${id}/rescindir`);
+    },
+
+    // GET /api/v1/platform/tenants/orphans
+    listOrphanTenants: async (): Promise<TenantSummary[]> => {
+        const response = await api.get<TenantSummary[]>(`${BASE_URL}/tenants/orphans`);
+        return response.data;
+    },
+
+    // POST /api/v1/platform/tenants/{id}/reassign
+    reassignTenant: async (tenantId: number, licencaId: number): Promise<TenantSummary> => {
+        const response = await api.post<TenantSummary>(`${BASE_URL}/tenants/${tenantId}/reassign?licencaId=${licencaId}`);
+        return response.data;
     }
 };
+
+// Additional types for Owner Dashboard
+export interface LicencaSummary {
+    id: number;
+    razaoSocial: string;
+    nomeFantasia?: string;
+    cnpj: string;
+    email: string;
+    status: 'ATIVA' | 'SUSPENSA' | 'CANCELADA';
+    planoTipo?: string;
+}
+
+export interface LicencaStats {
+    licencaId: number;
+    razaoSocial: string;
+    nomeFantasia?: string;
+    status: string;
+    totalTenants: number;
+    tenantsAtivos: number;
+    tenantsBloqueados: number;
+    receitaTotalTenants: number;
+    receitaRevendedor: number;
+    receitaOwner: number;
+    crescimentoMensal: number;
+}

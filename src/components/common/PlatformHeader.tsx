@@ -49,6 +49,24 @@ export const PlatformHeader: React.FC = () => {
                             icon={Layers}
                             active={isActive('/platform/plans')}
                         />
+                        <NavItem
+                            to="/platform/license-plans"
+                            label="Planos WL"
+                            icon={Layers}
+                            active={isActive('/platform/license-plans')}
+                        />
+                        <NavItem
+                            to="/platform/resellers"
+                            label="Revendedores"
+                            icon={Building2}
+                            active={isActive('/platform/resellers')}
+                        />
+                        <NavItem
+                            to="/platform/owner"
+                            label="Owner View"
+                            icon={LayoutDashboard}
+                            active={isActive('/platform/owner')}
+                        />
                     </nav>
 
                     {/* User Profile / Logout */}

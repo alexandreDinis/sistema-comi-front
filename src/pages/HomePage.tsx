@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { usePermission } from '../../hooks/usePermission';
+import { usePermission } from '../hooks/usePermission';
 import { OperationalDashboard } from '../components/dashboard/OperationalDashboard';
 
 export const HomePage: React.FC = () => {

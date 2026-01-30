@@ -4,11 +4,12 @@ import { userService } from './userService';
 import { queryClient } from '../lib/react-query';
 
 // Usamos a URL base definida no api.ts mas acessamos o endpoint de auth especificamente
-const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1/').replace(/\/?$/, '/') + 'auth';
+// Usamos a URL base definida no api.ts
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1/').replace(/\/?$/, '');
 
 export const authService = {
     login: async (credentials: LoginRequest): Promise<UserResponse> => {
-        const response = await axios.post<UserResponse>(`${API_URL}/login`, credentials);
+        const response = await axios.post<UserResponse>(`${API_URL}/auth/login`, credentials);
 
         if (response.data.token) {
             // 1. Salva temporariamente apenas com token para o interceptor funcionar
@@ -39,7 +40,7 @@ export const authService = {
     },
 
     register: async (data: RegisterRequest): Promise<UserResponse> => {
-        const response = await axios.post<UserResponse>(`${API_URL}/register`, data);
+        const response = await axios.post<UserResponse>(`${API_URL}/auth/register`, data);
         if (response.data.token) {
             localStorage.setItem('user', JSON.stringify(response.data));
         }

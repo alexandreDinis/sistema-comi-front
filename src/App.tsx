@@ -26,6 +26,7 @@ import { PlatformPlans } from './pages/platform/PlatformPlans';
 import { PlatformLicensePlans } from './pages/platform/PlatformLicensePlans';
 import { PlatformResellers } from './pages/platform/PlatformResellers';
 import { PlatformOwnerDashboard } from './pages/platform/PlatformOwnerDashboard';
+import { PlatformChangePasswordPage } from './pages/platform/PlatformChangePasswordPage';
 // import { ChangePasswordPage } from './pages/auth/ChangePasswordPage'; // Moved down
 import { CompanySettings } from './pages/settings/CompanySettings';
 import { TeamSettings } from './pages/settings/TeamSettings';
@@ -75,6 +76,7 @@ export const App: React.FC = () => {
             <Route path="license-plans" element={<PlatformLicensePlans />} />
             <Route path="resellers" element={<PlatformResellers />} />
             <Route path="owner" element={<PlatformOwnerDashboard />} />
+            <Route path="change-password" element={<PlatformChangePasswordPage />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 

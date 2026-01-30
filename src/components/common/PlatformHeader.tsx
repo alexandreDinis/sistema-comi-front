@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, LayoutDashboard, Building2, Layers } from 'lucide-react';
+import { LogOut, LayoutDashboard, Building2, Layers, Lock } from 'lucide-react';
 import { authService } from '../../services/authService';
 
 export const PlatformHeader: React.FC = () => {
@@ -76,6 +76,13 @@ export const PlatformHeader: React.FC = () => {
                             <div className="text-sm font-medium text-slate-200">root@oroboros.dev</div>
                         </div>
                         <div className="h-8 w-px bg-slate-700 mx-2"></div>
+                        <Link
+                            to="/platform/change-password"
+                            className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-900/10 rounded-full transition-colors"
+                            title="Alterar Senha"
+                        >
+                            <Lock size={18} />
+                        </Link>
                         <button
                             onClick={handleLogout}
                             className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-900/10 rounded-full transition-colors"

@@ -121,12 +121,13 @@ export const osService = {
     },
 
     updateDiscount: async (id: number, tipoDesconto: 'PERCENTUAL' | 'VALOR_FIXO' | null, valorDesconto: number): Promise<OrdemServico> => {
-        // Using PATCH to update only discount fields
-        // Backend must support this partial update on the main resource or a specific endpoint
-        // Assuming PATCH /ordens-servico/{id} accepts these fields as per standard REST/Spring Data usage
-        // If not, we might need a specific endpoint like /ordens-servico/{id}/desconto
         const payload = { tipoDesconto, valorDesconto };
         const response = await api.patch<OrdemServico>(`/ordens-servico/${id}`, payload);
+        return response.data;
+    },
+
+    updateOS: async (id: number, data: any): Promise<OrdemServico> => {
+        const response = await api.patch<OrdemServico>(`/ordens-servico/${id}`, data);
         return response.data;
     },
 

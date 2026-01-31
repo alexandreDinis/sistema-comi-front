@@ -37,9 +37,11 @@ export const ComissaoRulesPage: React.FC = () => {
     // Mutations
     const createMutation = useMutation({
         mutationFn: (data: RegraComissaoRequest) => regraComissaoService.createRegra(empresaId, data),
-        onSuccess: () => {
+        onSuccess: (newItem) => {
             queryClient.invalidateQueries({ queryKey: ['regras-comissao', empresaId] });
             setIsFormOpen(false);
+            // ⚡ Auto-prompt to activate the newly created rule
+            setConfirmAction({ type: 'ativar', regra: newItem });
         }
     });
 

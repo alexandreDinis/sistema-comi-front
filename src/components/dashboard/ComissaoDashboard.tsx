@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useComissao } from '../../hooks/useComissao';
+import { usePermission } from '../../hooks/usePermission';
 import { ComissaoCard } from './ComissaoCard';
 
 export const ComissaoDashboard: React.FC = () => {
@@ -7,7 +8,13 @@ export const ComissaoDashboard: React.FC = () => {
     const [ano, setAno] = useState(today.getFullYear());
     const [mes, setMes] = useState(today.getMonth() + 1);
 
-    const { comissao, isLoading, error, forceSync } = useComissao(ano, mes);
+    const { user } = usePermission();
+    // Default to true if undefined (legacy users), only strictly false disables it
+    const participaComissao = user?.participaComissao !== false;
+
+    const { comissao, isLoading, error, forceSync } = useComissao(ano, mes, {
+        enabled: participaComissao
+    });
 
     const handlePreviousMonth = () => {
         if (mes === 1) {
@@ -70,8 +77,8 @@ export const ComissaoDashboard: React.FC = () => {
 
                     <button
                         onClick={handleRefresh}
-                        disabled={isLoading}
-                        className="hud-button text-xs flex items-center gap-3"
+                        disabled={isLoading || !participaComissao}
+                        className="hud-button text-xs flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isLoading ? (
                             <><span className="animate-spin text-lg">⚙</span> SINCRONIZANDO...</>
@@ -82,18 +89,35 @@ export const ComissaoDashboard: React.FC = () => {
                 </div>
             </div>
 
-            {error && (
+            {!participaComissao || (error as any)?.response?.status === 400 ? (
+                <div className="hud-card top-brackets bottom-brackets p-16 text-center group bg-black/40 border border-slate-800">
+                    <div className="static-overlay opacity-5"></div>
+                    <div className="mb-6 flex justify-center">
+                        <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
+                            <span className="text-3xl grayscale opacity-50">🛡️</span>
+                        </div>
+                    </div>
+                    <h2 className="text-xl font-bold text-slate-200 tracking-wider mb-2">
+                        Módulo de Comissão Não Habilitado
+                    </h2>
+                    <p className="text-slate-500 font-mono text-xs max-w-lg mx-auto leading-relaxed uppercase tracking-wide">
+                        Seu perfil administrativo está configurado apenas para gestão (Salário Fixo / Pro-labore) e não participa do cálculo automático de comissões sobre vendas.
+                    </p>
+                    <div className="w-12 h-px bg-cyber-gold/20 mx-auto my-6"></div>
+                    <p className="text-[10px] text-slate-600 uppercase">
+                        STATUS: OPERACIONAL • SEM_COMISSIONAMENTO
+                    </p>
+                </div>
+            ) : error ? (
                 <div className="border border-cyber-error bg-cyber-error/5 p-6 text-cyber-error text-xs font-mono relative overflow-hidden hud-card bottom-brackets">
                     <div className="static-overlay opacity-10"></div>
                     <p className="font-black uppercase mb-2 flex items-center gap-2">
                         <span className="w-2 h-2 bg-cyber-error rounded-full animate-ping"></span>
                         Exceção_Crítica_Detectada
                     </p>
-                    <p className="opacity-80">STDOUT: {error}</p>
+                    <p className="opacity-80">STDOUT: {(error as any)?.message || 'Erro desconhecido'}</p>
                 </div>
-            )}
-
-            {isLoading ? (
+            ) : isLoading ? (
                 <div className="flex flex-col items-center justify-center py-32 gap-6">
                     <div className="w-64 h-1 bg-cyber-gold/5 relative overflow-hidden border border-cyber-gold/10">
                         <div className="absolute top-0 left-0 h-full bg-cyber-gold w-1/4 animate-[loading_2s_infinite_linear] shadow-[0_0_15px_var(--color-cyber-gold)]"></div>

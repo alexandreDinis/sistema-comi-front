@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, FlatList, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { ChevronLeft, Search, User, Car, Calendar, CheckCircle, X } from 'lucide-react-native';
+import { Picker } from '@react-native-picker/picker';
 import { osService } from '../services/osService';
+import { userService } from '../services/userService';
 import { Cliente } from '../types';
 import { theme } from '../theme';
 import { Card, Button, Input } from '../components/ui';
@@ -62,6 +64,22 @@ export const CreateOSScreen = () => {
         }
     };
 
+    const [users, setUsers] = useState<any[]>([]);
+    const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+
+    useEffect(() => {
+        loadUsers();
+    }, []);
+
+    const loadUsers = async () => {
+        try {
+            const data = await userService.getUsers();
+            setUsers(data);
+        } catch (e) {
+            console.error('Failed to load users', e);
+        }
+    };
+
     const handleCreate = async () => {
         if (!selectedClient) {
             Alert.alert('Atenção', 'Selecione um cliente.');
@@ -78,7 +96,8 @@ export const CreateOSScreen = () => {
             // 1. Create OS Header
             const os = await osService.createOS({
                 clienteId: selectedClient.id,
-                data: new Date().toISOString().split('T')[0]
+                data: new Date().toISOString().split('T')[0],
+                usuarioId: selectedUserId || undefined
             });
 
             // 2. Add Vehicle
@@ -169,6 +188,28 @@ export const CreateOSScreen = () => {
                         </View>
                     </Card>
                 </TouchableOpacity>
+
+
+
+                {/* Responsible User Selection */}
+                <Text style={{ color: theme.colors.primary, fontSize: 10, fontWeight: '700', letterSpacing: 2, marginBottom: 8 }}>
+                    RESPONSÁVEL (VENDEDOR)
+                </Text>
+                <Card style={{ marginBottom: 24, padding: 0 }}>
+                    <View style={{ borderRadius: 8, overflow: 'hidden' }}>
+                        <Picker
+                            selectedValue={selectedUserId}
+                            onValueChange={(itemValue) => setSelectedUserId(itemValue)}
+                            style={{ color: theme.colors.text, backgroundColor: 'transparent' }}
+                            dropdownIconColor={theme.colors.primary}
+                        >
+                            <Picker.Item label="Selecione o responsável..." value={null} style={{ color: '#666' }} />
+                            {users.map(user => (
+                                <Picker.Item key={user.id} label={user.name || user.email} value={user.id} style={{ color: '#000' }} />
+                            ))}
+                        </Picker>
+                    </View>
+                </Card>
 
                 {/* Vehicle Form */}
                 <Text style={{ color: theme.colors.primary, fontSize: 10, fontWeight: '700', letterSpacing: 2, marginBottom: 8 }}>
@@ -299,6 +340,6 @@ export const CreateOSScreen = () => {
                     </View>
                 </View>
             </Modal>
-        </View>
+        </View >
     );
 };

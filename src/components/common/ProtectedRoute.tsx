@@ -6,10 +6,11 @@ import { Feature } from '../../types/features';
 interface ProtectedRouteProps {
     children: React.ReactNode;
     role?: 'ADMIN' | 'USER' | 'ADMIN_PLATAFORMA' | 'ADMIN_EMPRESA' | string;
+    allowedRoles?: string[]; // New: Allow multiple roles
     requiredFeature?: Feature | string;
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role, requiredFeature }) => {
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role, allowedRoles, requiredFeature }) => {
     const { user, hasFeature } = usePermission();
     const location = useLocation();
 
@@ -23,44 +24,42 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role, 
         }
     }
 
-    if (role && !requiredFeature) {
-        // Normalize: remove ROLE_ prefix for easier comparison
+    // Role Checks (Legacy 'role' string OR new 'allowedRoles' array)
+    if (role || allowedRoles) {
+        // Normalize User Role
         let userRole = user.role ? user.role.toUpperCase() : '';
         if (userRole.startsWith('ROLE_')) userRole = userRole.replace('ROLE_', '');
 
         const userRoles = user.roles ? user.roles.map((r: string) => r.toUpperCase().replace('ROLE_', '')) : [];
-        let requiredRole = role.toUpperCase();
-        if (requiredRole.startsWith('ROLE_')) requiredRole = requiredRole.replace('ROLE_', '');
 
-        // Check if user has the role
-        const hasRole = userRole === requiredRole ||
-            userRoles.includes(requiredRole) ||
-            (requiredRole === 'ADMIN' && userRole === 'ADMIN') ||
-            (requiredRole === 'ADMIN_PLATAFORMA' && userRole === 'SUPER_ADMIN');
+        // Determine if user has access
+        let hasAccess = false;
 
-        if (!hasRole) {
+        // 1. Check 'role' (Legacy single role)
+        if (role) {
+            let requiredRole = role.toUpperCase();
+            if (requiredRole.startsWith('ROLE_')) requiredRole = requiredRole.replace('ROLE_', '');
+
+            hasAccess = userRole === requiredRole ||
+                userRoles.includes(requiredRole) ||
+                (requiredRole === 'ADMIN' && userRole === 'ADMIN') ||
+                (requiredRole === 'ADMIN_PLATAFORMA' && userRole === 'SUPER_ADMIN');
+        }
+
+        // 2. Check 'allowedRoles' (New array support)
+        if (allowedRoles && allowedRoles.length > 0) {
+            const normalizedAllowed = allowedRoles.map(r => r.toUpperCase().replace('ROLE_', ''));
+            // If user has ANY of the allowed roles
+            const matchesAllowed = normalizedAllowed.includes(userRole) ||
+                userRoles.some(ur => normalizedAllowed.includes(ur));
+
+            // If role was also specified, treat as OR condition? Or override?
+            // Let's treat allowedRoles as the primary check if present.
+            if (matchesAllowed) hasAccess = true;
+        }
+
+        if (!hasAccess) {
             return <AccessDenied />;
-        }
-
-        // Two Worlds Separation
-        if (requiredRole === 'ADMIN_PLATAFORMA' || userRole === 'ADMIN_PLATAFORMA' || userRole === 'SUPER_ADMIN') {
-            // Allow SUPER_ADMIN to pass if requiredRole is ADMIN_PLATAFORMA
-            const isSuperAdmin = userRole === 'SUPER_ADMIN';
-            const isPlatformRole = requiredRole === 'ADMIN_PLATAFORMA';
-
-            if (isPlatformRole && isSuperAdmin) {
-                return <>{children}</>;
-            }
-
-            if (user.empresa !== null && user.empresa !== undefined) {
-                return <AccessDenied />;
-            }
-        }
-
-        if (requiredRole === 'ADMIN_EMPRESA' || userRole === 'ADMIN_EMPRESA') {
-            if (!user.empresa) {
-                return <AccessDenied />;
-            }
         }
     }
 

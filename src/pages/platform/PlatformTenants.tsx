@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { platformService } from '../../services/platformService';
 import type { TenantSummary, TenantUpdateRequest } from '../../services/platformService';
-import { Ban, CheckCircle, Search, Plus, Building2, Calendar, Pencil, X } from 'lucide-react';
+import { Ban, CheckCircle, Search, Plus, Building2, Calendar, Pencil, X, KeyRound, Loader2 } from 'lucide-react';
 import { TenantOnboarding } from '../../components/platform/TenantOnboarding';
 
 export const PlatformTenants: React.FC = () => {
@@ -10,6 +10,7 @@ export const PlatformTenants: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showOnboarding, setShowOnboarding] = useState(false);
     const [editingTenant, setEditingTenant] = useState<TenantSummary | null>(null);
+    const [resetPwdTenant, setResetPwdTenant] = useState<TenantSummary | null>(null);
 
     const { data: tenants, isLoading } = useQuery({
         queryKey: ['platform-tenants'],
@@ -32,6 +33,17 @@ export const PlatformTenants: React.FC = () => {
         onError: (err) => {
             alert('Falha ao atualizar inquilino. Verifique os dados.');
             console.error(err);
+        }
+    });
+
+    const resetPwdMutation = useMutation({
+        mutationFn: (data: { id: number, pass: string }) => platformService.resetTenantPassword(data.id, data.pass),
+        onSuccess: () => {
+            alert('Senha redefinida com sucesso!');
+            setResetPwdTenant(null);
+        },
+        onError: (err: any) => {
+            alert('Erro ao redefinir senha: ' + (err.response?.data?.message || err.message));
         }
     });
 
@@ -130,6 +142,13 @@ export const PlatformTenants: React.FC = () => {
                                     <td className="p-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             <button
+                                                onClick={() => setResetPwdTenant(tenant)}
+                                                className="p-2 rounded text-yellow-400 hover:bg-yellow-900/30 hover:text-yellow-300 transition-colors"
+                                                title="Redefinir Senha do Admin"
+                                            >
+                                                <KeyRound size={18} />
+                                            </button>
+                                            <button
                                                 onClick={() => setEditingTenant(tenant)}
                                                 className="p-2 rounded text-blue-400 hover:bg-blue-900/30 hover:text-blue-300 transition-colors"
                                                 title="Editar Inquilino"
@@ -172,6 +191,58 @@ export const PlatformTenants: React.FC = () => {
                     isSaving={updateTenantMutation.isPending}
                 />
             )}
+
+            {resetPwdTenant && (
+                <ResetPasswordModal
+                    tenantName={resetPwdTenant.nome}
+                    onClose={() => setResetPwdTenant(null)}
+                    onConfirm={(pass) => resetPwdMutation.mutate({ id: resetPwdTenant.id, pass })}
+                    isSaving={resetPwdMutation.isPending}
+                />
+            )}
+        </div>
+    );
+};
+
+// Reset Password Modal
+const ResetPasswordModal: React.FC<{
+    tenantName: string,
+    onClose: () => void,
+    onConfirm: (pass: string) => void,
+    isSaving: boolean
+}> = ({ tenantName, onClose, onConfirm, isSaving }) => {
+    const [password, setPassword] = useState('');
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onConfirm(password);
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div className="bg-slate-900 border border-slate-700 rounded-lg w-full max-w-sm p-6 relative shadow-2xl">
+                <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-white"><X size={20} /></button>
+                <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                    <KeyRound size={20} className="text-yellow-500" /> Redefinir Senha
+                </h2>
+                <p className="text-slate-400 text-sm mb-4">Define uma nova senha para o admin de <strong className="text-slate-200">{tenantName}</strong>.</p>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <input
+                        type="text"
+                        required
+                        className="w-full bg-slate-800 border border-slate-600 rounded p-2 text-slate-200 outline-none focus:border-yellow-500 font-mono"
+                        placeholder="Nova senha..."
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                    />
+                    <div className="flex justify-end gap-3 pt-2">
+                        <button type="button" onClick={onClose} className="px-3 py-2 text-slate-400 hover:text-white">Cancelar</button>
+                        <button type="submit" disabled={isSaving} className="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 text-white rounded font-bold flex items-center gap-2">
+                            {isSaving && <Loader2 className="animate-spin" size={16} />} Salvar
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 };
@@ -187,7 +258,7 @@ const EditTenantModal: React.FC<{
         nome: tenant.nome,
         cnpj: tenant.cnpj,
         plano: tenant.plano,
-        adminEmail: tenant.adminEmail || '' // Backend might not send this in list, but we can try to pre-fill or leave blank
+        adminEmail: tenant.adminEmail || ''
     });
 
     const handleSubmit = (e: React.FormEvent) => {

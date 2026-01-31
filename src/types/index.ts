@@ -119,6 +119,7 @@ export interface UserResponse {
     empresa?: Empresa;
     features?: string[];
     mustChangePassword?: boolean;
+    participaComissao?: boolean;
 }
 
 export interface Empresa {

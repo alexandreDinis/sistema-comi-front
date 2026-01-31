@@ -27,6 +27,7 @@ import { PlatformLicensePlans } from './pages/platform/PlatformLicensePlans';
 import { PlatformResellers } from './pages/platform/PlatformResellers';
 import { PlatformOwnerDashboard } from './pages/platform/PlatformOwnerDashboard';
 import { PlatformChangePasswordPage } from './pages/platform/PlatformChangePasswordPage';
+import { PlatformRiskPage } from './pages/platform/PlatformRiskPage';
 // import { ChangePasswordPage } from './pages/auth/ChangePasswordPage'; // Moved down
 import { CompanySettings } from './pages/settings/CompanySettings';
 import { TeamSettings } from './pages/settings/TeamSettings';
@@ -66,12 +67,13 @@ export const App: React.FC = () => {
 
           {/* Platform Routes (Blue Theme) */}
           <Route path="/platform" element={
-            <ProtectedRoute role="ADMIN_PLATAFORMA">
+            <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN_PLATAFORMA', 'ADMIN_LICENCA', 'REVENDEDOR']}>
               <PlatformLayout />
             </ProtectedRoute>
           }>
             <Route path="dashboard" element={<PlatformDashboard />} />
             <Route path="tenants" element={<PlatformTenants />} />
+            <Route path="risk" element={<PlatformRiskPage />} />
             <Route path="plans" element={<PlatformPlans />} />
             <Route path="license-plans" element={<PlatformLicensePlans />} />
             <Route path="resellers" element={<PlatformResellers />} />

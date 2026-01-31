@@ -304,6 +304,10 @@ export interface OrdemServico {
     valorTotalComDesconto?: number;
     cliente: Cliente;
     veiculos: VeiculoOS[];
+    // Responsible User
+    usuarioId?: number;
+    usuarioNome?: string;
+    usuarioEmail?: string;
 }
 
 export interface CreateOSRequest {

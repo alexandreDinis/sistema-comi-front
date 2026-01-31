@@ -3,9 +3,9 @@ import type { ComissaoCalculada, ComparacaoFaturamentoDTO } from '../types';
 
 export const comissaoService = {
     async obterComissaoMensal(ano: number, mes: number, force: boolean = false): Promise<ComissaoCalculada> {
-        const response = await api.get<ComissaoCalculada>(`comissao/${ano}/${mes}`, {
-            params: { force }
-        });
+        const params: any = { force };
+        if (force) params._t = Date.now();
+        const response = await api.get<ComissaoCalculada>(`comissao/${ano}/${mes}`, { params });
         return response.data;
     },
 
@@ -26,9 +26,9 @@ export const comissaoService = {
     },
 
     async listarComissoesEmpresa(ano: number, mes: number, force: boolean = false): Promise<ComissaoFuncionario[]> {
-        const response = await api.get<ComissaoFuncionario[]>(`comissao/empresa/${ano}/${mes}`, {
-            params: { force }
-        });
+        const params: any = { force };
+        if (force) params._t = Date.now();
+        const response = await api.get<ComissaoFuncionario[]>(`comissao/empresa/${ano}/${mes}`, { params });
         return response.data;
     },
 };

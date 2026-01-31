@@ -29,6 +29,7 @@ export interface TenantCreateRequest {
     plano: string;
     adminEmail: string;
     adminPassword?: string;
+    licencaId?: number; // Optional: For Super Admin
 }
 
 export interface PlanSummary {
@@ -113,6 +114,21 @@ export const platformService = {
     reassignTenant: async (tenantId: number, licencaId: number): Promise<TenantSummary> => {
         const response = await api.post<TenantSummary>(`${BASE_URL}/tenants/${tenantId}/reassign?licencaId=${licencaId}`);
         return response.data;
+    },
+    // POST /api/v1/platform/admin/migration/transfer-tenant
+    migrateTenant: async (data: { empresaId: number; novaLicencaId: number; motivo: string }): Promise<void> => {
+        await api.put(`${BASE_URL}/admin/migration/transfer-tenant`, data);
+    },
+
+    // GET /api/v1/platform/tenants/risk
+    getRiskyTenants: async (): Promise<TenantSummary[]> => {
+        const response = await api.get<TenantSummary[]>(`${BASE_URL}/tenants/risk`);
+        return response.data;
+    },
+
+    // PUT /api/v1/platform/tenants/{id}/reset-password
+    resetTenantPassword: async (id: number, newPassword: string): Promise<void> => {
+        await api.put(`${BASE_URL}/tenants/${id}/reset-password`, { newPassword });
     }
 };
 

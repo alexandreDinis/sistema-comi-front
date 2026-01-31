@@ -36,14 +36,22 @@ export const LoginForm: React.FC = () => {
             // Everyone else -> / (tenant app context)
             // =====================================================
 
-            const isPlatformAdmin = (role === 'SUPER_ADMIN' || role === 'ADMIN_PLATAFORMA') &&
-                (user.empresa === null || user.empresa === undefined);
+            // Explicit Tenant Roles
+            const isTenantUser = role === 'ADMIN_EMPRESA' || role === 'USER' || role === 'TECNICO' || role === 'FINANCEIRO';
 
-            if (isPlatformAdmin) {
+            // Platform Roles
+            const isPlatformSuperUser = (role === 'SUPER_ADMIN' || role === 'ADMIN_PLATAFORMA') && !user.empresa;
+            const isResellerInfo = role === 'ADMIN_LICENCA' || role === 'REVENDEDOR';
+
+            if (isTenantUser) {
+                console.log('[LoginForm] ✅ Tenant User detected -> / (app)');
+                navigate('/');
+            } else if (isPlatformSuperUser || isResellerInfo) {
                 console.log('[LoginForm] ✅ Platform Admin detected -> /platform/dashboard');
                 navigate('/platform/dashboard');
             } else {
-                console.log('[LoginForm] ✅ Tenant User detected -> / (app)');
+                // Fallback (e.g. if role is unknown, default to app)
+                console.warn('[LoginForm] ⚠️ Unknown role, defaulting to App:', role);
                 navigate('/');
             }
         } catch (err: any) {
@@ -52,6 +60,8 @@ export const LoginForm: React.FC = () => {
                     setError('Credenciais inválidas. ACESSO NEGADO.');
                 } else if (err.response.status === 429) {
                     setError('Muitas tentativas. SISTEMA BLOQUEADO TEMPORARIAMENTE. Tente novamente em 15min.');
+                } else if (err.response.status === 403) {
+                    setError('Conta inativa ou sem permissão de acesso.');
                 } else {
                     setError('Erro de conexão com o servidor de autenticação.');
                 }

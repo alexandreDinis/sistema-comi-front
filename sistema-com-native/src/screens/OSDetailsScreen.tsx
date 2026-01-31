@@ -3,9 +3,11 @@ import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Mod
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/types';
-import { ChevronLeft, Calendar, User, Car, Share2, CheckCircle, DollarSign, Wrench, Plus, Trash2, Ban, X } from 'lucide-react-native';
+import { ChevronLeft, Calendar, User, Car, Share2, CheckCircle, DollarSign, Wrench, Plus, Trash2, Ban, X, Edit2, Save } from 'lucide-react-native';
+import { Picker } from '@react-native-picker/picker';
 import { osService } from '../services/osService';
-import { OrdemServico, OSStatus, VeiculoOS, PecaOS } from '../types';
+import { userService } from '../services/userService';
+import { OrdemServico, OSStatus, VeiculoOS, PecaOS, User as UserType } from '../types';
 import { theme } from '../theme';
 import { Card, OSStatusBadge } from '../components/ui';
 import { PlateInput } from '../components/forms/PlateInput';
@@ -36,6 +38,39 @@ export const OSDetailsScreen = () => {
     // Forms
     const [veiculoForm, setVeiculoForm] = useState({ placa: '', modelo: '', cor: '' });
     const [pecaForm, setPecaForm] = useState({ tipoPecaId: '', valorCobrado: '', descricao: '' });
+
+    // User Assignment State
+    const [users, setUsers] = useState<UserType[]>([]);
+    const [isEditingUser, setIsEditingUser] = useState(false);
+    const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+
+    useEffect(() => {
+        loadUsers();
+    }, []);
+
+    const loadUsers = async () => {
+        try {
+            const data = await userService.getUsers();
+            setUsers(data);
+        } catch (e) {
+            console.error('Failed to load users', e);
+        }
+    };
+
+    const handleUpdateOwner = async () => {
+        if (!selectedUserId) return;
+        try {
+            setUpdating(true);
+            await osService.updateOS(osId, { usuarioId: selectedUserId });
+            Alert.alert('Sucesso', 'Responsável atualizado!');
+            setIsEditingUser(false);
+            fetchDetails();
+        } catch (error) {
+            Alert.alert('Erro', 'Falha ao atualizar responsável.');
+        } finally {
+            setUpdating(false);
+        }
+    };
 
     const fetchDetails = useCallback(async () => {
         try {
@@ -351,6 +386,54 @@ export const OSDetailsScreen = () => {
                     <Text style={{ color: theme.colors.text, fontSize: 16, fontWeight: '700' }}>{os.cliente?.nomeFantasia || os.cliente?.razaoSocial}</Text>
                     <Text style={{ color: theme.colors.textSecondary, fontSize: 13, marginTop: 4 }}>{os.cliente?.contato}</Text>
                     <Text style={{ color: theme.colors.textMuted, fontSize: 11, marginTop: 2 }}>{os.cliente?.email}</Text>
+                </Card>
+
+                {/* Responsible User */}
+                <Card style={{ marginBottom: 16 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.border }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <User size={18} color={theme.colors.primary} />
+                            <Text style={{ color: theme.colors.primary, fontWeight: '700', marginLeft: 8, letterSpacing: 1, fontSize: 12 }}>RESPONSÁVEL</Text>
+                        </View>
+                        {!isEditingUser && !isFinalized && (
+                            <TouchableOpacity onPress={() => { setIsEditingUser(true); setSelectedUserId(os.usuarioId || null); }}>
+                                <Edit2 size={16} color={theme.colors.primary} />
+                            </TouchableOpacity>
+                        )}
+                    </View>
+
+                    {isEditingUser ? (
+                        <View>
+                            <View style={{ borderWidth: 1, borderColor: theme.colors.border, borderRadius: 8, marginBottom: 8 }}>
+                                <Picker
+                                    selectedValue={selectedUserId}
+                                    onValueChange={(itemValue) => setSelectedUserId(itemValue)}
+                                    style={{ color: theme.colors.text }}
+                                    dropdownIconColor={theme.colors.primary}
+                                >
+                                    <Picker.Item label="Selecione..." value={null} style={{ color: '#666' }} />
+                                    {users.map(u => (
+                                        <Picker.Item key={u.id} label={u.name || u.email} value={u.id} style={{ color: '#000' }} />
+                                    ))}
+                                </Picker>
+                            </View>
+                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+                                <TouchableOpacity onPress={() => setIsEditingUser(false)} style={{ padding: 8 }}>
+                                    <Text style={{ color: theme.colors.error }}>Cancelar</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={handleUpdateOwner} style={{ padding: 8, backgroundColor: theme.colors.primary, borderRadius: 4 }}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        <Save size={14} color="#000" />
+                                        <Text style={{ color: '#000', fontWeight: 'bold', marginLeft: 4 }}>Salvar</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    ) : (
+                        <Text style={{ color: theme.colors.text, fontSize: 16, fontWeight: '700' }}>
+                            {os.usuarioNome || os.usuarioEmail || 'Não Atribuído'}
+                        </Text>
+                    )}
                 </Card>
 
                 {/* Date & Value Summary */}

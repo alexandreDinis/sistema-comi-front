@@ -4,7 +4,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { osService } from '../../services/osService';
 import { prestadorService } from '../../services/prestadorService';
-import { ArrowLeft, Car, Wrench, CheckCircle, Plus, Ban, History, FileDown, Trash2 } from 'lucide-react';
+import { userService } from '../../services/userService';
+import { ArrowLeft, Car, Wrench, CheckCircle, Plus, Ban, History, FileDown, Trash2, User as UserIcon, Edit2, Save } from 'lucide-react';
 import { VehicleHistoryModal } from '../../components/modals/VehicleHistoryModal';
 import { DuplicatePlateModal } from '../../components/modals/DuplicatePlateModal';
 import { ActionModal } from '../../components/modals/ActionModal';
@@ -78,6 +79,34 @@ export const OSDetailsPage: React.FC = () => {
         queryKey: ['prestadores'],
         queryFn: () => prestadorService.listar(true)
     });
+
+    // Query para usuários (para selecionar responsável)
+    const { data: users } = useQuery({
+        queryKey: ['users'],
+        queryFn: userService.getUsers
+    });
+
+    const [isEditingUser, setIsEditingUser] = useState(false);
+    const [selectedUserId, setSelectedUserId] = useState<string>('');
+
+    // Mutation para mudar responsável
+    const updateOwnerMutation = useMutation({
+        mutationFn: (newUserId: number) => osService.updateOS(osId, { usuarioId: newUserId }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['ordem-servico', osId] });
+            setIsEditingUser(false);
+            alert('Responsável atualizado com sucesso!');
+        },
+        onError: (error) => {
+            console.error('Erro ao atualizar responsável:', error);
+            alert('Erro ao atualizar responsável.');
+        }
+    });
+
+    const handleUpdateOwner = () => {
+        if (!selectedUserId) return;
+        updateOwnerMutation.mutate(parseInt(selectedUserId));
+    };
 
     // Mutations
     const addVeiculoMutation = useMutation({
@@ -186,6 +215,7 @@ export const OSDetailsPage: React.FC = () => {
                 console.log('🔄 [SYNC] Hard Resetting system caches...');
 
                 queryClient.invalidateQueries({ queryKey: ['ordens-servico'] });
+                queryClient.invalidateQueries({ queryKey: ['os-list'] });
 
                 // Invalidate Financial Reports to show new revenue immediately
                 queryClient.invalidateQueries({ queryKey: ['relatorio'] });
@@ -497,6 +527,48 @@ export const OSDetailsPage: React.FC = () => {
                         </div>
                     )}
                     <div className="text-xs text-gray-500 mt-1">VALOR TOTAL {os.tipoDesconto ? 'COM DESCONTO' : 'ACUMULADO'}</div>
+                </div>
+
+                {/* Responsável (New Card) */}
+                <div className="bg-black/40 border border-white/10 p-6 rounded-lg flex flex-col justify-center">
+                    <div className="flex justify-between items-center mb-2">
+                        <h3 className="text-gray-400 text-sm font-oxanium uppercase tracking-wide">Responsável</h3>
+                        {!isFinalized && !isEditingUser && (
+                            <button onClick={() => { setIsEditingUser(true); setSelectedUserId(os.usuarioId?.toString() || ''); }} className="text-cyber-gold hover:text-white transition-colors" title="Alterar Responsável">
+                                <Edit2 className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+
+                    {isEditingUser ? (
+                        <div className="flex gap-2 items-center">
+                            <select
+                                className="bg-black border border-white/20 text-white p-2 rounded text-sm w-full outline-none focus:border-cyber-gold"
+                                value={selectedUserId}
+                                onChange={(e) => setSelectedUserId(e.target.value)}
+                            >
+                                <option value="">Selecione...</option>
+                                {users?.map(u => (
+                                    <option key={u.id} value={u.id}>{u.name || u.email}</option>
+                                ))}
+                            </select>
+                            <button onClick={handleUpdateOwner} className="text-green-400 hover:text-green-300 p-1" title="Salvar">
+                                <Save className="w-5 h-5" />
+                            </button>
+                            <button onClick={() => setIsEditingUser(false)} className="text-red-400 hover:text-red-300 p-1" title="Cancelar">
+                                <Ban className="w-5 h-5" />
+                            </button>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="text-xl text-white font-bold font-orbitron truncate" title={os.usuarioEmail}>
+                                {os.usuarioNome || os.usuarioEmail || 'Não Atribuído'}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                <UserIcon className="w-3 h-3" /> VENDEDOR / TÉCNICO
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Data */}

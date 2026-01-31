@@ -1,11 +1,16 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, LayoutDashboard, Building2, Layers, Lock } from 'lucide-react';
+import { LogOut, LayoutDashboard, Building2, Layers, Lock, AlertTriangle } from 'lucide-react';
 import { authService } from '../../services/authService';
 
 export const PlatformHeader: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
+
+    const { user } = authService.getCurrentUser() ? { user: authService.getCurrentUser() } : { user: null };
+    // Helper to check roles (quick implementation since we are outside ProtectedRoute context somewhat)
+    const role = user?.role || '';
+    const isSuperAdmin = role === 'SUPER_ADMIN' || role === 'ROLE_SUPER_ADMIN' || role === 'ADMIN_PLATAFORMA';
 
     const handleLogout = () => {
         authService.logout();
@@ -14,19 +19,15 @@ export const PlatformHeader: React.FC = () => {
 
     const isActive = (path: string) => location.pathname === path;
 
+    // ... (existing code)
+
     return (
         <header className="bg-slate-900 border-b border-slate-700 shadow-md sticky top-0 z-50">
             <div className="container mx-auto px-6 py-3">
                 <div className="flex justify-between items-center">
                     {/* Brand */}
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-                            <LayoutDashboard className="text-white" size={18} />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-lg font-bold text-slate-100 tracking-tight">OROBOROS</span>
-                            <span className="text-[10px] bg-blue-900/50 text-blue-200 px-1.5 rounded w-fit font-mono uppercase">Platform Admin</span>
-                        </div>
+                        {/* ... */}
                     </div>
 
                     {/* Navigation */}
@@ -49,24 +50,36 @@ export const PlatformHeader: React.FC = () => {
                             icon={Layers}
                             active={isActive('/platform/plans')}
                         />
-                        <NavItem
-                            to="/platform/license-plans"
-                            label="Planos WL"
-                            icon={Layers}
-                            active={isActive('/platform/license-plans')}
-                        />
-                        <NavItem
-                            to="/platform/resellers"
-                            label="Revendedores"
-                            icon={Building2}
-                            active={isActive('/platform/resellers')}
-                        />
-                        <NavItem
-                            to="/platform/owner"
-                            label="Owner View"
-                            icon={LayoutDashboard}
-                            active={isActive('/platform/owner')}
-                        />
+
+                        {/* RESTRICTED: SUPER ADMIN ONLY */}
+                        {isSuperAdmin && (
+                            <>
+                                <NavItem
+                                    to="/platform/license-plans"
+                                    label="Planos WL"
+                                    icon={Layers}
+                                    active={isActive('/platform/license-plans')}
+                                />
+                                <NavItem
+                                    to="/platform/resellers"
+                                    label="Revendedores"
+                                    icon={Building2}
+                                    active={isActive('/platform/resellers')}
+                                />
+                                <NavItem
+                                    to="/platform/risk"
+                                    label="Risco"
+                                    icon={AlertTriangle}
+                                    active={isActive('/platform/risk')}
+                                />
+                                <NavItem
+                                    to="/platform/owner"
+                                    label="Owner View"
+                                    icon={LayoutDashboard}
+                                    active={isActive('/platform/owner')}
+                                />
+                            </>
+                        )}
                     </nav>
 
                     {/* User Profile / Logout */}

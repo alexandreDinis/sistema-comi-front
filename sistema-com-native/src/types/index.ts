@@ -129,7 +129,9 @@ export interface OrdemServico {
     valorDesconto?: number;
     cliente: Cliente;
     veiculos: VeiculoOS[];
-    usuarioId: number;
+    usuarioId?: number;
+    usuarioNome?: string;
+    usuarioEmail?: string;
     empresaId: number;
 }
 
@@ -137,6 +139,7 @@ export interface CreateOSRequest {
     clienteId: number;
     data: string;
     dataVencimento?: string;
+    usuarioId?: number;
 }
 
 export interface UpdateOSStatusRequest {

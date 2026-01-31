@@ -44,6 +44,11 @@ export const osService = {
         return response.data;
     },
 
+    updateOS: async (id: number, data: any): Promise<OrdemServico> => {
+        const response = await api.patch<OrdemServico>(`/ordens-servico/${id}`, data);
+        return response.data;
+    },
+
     addVeiculo: async (data: AddVeiculoRequest): Promise<VeiculoOS> => {
         const response = await api.post<VeiculoOS>('/ordens-servico/veiculos', data);
         return response.data;

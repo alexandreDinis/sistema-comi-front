@@ -38,8 +38,10 @@ export const GestaoComissoesPage: React.FC = () => {
     const recalcularMutation = useMutation({
         mutationFn: () => comissaoService.listarComissoesEmpresa(ano, mes, true),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['comissoes-empresa', ano, mes] });
-            // alert('Recálculo realizado com sucesso!');
+            console.log('✅ Recálculo forçado com sucesso!');
+            queryClient.invalidateQueries({ queryKey: ['comissoes-empresa'] });
+            queryClient.invalidateQueries({ queryKey: ['comissao'] });
+            alert('Sistema recalculou todas as comissões deste mês.');
         },
         onError: (error) => {
             console.error(error);

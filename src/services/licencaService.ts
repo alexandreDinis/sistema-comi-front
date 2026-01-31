@@ -115,6 +115,12 @@ export const licencaService = {
         return response.data;
     },
 
+    // PUT /api/v1/admin/licencas/{id}
+    updateLicenca: async (id: number, data: Partial<LicencaCreateRequest>): Promise<Licenca> => {
+        const response = await api.put<Licenca>(`${BASE_URL}/${id}`, data);
+        return response.data;
+    },
+
     // POST /api/v1/admin/licencas/{id}/suspender
     suspendLicenca: async (id: number, motivo: string): Promise<void> => {
         await api.post(`${BASE_URL}/${id}/suspender`, motivo, {

@@ -267,3 +267,12 @@ body::after {
 .italic-shadow {
   text-shadow: 2px 2px 0px rgba(212, 175, 55, 0.2);
 }
+
+/* Mobile Safe Areas */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}

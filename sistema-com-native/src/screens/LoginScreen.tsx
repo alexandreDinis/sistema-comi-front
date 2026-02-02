@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, Alert, Image } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
-import { Lock, Mail, Eye, EyeOff } from 'lucide-react-native';
+import { Lock, Mail, Eye, EyeOff, ScanFace } from 'lucide-react-native';
 import { Button, Input, Card } from '../components/ui';
 import { theme } from '../theme';
+import { BiometricService } from '../services/biometricService';
 
 export const LoginScreen = () => {
     const { signIn } = useAuth();
@@ -12,6 +13,40 @@ export const LoginScreen = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isBiometricReady, setIsBiometricReady] = useState(false);
+
+    useEffect(() => {
+        BiometricService.isReady().then(ready => {
+            setIsBiometricReady(ready);
+            if (ready) {
+                // Optional: Auto-trigger biometric prompt if ready
+                // handleBiometricLogin();
+            }
+        });
+    }, []);
+
+    const handleBiometricLogin = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const credentials = await BiometricService.loginWithBiometrics();
+            if (credentials) {
+                await signIn({ email: credentials.email, password: credentials.pass });
+            } else {
+                setLoading(false); // Cancelled or failed
+            }
+        } catch (err: any) {
+            console.error('Biometric login failed', err);
+            if (err.response?.status === 401) {
+                Alert.alert('Sessão Expirada', 'Por segurança, faça login com senha novamente.');
+                await BiometricService.clearCredentials();
+                setIsBiometricReady(false); // Force re-check or hide button
+            } else {
+                setError('Falha no login biométrico.');
+            }
+            setLoading(false);
+        }
+    };
 
     const handleLogin = async () => {
         if (!email || !password) {
@@ -23,6 +58,39 @@ export const LoginScreen = () => {
             setLoading(true);
             setError(null);
             await signIn({ email, password });
+
+            await signIn({ email, password });
+
+            // Check if device supports biometrics
+            const canUseBiometrics = await BiometricService.hasHardware();
+
+            if (canUseBiometrics) {
+                // Ask user if they want to enable biometric login
+                Alert.alert(
+                    'Facilitar Acesso',
+                    'Deseja ativar o login com Biometria para os próximos acessos?',
+                    [
+                        {
+                            text: 'Não, obrigado',
+                            style: 'cancel',
+                            onPress: () => console.log('Biometria recusada pelo usuário')
+                        },
+                        {
+                            text: 'Sim, ativar',
+                            onPress: async () => {
+                                try {
+                                    await BiometricService.saveCredentials(email, password);
+                                    Alert.alert('Sucesso', 'Biometria ativada!');
+                                } catch (e) {
+                                    console.error('Falha ao salvar biometria', e);
+                                    Alert.alert('Erro', 'Não foi possível ativar a biometria.');
+                                }
+                            }
+                        }
+                    ]
+                );
+            }
+
         } catch (err: any) {
             console.error(err);
             if (err.response?.status === 401) {
@@ -62,21 +130,15 @@ export const LoginScreen = () => {
 
             {/* Logo */}
             <View style={{ alignItems: 'center', marginBottom: 40 }}>
-                <View
+                <Image
+                    source={require('../../assets/logo-final.png')}
                     style={{
-                        width: 64,
-                        height: 64,
-                        backgroundColor: theme.colors.primaryMuted,
-                        borderWidth: 2,
-                        borderColor: theme.colors.primary,
-                        borderRadius: 12,
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        width: 120,
+                        height: 120,
+                        resizeMode: 'contain',
                         marginBottom: 16,
                     }}
-                >
-                    <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: 28 }}>S</Text>
-                </View>
+                />
                 <Text
                     style={{
                         fontSize: 24,
@@ -164,6 +226,30 @@ export const LoginScreen = () => {
                 <Button onPress={handleLogin} loading={loading} disabled={loading}>
                     {loading ? '>>> AUTENTICANDO...' : 'INICIAR_SESSÃO >>'}
                 </Button>
+
+                {/* Biometric Button */}
+                {isBiometricReady && (
+                    <TouchableOpacity
+                        onPress={handleBiometricLogin}
+                        disabled={loading}
+                        style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginTop: 16,
+                            paddingVertical: 12,
+                            borderWidth: 1,
+                            borderColor: theme.colors.primaryMuted,
+                            borderRadius: 8,
+                            backgroundColor: 'rgba(212, 175, 55, 0.05)'
+                        }}
+                    >
+                        <ScanFace size={20} color={theme.colors.primary} />
+                        <Text style={{ color: theme.colors.primary, fontWeight: '700', marginLeft: 8, fontSize: 12, letterSpacing: 1 }}>
+                            ACESSAR COM BIOMETRIA
+                        </Text>
+                    </TouchableOpacity>
+                )}
 
                 {/* Forgot Password */}
                 <TouchableOpacity style={{ marginTop: 16, alignItems: 'center' }}>

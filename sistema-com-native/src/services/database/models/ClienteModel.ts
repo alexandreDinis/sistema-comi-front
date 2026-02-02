@@ -2,7 +2,7 @@
 // Model para operações CRUD de Clientes no banco local
 
 import { databaseService } from '../DatabaseService';
-import { v4 as uuidv4 } from 'uuid';
+import { generateUUID } from '../../../utils/uuid';
 import { LocalCliente, SyncStatus, SYNC_PRIORITIES } from './types';
 import type { Cliente, ClienteRequest } from '../../../types';
 
@@ -66,7 +66,7 @@ export const ClienteModel = {
      */
     async create(data: ClienteRequest, syncStatus: SyncStatus = 'PENDING_CREATE'): Promise<LocalCliente> {
         const now = Date.now();
-        const localId = uuidv4();
+        const localId = generateUUID();
 
         const id = await databaseService.runInsert(
             `INSERT INTO clientes (
@@ -115,6 +115,15 @@ export const ClienteModel = {
         const existing = await this.getByServerId(cliente.id);
 
         if (existing) {
+            // CONFLICT RESOLUTION:
+            // Se temos alterações locais pendentes, IGNORA o update do servidor por enquanto
+            // O SyncEngine vai tentar enviar nossas alterações depois.
+            // "Client Wins" se estiver pendente.
+            if (existing.sync_status !== 'SYNCED') {
+                console.log(`[ClienteModel] Ignorando update do servidor para id ${existing.id} pois tem alterações locais pendentes.`);
+                return existing;
+            }
+
             // Atualizar existente
             await databaseService.runUpdate(
                 `UPDATE clientes SET
@@ -122,7 +131,7 @@ export const ClienteModel = {
           tipo_pessoa = ?, contato = ?, email = ?, status = ?,
           logradouro = ?, numero = ?, complemento = ?, bairro = ?,
           cidade = ?, estado = ?, cep = ?,
-          sync_status = 'SYNCED', last_synced_at = ?, updated_at = ?
+          sync_status = 'SYNCED', last_synced_at = ?
          WHERE id = ?`,
                 [
                     cliente.razaoSocial,
@@ -141,14 +150,18 @@ export const ClienteModel = {
                     cliente.estado || null,
                     cliente.cep || null,
                     now,
-                    now,
-                    existing.id
+                    existing.id // Mantém updated_at original para não parecer mudança local?
+                    // Na verdade, updated_at deve refletir a última mudança. Mas se veio do servidor, ok.
+                    // Vamos atualizar updated_at também.
                 ]
             );
+            // Atualizar updated_at separadamente ou na query acima. Query acima não tinha updated_at!
+            await databaseService.runUpdate(`UPDATE clientes SET updated_at = ? WHERE id = ?`, [now, existing.id]);
+
             return (await this.getById(existing.id))!;
         } else {
             // Inserir novo
-            const localId = uuidv4();
+            const localId = generateUUID();
             const id = await databaseService.runInsert(
                 `INSERT INTO clientes (
           local_id, server_id, version, razao_social, nome_fantasia, cnpj, cpf,
@@ -237,29 +250,61 @@ export const ClienteModel = {
         );
 
         // Adicionar à fila de sync
-        if (existing.sync_status === 'SYNCED') {
-            await this.addToSyncQueue(existing.local_id, 'UPDATE', data);
+        // Se já estava PENDING, não precisa readicionar operação update (mas o debounce cuidaria).
+        // Aqui simplificamos: sempre garante na fila.
+        const updated = await this.getById(id);
+        if (updated && updated.sync_status !== 'SYNCED') {
+            // Se estava PENDING_CREATE, continua create com dados novos.
+            // Se estava SYNCED, virou PENDING_UPDATE.
+            const op = updated.sync_status === 'PENDING_CREATE' ? 'CREATE' : 'UPDATE';
+            // Payload deve ser o objeto completo para update (ou partial se suportado).
+            // Vamos mandar full object para simplificar o backend.
+            const payload = this.toApiFormat(updated);
+            await this.addToSyncQueue(updated.local_id, op, payload);
         }
 
         return await this.getById(id);
     },
 
     /**
-     * Marcar cliente para deleção
+     * Soft Delete: Marcar para deleção sem remover fisicamente imediato
      */
-    async delete(id: number): Promise<boolean> {
+    async softDelete(id: number): Promise<boolean> {
         const existing = await this.getById(id);
         if (!existing) return false;
+
+        // Validar integridade referencial: Verificar se há OS vinculadas
+        // Verifica tanto pelo ID numérico (se sincronizado) quanto pelo UUID local
+        const query = `
+            SELECT COUNT(*) as count FROM ordens_servico 
+            WHERE (cliente_id = ? OR cliente_local_id = ?) 
+            AND (deleted_at IS NULL OR deleted_at = 0)
+        `;
+        const result = await databaseService.getFirst<{ count: number }>(query, [existing.id, existing.local_id]);
+
+        if (result && result.count > 0) {
+            console.warn(`[ClienteModel] Tentativa de excluir cliente ${id} com ${result.count} OS vinculadas.`);
+            // Poderíamos lançar erro ou retornar false. 
+            // Para UI feedback, lançar erro é melhor, mas aqui retornamos false e logamos.
+            // O ideal seria throw new Error('Cliente possui OS vinculadas');
+            throw new Error('Não é possível excluir cliente com Ordens de Serviço vinculadas.');
+        }
+
+        const now = Date.now();
 
         if (existing.server_id) {
             // Tem no servidor, marcar para deleção remota
             await databaseService.runUpdate(
-                `UPDATE clientes SET sync_status = 'PENDING_DELETE', updated_at = ? WHERE id = ?`,
-                [Date.now(), id]
+                `UPDATE clientes SET 
+                    sync_status = 'PENDING_DELETE', 
+                    updated_at = ?,
+                    deleted_at = ? 
+                WHERE id = ?`,
+                [now, now, id]
             );
             await this.addToSyncQueue(existing.local_id, 'DELETE', null);
         } else {
-            // Apenas local, pode deletar direto
+            // Apenas local, pode deletar direto (Hard Delete)
             await databaseService.runDelete(`DELETE FROM clientes WHERE id = ?`, [id]);
             // Remover da fila de sync
             await databaseService.runDelete(
@@ -269,6 +314,12 @@ export const ClienteModel = {
         }
 
         return true;
+    },
+
+    // Manter método delete antigo como alias ou remover? 
+    // Vamos substituir o delete pelo softDelete na prática, mas manter assinatura.
+    async delete(id: number): Promise<boolean> {
+        return this.softDelete(id);
     },
 
     /**
@@ -304,15 +355,11 @@ export const ClienteModel = {
      * Marcar como erro de sincronização
      */
     async markAsSyncError(localId: string, errorMessage: string): Promise<void> {
-        await databaseService.runUpdate(
-            `UPDATE clientes SET sync_status = 'ERROR' WHERE local_id = ?`,
-            [localId]
-        );
-
-        await databaseService.runUpdate(
-            `UPDATE sync_queue SET error_message = ? WHERE entity_type = 'cliente' AND entity_local_id = ?`,
-            [errorMessage, localId]
-        );
+        // Não mudamos o sync_status da entidade para ERROR para não quebrar a UI que espera PENDING
+        // Mas podemos logar ou usar tabela auxiliar.
+        // O SyncEngine já marca o erro na sync_queue.
+        // Aqui apenas atualizamos se quisermos persistência no modelo.
+        console.warn(`[ClienteModel] Erro sync cliente ${localId}: ${errorMessage}`);
     },
 
     /**
@@ -322,22 +369,30 @@ export const ClienteModel = {
         const now = Date.now();
 
         // Verificar se já existe na fila
-        const existing = await databaseService.getFirst<{ id: number }>(
-            `SELECT id FROM sync_queue WHERE entity_type = 'cliente' AND entity_local_id = ?`,
+        const existing = await databaseService.getFirst<{ id: number; attempts: number }>(
+            `SELECT id, attempts FROM sync_queue WHERE entity_type = 'cliente' AND entity_local_id = ?`,
             [localId]
         );
 
         if (existing) {
-            // Atualizar operação existente
+            // Atualizar operação existente e resetar erro/retry se for nova alteração do usuário
+            // Se o usuário alterou de novo, reseta attempts para tentar nova versão com prioridade.
             await databaseService.runUpdate(
-                `UPDATE sync_queue SET operation = ?, payload = ?, created_at = ? WHERE id = ?`,
+                `UPDATE sync_queue SET 
+                    operation = ?, 
+                    payload = ?, 
+                    created_at = ?,
+                    status = 'PENDING',
+                    attempts = 0,
+                    error_message = NULL
+                WHERE id = ?`,
                 [operation, payload ? JSON.stringify(payload) : null, now, existing.id]
             );
         } else {
             // Inserir nova
             await databaseService.runInsert(
-                `INSERT INTO sync_queue (entity_type, entity_local_id, operation, payload, priority, created_at)
-         VALUES ('cliente', ?, ?, ?, ?, ?)`,
+                `INSERT INTO sync_queue (entity_type, entity_local_id, operation, payload, priority, created_at, status)
+         VALUES ('cliente', ?, ?, ?, ?, ?, 'PENDING')`,
                 [localId, operation, payload ? JSON.stringify(payload) : null, SYNC_PRIORITIES.HIGH, now]
             );
         }

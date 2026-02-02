@@ -2,11 +2,14 @@
 import "./global.css";
 import 'react-native-gesture-handler';
 import React from 'react';
+import { View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
+import { OfflineProvider } from './src/contexts/OfflineContext';
+import { OfflineIndicator } from './src/components/ui/OfflineIndicator';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { TabNavigator } from './src/navigation/TabNavigator';
 import { OSDetailsScreen } from './src/screens/OSDetailsScreen';
@@ -19,25 +22,33 @@ const Stack = createStackNavigator<RootStackParamList>();
 
 function AppRoutes() {
   const { user, loading } = useAuth();
+  const insets = useSafeAreaInsets();
+
+  React.useEffect(() => {
+    console.log('[AppRoutes] Auth State changed:', { loading, user: !!user });
+  }, [loading, user]);
 
   if (loading) {
-    return null;
+    console.log('[AppRoutes] Still loading auth...');
+    return null; // Or return a SplashScreen component
   }
 
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {user ? (
-        <>
-          <Stack.Screen name="Main" component={TabNavigator} />
-          <Stack.Screen name="OSDetails" component={OSDetailsScreen} />
-          <Stack.Screen name="CreateOS" component={CreateOSScreen} />
-          <Stack.Screen name="ClientForm" component={ClientFormScreen} />
 
-        </>
-      ) : (
-        <Stack.Screen name="Login" component={LoginScreen} />
-      )}
-    </Stack.Navigator>
+  return (
+    <View style={{ flex: 1 }}>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {user ? (
+          <>
+            <Stack.Screen name="Main" component={TabNavigator} />
+            <Stack.Screen name="OSDetails" component={OSDetailsScreen} />
+            <Stack.Screen name="CreateOS" component={CreateOSScreen} />
+            <Stack.Screen name="ClientForm" component={ClientFormScreen} />
+          </>
+        ) : (
+          <Stack.Screen name="Login" component={LoginScreen} />
+        )}
+      </Stack.Navigator>
+    </View>
   );
 }
 
@@ -46,8 +57,10 @@ export default function App() {
     <SafeAreaProvider>
       <NavigationContainer>
         <AuthProvider>
-          <StatusBar style="light" backgroundColor={theme.colors.background} />
-          <AppRoutes />
+          <OfflineProvider>
+            <StatusBar style="light" backgroundColor={theme.colors.background} />
+            <AppRoutes />
+          </OfflineProvider>
         </AuthProvider>
       </NavigationContainer>
     </SafeAreaProvider>

@@ -202,8 +202,8 @@ export const AppHeader: React.FC = () => {
                             </div>
                         ))}
                         {/* Mobile User Menu */}
-                        <div className="border-t border-cyber-gold/20 pt-4 px-4">
-                            <UserMenu />
+                        <div className="border-t border-cyber-gold/20 pt-4 px-4 pb-8">
+                            <UserMenu mobile onClose={() => setIsMenuOpen(false)} />
                         </div>
                     </div>
                 )}

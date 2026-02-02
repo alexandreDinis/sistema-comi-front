@@ -6,6 +6,7 @@ import { RootStackParamList } from '../navigation/types';
 import { Search, Phone, Mail, MapPin, User, Plus } from 'lucide-react-native';
 import { theme } from '../theme';
 import { Card, Badge } from '../components/ui';
+import { OfflineIndicator } from '../components/ui/OfflineIndicator';
 import { clienteService } from '../services/clienteService';
 import { Cliente } from '../types';
 
@@ -131,9 +132,12 @@ export const ClientesScreen = () => {
                     borderBottomColor: theme.colors.border,
                 }}
             >
-                <Text style={{ color: theme.colors.primary, fontSize: 20, fontWeight: '900', letterSpacing: 2, marginBottom: 16 }}>
-                    CLIENTES
-                </Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <Text style={{ color: theme.colors.primary, fontSize: 20, fontWeight: '900', letterSpacing: 2 }}>
+                        CLIENTES
+                    </Text>
+                    <OfflineIndicator compact alwaysVisible />
+                </View>
 
                 {/* Search */}
                 <View

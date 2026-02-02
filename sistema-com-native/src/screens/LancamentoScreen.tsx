@@ -7,6 +7,7 @@ import { despesaService } from '../services/despesaService';
 import { cartaoService } from '../services/cartaoService';
 import { theme } from '../theme';
 import { Card, Input, Button } from '../components/ui';
+import { OfflineIndicator } from '../components/ui/OfflineIndicator';
 import NetInfo from '@react-native-community/netinfo';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/types';
@@ -253,21 +254,7 @@ export const LancamentoScreen = () => {
                 </View>
 
                 {/* Status de conexão */}
-                <View style={{ alignItems: 'center' }}>
-                    {isOnline ? (
-                        <Wifi size={20} color="#10b981" />
-                    ) : (
-                        <WifiOff size={20} color="#ef4444" />
-                    )}
-                    <Text style={{
-                        fontSize: 9,
-                        color: isOnline ? '#10b981' : '#ef4444',
-                        marginTop: 2,
-                        fontWeight: '600'
-                    }}>
-                        {isOnline ? 'Online' : 'Offline'}
-                    </Text>
-                </View>
+                <OfflineIndicator compact alwaysVisible />
             </View>
 
             {/* Banner de modo offline */}

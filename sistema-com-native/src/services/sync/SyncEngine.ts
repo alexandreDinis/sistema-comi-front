@@ -1,9 +1,9 @@
 // src/services/sync/SyncEngine.ts
-// Motor de sincronização offline-online
+// Motor de sincronização offline-online com Retry e Resolução de Conflitos
 
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import { databaseService } from '../database/DatabaseService';
-import { SyncQueueModel, ClienteModel, OSModel, VeiculoModel, DespesaModel, AuditLogModel } from '../database/models';
+import { SyncQueueModel, ClienteModel, OSModel, VeiculoModel, DespesaModel } from '../database/models';
 import type { SyncQueueItem } from '../database/models/types';
 import api from '../api';
 
@@ -22,6 +22,9 @@ export interface SyncResult {
     errors: string[];
 }
 
+const MAX_RETRIES_DEFAULT = 3;
+const INITIAL_RETRY_DELAY_MS = 1000; // 1 segundo
+
 class SyncEngine {
     private isOnline: boolean = false;
     private isSyncing: boolean = false;
@@ -29,40 +32,27 @@ class SyncEngine {
     private listeners: Set<(status: SyncStatus) => void> = new Set();
     private unsubscribeNetInfo: (() => void) | null = null;
 
-    /**
-     * Inicializar o motor de sync e começar a monitorar conexão
-     */
     async initialize(): Promise<void> {
         console.log('[SyncEngine] Initializing...');
-
-        // Inicializar banco de dados
         await databaseService.initialize();
 
-        // Verificar estado inicial da conexão
         const state = await NetInfo.fetch();
         this.isOnline = state.isConnected === true && state.isInternetReachable === true;
 
-        // Monitorar mudanças de conexão
         this.unsubscribeNetInfo = NetInfo.addEventListener(this.handleNetworkChange.bind(this));
-
         console.log(`[SyncEngine] Initialized. Online: ${this.isOnline}`);
 
-        // Se online, tentar sincronizar
         if (this.isOnline) {
             this.trySyncInBackground();
         }
     }
 
-    /**
-     * Handler para mudanças de rede
-     */
     private handleNetworkChange(state: NetInfoState): void {
         const wasOnline = this.isOnline;
         this.isOnline = state.isConnected === true && state.isInternetReachable === true;
 
         console.log(`[SyncEngine] Network changed: ${wasOnline} -> ${this.isOnline}`);
 
-        // Se voltou online, tentar sincronizar
         if (!wasOnline && this.isOnline) {
             console.log('[SyncEngine] Back online! Starting sync...');
             this.trySyncInBackground();
@@ -71,40 +61,27 @@ class SyncEngine {
         this.notifyListeners();
     }
 
-    /**
-     * Registrar listener para mudanças de status
-     */
     subscribe(listener: (status: SyncStatus) => void): () => void {
         this.listeners.add(listener);
-        // Notificar estado inicial
         listener(this.getStatus());
         return () => this.listeners.delete(listener);
     }
 
-    /**
-     * Notificar todos os listeners
-     */
     private async notifyListeners(): Promise<void> {
         const status = await this.getStatusAsync();
         this.listeners.forEach(listener => listener(status));
     }
 
-    /**
-     * Obter status atual (síncrono, usa cache)
-     */
     getStatus(): SyncStatus {
         return {
             isOnline: this.isOnline,
             isSyncing: this.isSyncing,
-            pendingCount: 0, // Será atualizado assincronamente
+            pendingCount: 0,
             errorCount: 0,
             lastSyncTime: this.lastSyncTime
         };
     }
 
-    /**
-     * Obter status atual (assíncrono, consulta DB)
-     */
     async getStatusAsync(): Promise<SyncStatus> {
         const counts = await SyncQueueModel.getCounts();
         return {
@@ -116,36 +93,23 @@ class SyncEngine {
         };
     }
 
-    /**
-     * Verificar se está online
-     */
     isConnected(): boolean {
         return this.isOnline;
     }
 
-    /**
-     * Tentar sync em background (não bloqueia)
-     */
     trySyncInBackground(): void {
         if (this.isSyncing) return;
-
-        // Executar em background
         this.syncAll().catch(err => {
             console.error('[SyncEngine] Background sync failed:', err);
         });
     }
 
-    /**
-     * Sincronizar tudo (método principal)
-     */
     async syncAll(): Promise<SyncResult> {
         if (this.isSyncing) {
-            console.log('[SyncEngine] Already syncing, skipping...');
             return { success: 0, failed: 0, errors: ['Already syncing'] };
         }
 
         if (!this.isOnline) {
-            console.log('[SyncEngine] Offline, cannot sync');
             return { success: 0, failed: 0, errors: ['Offline'] };
         }
 
@@ -156,24 +120,49 @@ class SyncEngine {
 
         try {
             console.log('[SyncEngine] Starting sync...');
+            // Fetch ALL pending items, but filter by readiness (backoff)
             const items = await SyncQueueModel.getPending();
-            console.log(`[SyncEngine] Found ${items.length} items to sync`);
+            const now = Date.now();
 
-            for (const item of items) {
+            // Filter items that are ready for retry
+            const readyItems = items.filter(item => {
+                if (item.attempts === 0) return true;
+                const delay = INITIAL_RETRY_DELAY_MS * Math.pow(2, item.attempts - 1);
+                return (item.last_attempt || 0) + delay <= now;
+            });
+
+            console.log(`[SyncEngine] Found ${items.length} items, ${readyItems.length} ready to sync`);
+
+            for (const item of readyItems) {
                 try {
                     await this.syncItem(item);
                     result.success++;
                 } catch (err: any) {
                     result.failed++;
                     result.errors.push(`${item.entity_type}/${item.entity_local_id}: ${err.message}`);
+
+                    // Update retry info
+                    const newAttempts = item.attempts + 1;
+                    const maxRetries = item.max_retries || MAX_RETRIES_DEFAULT;
+                    const isFinalFailure = newAttempts >= maxRetries;
+
                     await SyncQueueModel.markAttempt(item.id, false, err.message);
+
+                    if (isFinalFailure) {
+                        console.error(`[SyncEngine] Item ${item.id} failed permanently after ${newAttempts} attempts.`);
+                        // Here we could update the Entity sync_status to ERROR if logic permits
+                        if (item.entity_type === 'cliente') await ClienteModel.markAsSyncError(item.entity_local_id, err.message);
+                        // Add other models error marking as needed
+                    }
                 }
             }
 
             this.lastSyncTime = new Date();
             await databaseService.setMetadata('last_sync', this.lastSyncTime.toISOString());
 
-            console.log(`[SyncEngine] Sync complete. Success: ${result.success}, Failed: ${result.failed}`);
+            // Daily Cleanup
+            await this.tryCleanup();
+
         } catch (err: any) {
             console.error('[SyncEngine] Sync error:', err);
             result.errors.push(err.message);
@@ -185,12 +174,33 @@ class SyncEngine {
         return result;
     }
 
-    /**
-     * Sincronizar um item específico
-     */
-    private async syncItem(item: SyncQueueItem): Promise<void> {
-        console.log(`[SyncEngine] Syncing ${item.entity_type}/${item.operation}...`);
+    private async tryCleanup(): Promise<void> {
+        try {
+            const lastCleanupStr = await databaseService.getMetadata('last_cleanup');
+            const lastCleanup = lastCleanupStr ? new Date(lastCleanupStr).getTime() : 0;
+            const now = Date.now();
+            const oneDay = 24 * 60 * 60 * 1000;
 
+            if (now - lastCleanup > oneDay) {
+                console.log('[SyncEngine] Running daily cleanup...');
+                const sevenDaysAgo = now - (7 * oneDay); // Keep 7 days history
+
+                // Remove old SUCCESS items from pending queue (if we kept them there)
+                await databaseService.runDelete(
+                    `DELETE FROM sync_queue WHERE status = 'SUCCESS' AND updated_at < ?`,
+                    [sevenDaysAgo]
+                );
+
+                await databaseService.setMetadata('last_cleanup', new Date().toISOString());
+                console.log('[SyncEngine] Cleanup completed');
+            }
+        } catch (err) {
+            console.warn('[SyncEngine] Cleanup failed:', err);
+        }
+    }
+
+    private async syncItem(item: SyncQueueItem): Promise<void> {
+        console.log(`[SyncEngine] Syncing ${item.entity_type}/${item.operation} (Attempt ${item.attempts + 1})...`);
         const payload = item.payload ? JSON.parse(item.payload) : null;
 
         switch (item.entity_type) {
@@ -210,47 +220,36 @@ class SyncEngine {
                 throw new Error(`Unknown entity type: ${item.entity_type}`);
         }
 
-        // Remover da fila após sucesso
         await SyncQueueModel.remove(item.id);
     }
 
-    /**
-     * Sincronizar cliente
-     */
+    // --- Specific Sync Handlers ---
+
     private async syncCliente(item: SyncQueueItem, payload: any): Promise<void> {
         const local = await ClienteModel.getByLocalId(item.entity_local_id);
-        if (!local) throw new Error('Local cliente not found');
+        if (!local && item.operation !== 'DELETE') throw new Error('Local cliente not found');
 
         switch (item.operation) {
             case 'CREATE': {
+                // Idempotency check handled by backend with localId if implemented, 
+                // or we rely on the fact that if it fails it stays in queue
                 const response = await api.post('/clientes', {
-                    razaoSocial: local.razao_social,
-                    nomeFantasia: local.nome_fantasia,
-                    cnpj: local.cnpj,
-                    cpf: local.cpf,
-                    tipoPessoa: local.tipo_pessoa,
-                    contato: local.contato,
-                    email: local.email,
-                    status: local.status,
-                    logradouro: local.logradouro,
-                    numero: local.numero,
-                    complemento: local.complemento,
-                    bairro: local.bairro,
-                    cidade: local.cidade,
-                    estado: local.estado,
-                    cep: local.cep
+                    ...payload,
+                    localId: item.entity_local_id
                 });
                 await ClienteModel.markAsSynced(item.entity_local_id, response.data.id);
                 break;
             }
             case 'UPDATE': {
-                if (!local.server_id) throw new Error('No server ID for update');
+                if (!local || !local.server_id) throw new Error('No server ID for update');
+                // Conflict resolution: Server Wins if newer? 
+                // For now, simple Last-Write-Wins (Blindly overwrite server with our newer data)
                 await api.put(`/clientes/${local.server_id}`, payload);
                 await ClienteModel.markAsSynced(item.entity_local_id, local.server_id);
                 break;
             }
             case 'DELETE': {
-                if (local.server_id) {
+                if (local && local.server_id) {
                     await api.delete(`/clientes/${local.server_id}`);
                 }
                 await databaseService.runDelete('DELETE FROM clientes WHERE local_id = ?', [item.entity_local_id]);
@@ -259,42 +258,48 @@ class SyncEngine {
         }
     }
 
-    /**
-     * Sincronizar OS
-     */
     private async syncOS(item: SyncQueueItem, payload: any): Promise<void> {
         const local = await OSModel.getByLocalId(item.entity_local_id);
-        if (!local) throw new Error('Local OS not found');
+        if (!local && item.operation !== 'DELETE') throw new Error('Local OS not found');
 
         switch (item.operation) {
             case 'CREATE': {
-                // Resolver cliente server_id
                 let clienteServerId: number | null = null;
-                if (local.cliente_local_id) {
+                if (local?.cliente_local_id) {
                     const cliente = await ClienteModel.getByLocalId(local.cliente_local_id);
                     clienteServerId = cliente?.server_id || null;
                 }
+
+                // If client is not synced, we can't sync OS yet unless we support dependency resolution.
+                // For now, throw and retry later (hopefully client syncs first).
                 if (!clienteServerId) throw new Error('Cliente not synced yet');
 
                 const response = await api.post('/ordens-servico', {
                     clienteId: clienteServerId,
-                    data: local.data,
-                    dataVencimento: local.data_vencimento
+                    data: local?.data,
+                    dataVencimento: local?.data_vencimento,
+                    status: local?.status,
+                    tipoDesconto: local?.tipo_desconto,
+                    valorDesconto: local?.valor_desconto,
+                    localId: item.entity_local_id // For Idempotency
                 });
                 await OSModel.markAsSynced(item.entity_local_id, response.data.id);
                 break;
             }
             case 'UPDATE': {
-                if (!local.server_id) throw new Error('No server ID for update');
-                // Update de status
+                if (!local || !local.server_id) throw new Error('No server ID for update');
+                // Update specific fields or status
                 if (payload?.status) {
                     await api.patch(`/ordens-servico/${local.server_id}/status`, { status: payload.status });
+                } else {
+                    // Full update patch
+                    await api.patch(`/ordens-servico/${local.server_id}`, payload);
                 }
                 await OSModel.markAsSynced(item.entity_local_id, local.server_id);
                 break;
             }
             case 'DELETE': {
-                if (local.server_id) {
+                if (local && local.server_id) {
                     await api.delete(`/ordens-servico/${local.server_id}`);
                 }
                 await databaseService.runDelete('DELETE FROM ordens_servico WHERE local_id = ?', [item.entity_local_id]);
@@ -303,18 +308,14 @@ class SyncEngine {
         }
     }
 
-    /**
-     * Sincronizar veículo
-     */
     private async syncVeiculo(item: SyncQueueItem, payload: any): Promise<void> {
         const local = await VeiculoModel.getById(
             (await databaseService.getFirst<{ id: number }>('SELECT id FROM veiculos_os WHERE local_id = ?', [item.entity_local_id]))?.id || 0
         );
-        if (!local) throw new Error('Local veiculo not found');
 
         switch (item.operation) {
             case 'CREATE': {
-                // Resolver OS server_id
+                if (!local) throw new Error('Local veiculo not found');
                 let osServerId: number | null = null;
                 if (local.os_local_id) {
                     const os = await OSModel.getByLocalId(local.os_local_id);
@@ -326,14 +327,21 @@ class SyncEngine {
                     ordemServicoId: osServerId,
                     placa: local.placa,
                     modelo: local.modelo,
-                    cor: local.cor
+                    cor: local.cor,
+                    localId: item.entity_local_id
                 });
                 await VeiculoModel.markAsSynced(item.entity_local_id, response.data.id);
                 break;
             }
             case 'DELETE': {
-                if (local.server_id) {
-                    await api.delete(`/ordens-servico/veiculos/${local.server_id}`);
+                // Check if it exists locally or just proceed to kill on server
+                // Implementation implies if we have server_id we delete
+                // Ideally we track server_id in payload for DELETE ops if local is gone
+                // But current logic requires local record to get server_id. 
+                // If local is hard deleted, we might lose server_id. Soft delete fixes this!
+                const serverId = local?.server_id;
+                if (serverId) {
+                    await api.delete(`/ordens-servico/veiculos/${serverId}`);
                 }
                 await databaseService.runDelete('DELETE FROM veiculos_os WHERE local_id = ?', [item.entity_local_id]);
                 break;
@@ -341,33 +349,23 @@ class SyncEngine {
         }
     }
 
-    /**
-     * Sincronizar despesa
-     */
     private async syncDespesa(item: SyncQueueItem, payload: any): Promise<void> {
         const local = await DespesaModel.getById(
             (await databaseService.getFirst<{ id: number }>('SELECT id FROM despesas WHERE local_id = ?', [item.entity_local_id]))?.id || 0
         );
-        if (!local) throw new Error('Local despesa not found');
 
         switch (item.operation) {
             case 'CREATE': {
-                // Usando o mesmo endpoint do frontend web: /despesas
+                if (!local) throw new Error('Local despesa not found');
                 const response = await api.post('/despesas', {
-                    descricao: local.descricao,
-                    valor: local.valor,
-                    dataDespesa: local.data_despesa,
-                    dataVencimento: local.data_despesa,
-                    categoria: local.categoria || 'OUTROS',
-                    meioPagamento: local.meio_pagamento || 'PIX',
-                    pagoAgora: local.pago_agora === 1,
-                    cartaoId: local.cartao_id
+                    ...payload,
+                    localId: item.entity_local_id
                 });
                 await DespesaModel.markAsSynced(item.entity_local_id, response.data.id);
                 break;
             }
             case 'DELETE': {
-                if (local.server_id) {
+                if (local && local.server_id) {
                     await api.delete(`/despesas/${local.server_id}`);
                 }
                 await databaseService.runDelete('DELETE FROM despesas WHERE local_id = ?', [item.entity_local_id]);
@@ -376,24 +374,6 @@ class SyncEngine {
         }
     }
 
-    /**
-     * Força sincronização manual
-     */
-    async forceSync(): Promise<SyncResult> {
-        // Atualizar estado da rede
-        const state = await NetInfo.fetch();
-        this.isOnline = state.isConnected === true && state.isInternetReachable === true;
-
-        if (!this.isOnline) {
-            return { success: 0, failed: 0, errors: ['Sem conexão com internet'] };
-        }
-
-        return await this.syncAll();
-    }
-
-    /**
-     * Destruir engine (limpar listeners)
-     */
     destroy(): void {
         if (this.unsubscribeNetInfo) {
             this.unsubscribeNetInfo();

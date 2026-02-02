@@ -1,11 +1,12 @@
 // src/services/database/migrations.ts
 // Esquema SQL para banco de dados offline
 
+
 export const MIGRATIONS = [
-    {
-        version: 1,
-        name: 'initial_schema',
-        sql: `
+  {
+    version: 1,
+    name: 'initial_schema',
+    sql: `
       -- Tabela de Clientes
       CREATE TABLE IF NOT EXISTS clientes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -172,7 +173,95 @@ export const MIGRATIONS = [
         updated_at INTEGER
       );
     `
-    }
+  },
+  {
+    version: 2,
+    name: 'add_soft_delete_and_sync_improvements',
+    sql: `
+        -- Adicionar suporte a Soft Delete
+        ALTER TABLE clientes ADD COLUMN deleted_at INTEGER;
+        ALTER TABLE ordens_servico ADD COLUMN deleted_at INTEGER;
+        ALTER TABLE veiculos_os ADD COLUMN deleted_at INTEGER;
+        ALTER TABLE pecas_os ADD COLUMN deleted_at INTEGER;
+        ALTER TABLE despesas ADD COLUMN deleted_at INTEGER;
+
+        -- Melhorias na Fila de Sincronização
+        ALTER TABLE sync_queue ADD COLUMN max_retries INTEGER DEFAULT 3;
+        ALTER TABLE sync_queue ADD COLUMN status TEXT DEFAULT 'PENDING';
+        `
+  },
+  {
+    version: 3,
+    name: 'add_indices_and_constraints',
+    sql: `
+        -- Índices para Soft Delete (Performance em queries que filtram deletados)
+        CREATE INDEX IF NOT EXISTS idx_clientes_deleted ON clientes(deleted_at);
+        CREATE INDEX IF NOT EXISTS idx_os_deleted ON ordens_servico(deleted_at);
+        CREATE INDEX IF NOT EXISTS idx_veiculos_deleted ON veiculos_os(deleted_at);
+        CREATE INDEX IF NOT EXISTS idx_pecas_deleted ON pecas_os(deleted_at);
+        CREATE INDEX IF NOT EXISTS idx_despesas_deleted ON despesas(deleted_at);
+
+        -- Índices para Sync Queue
+        CREATE INDEX IF NOT EXISTS idx_sync_queue_status ON sync_queue(status);
+        
+        -- Constraint UNIQUE para evitar duplicação na fila (garantindo idempotência no enfileiramento)
+        -- Usando índice único pois SQLite não suporta ADD CONSTRAINT facilmente
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_sync_queue_unique_op ON sync_queue(entity_type, entity_local_id, operation);
+      `
+  },
+  {
+    version: 4,
+    name: 'fix_veiculos_os_columns',
+    // Cada ALTER TABLE é executado separadamente para permitir que alguns falhem
+    // se a coluna já existir
+    statements: [
+      `ALTER TABLE veiculos_os ADD COLUMN updated_at INTEGER;`,
+      `ALTER TABLE veiculos_os ADD COLUMN created_at INTEGER;`,
+      `ALTER TABLE veiculos_os ADD COLUMN last_synced_at INTEGER;`
+    ]
+  },
+  {
+    version: 5,
+    name: 'recreate_veiculos_os_table',
+    sql: `
+      -- Recriar tabela veiculos_os com todas as colunas corretas
+      -- Primeiro, criar uma tabela temporária com os dados existentes
+      CREATE TABLE IF NOT EXISTS veiculos_os_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        local_id TEXT UNIQUE,
+        server_id INTEGER,
+        version INTEGER DEFAULT 1,
+        os_id INTEGER,
+        os_local_id TEXT,
+        placa TEXT NOT NULL,
+        modelo TEXT,
+        cor TEXT,
+        valor_total REAL DEFAULT 0,
+        sync_status TEXT DEFAULT 'SYNCED',
+        last_synced_at INTEGER,
+        updated_at INTEGER,
+        created_at INTEGER,
+        deleted_at INTEGER,
+        FOREIGN KEY (os_id) REFERENCES ordens_servico(id)
+      );
+      
+      -- Copiar dados existentes (se houver)
+      INSERT OR IGNORE INTO veiculos_os_new (id, local_id, server_id, version, os_id, os_local_id, placa, modelo, cor, valor_total, sync_status)
+      SELECT id, local_id, server_id, version, os_id, os_local_id, placa, modelo, cor, valor_total, sync_status
+      FROM veiculos_os;
+      
+      -- Dropar tabela antiga
+      DROP TABLE IF EXISTS veiculos_os;
+      
+      -- Renomear nova tabela
+      ALTER TABLE veiculos_os_new RENAME TO veiculos_os;
+      
+      -- Recriar índices
+      CREATE INDEX IF NOT EXISTS idx_veiculos_placa ON veiculos_os(placa);
+      CREATE INDEX IF NOT EXISTS idx_veiculos_sync ON veiculos_os(sync_status);
+      CREATE INDEX IF NOT EXISTS idx_veiculos_deleted ON veiculos_os(deleted_at);
+    `
+  }
 ];
 
-export const CURRENT_DB_VERSION = 1;
+export const CURRENT_DB_VERSION = 5;

@@ -4,6 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { TrendingUp, Percent, Landmark, ReceiptText, ArrowUpRight, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react-native';
 import { theme } from '../theme';
 import { Card } from '../components/ui';
+import { OfflineIndicator } from '../components/ui/OfflineIndicator';
 import { comissaoService } from '../services/comissaoService';
 import { ComissaoCalculada } from '../types';
 
@@ -14,31 +15,52 @@ export const MyCommissionsScreen = () => {
     const [comissao, setComissao] = useState<ComissaoCalculada | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [naoParticipaComissao, setNaoParticipaComissao] = useState(false);
+
+    console.log('[MyCommissionsScreen] Render. State:', { ano, mes, loading, error: !!error });
 
     const fetchComissao = async () => {
         try {
+            console.log('[MyCommissionsScreen] fetchComissao started for:', ano, mes);
             setLoading(true);
             setError(null);
+            setNaoParticipaComissao(false);
             const data = await comissaoService.obterComissaoMensal(ano, mes);
+            console.log('[MyCommissionsScreen] fetchComissao success. Data:', JSON.stringify(data, null, 2));
             setComissao(data);
         } catch (err: any) {
-            console.error('Failed to load commission:', err);
+            console.error('[MyCommissionsScreen] fetchComissao failed:', err);
+            if (err.response) {
+                console.error('[MyCommissionsScreen] Error response:', err.response.status, err.response.data);
+            }
             setComissao(null);
-            if (err.response?.status !== 404) {
+
+            // Verifica se é erro de usuário que não participa de comissão
+            const errorMessage = err?.message || err?.details?.message || '';
+            if (errorMessage.toLowerCase().includes('não configurado para receber comissões') ||
+                errorMessage.toLowerCase().includes('nao configurado para receber comissoes')) {
+                setNaoParticipaComissao(true);
+                console.log('[MyCommissionsScreen] User does not participate in commissions');
+            } else if (err.response?.status !== 404) {
                 setError('Falha ao carregar dados.');
+            } else {
+                console.log('[MyCommissionsScreen] 404 Not Found - expected for new months');
             }
         } finally {
+            console.log('[MyCommissionsScreen] fetchComissao finally block');
             setLoading(false);
         }
     };
 
     useFocusEffect(
         useCallback(() => {
+            console.log('[MyCommissionsScreen] useFocusEffect triggered');
             fetchComissao();
         }, [ano, mes])
     );
 
     const handlePreviousMonth = () => {
+        console.log('[MyCommissionsScreen] handlePreviousMonth');
         if (mes === 1) {
             setMes(12);
             setAno(ano - 1);
@@ -48,6 +70,7 @@ export const MyCommissionsScreen = () => {
     };
 
     const handleNextMonth = () => {
+        console.log('[MyCommissionsScreen] handleNextMonth');
         if (mes === 12) {
             setMes(1);
             setAno(ano + 1);
@@ -57,12 +80,15 @@ export const MyCommissionsScreen = () => {
     };
 
     const handleForceSync = async () => {
+        console.log('[MyCommissionsScreen] handleForceSync triggered');
         try {
             setLoading(true);
+            console.log('[MyCommissionsScreen] calling service.forceSync');
             await comissaoService.forceSync(ano, mes);
+            console.log('[MyCommissionsScreen] forceSync success, refetching...');
             await fetchComissao();
         } catch (err) {
-            console.error('Failed to sync:', err);
+            console.error('[MyCommissionsScreen] forceSync failed:', err);
         }
     };
 
@@ -97,19 +123,22 @@ export const MyCommissionsScreen = () => {
                         </Text>
                     </View>
 
-                    {/* Month Navigation */}
-                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.4)', borderWidth: 1, borderColor: theme.colors.border, height: 40 }}>
-                        <TouchableOpacity onPress={handlePreviousMonth} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
-                            <Text style={{ color: theme.colors.primary, fontSize: 18, fontWeight: '900' }}>{'<'}</Text>
-                        </TouchableOpacity>
-                        <View style={{ paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center' }}>
-                            <Text style={{ color: theme.colors.textMuted, fontSize: 10, fontWeight: '700' }}>
-                                {mes.toString().padStart(2, '0')}.{ano}
-                            </Text>
+                    {/* Right Side: Indicator + Month Nav */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <OfflineIndicator compact alwaysVisible />
+                        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.4)', borderWidth: 1, borderColor: theme.colors.border, height: 40 }}>
+                            <TouchableOpacity onPress={handlePreviousMonth} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
+                                <Text style={{ color: theme.colors.primary, fontSize: 18, fontWeight: '900' }}>{'<'}</Text>
+                            </TouchableOpacity>
+                            <View style={{ paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center' }}>
+                                <Text style={{ color: theme.colors.textMuted, fontSize: 10, fontWeight: '700' }}>
+                                    {mes.toString().padStart(2, '0')}.{ano}
+                                </Text>
+                            </View>
+                            <TouchableOpacity onPress={handleNextMonth} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
+                                <Text style={{ color: theme.colors.primary, fontSize: 18, fontWeight: '900' }}>{'>'}</Text>
+                            </TouchableOpacity>
                         </View>
-                        <TouchableOpacity onPress={handleNextMonth} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
-                            <Text style={{ color: theme.colors.primary, fontSize: 18, fontWeight: '900' }}>{'>'}</Text>
-                        </TouchableOpacity>
                     </View>
                 </View>
 
@@ -150,6 +179,31 @@ export const MyCommissionsScreen = () => {
                             <Text style={{ color: theme.colors.error, fontWeight: '700', fontSize: 12 }}>Exceção_Crítica_Detectada</Text>
                         </View>
                         <Text style={{ color: theme.colors.error, fontSize: 11, marginTop: 4 }}>{error}</Text>
+                    </Card>
+                )}
+
+                {/* Info: Usuário não participa de comissão */}
+                {naoParticipaComissao && !loading && (
+                    <Card style={{ marginBottom: 16, backgroundColor: 'rgba(59, 130, 246, 0.1)', borderColor: 'rgba(59, 130, 246, 0.3)' }}>
+                        <View style={{ alignItems: 'center', padding: 24 }}>
+                            <View style={{
+                                width: 56,
+                                height: 56,
+                                borderRadius: 28,
+                                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginBottom: 16
+                            }}>
+                                <AlertTriangle size={28} color="#3b82f6" />
+                            </View>
+                            <Text style={{ color: '#3b82f6', fontSize: 14, fontWeight: '700', textAlign: 'center', marginBottom: 8 }}>
+                                Você não participa de comissões
+                            </Text>
+                            <Text style={{ color: theme.colors.textMuted, fontSize: 12, textAlign: 'center', lineHeight: 18 }}>
+                                Sua conta não está configurada para receber comissões. Entre em contato com o administrador da empresa caso acredite que isso seja um erro.
+                            </Text>
+                        </View>
                     </Card>
                 )}
 
@@ -194,7 +248,7 @@ export const MyCommissionsScreen = () => {
                         </View>
 
                         {/* Saldo Anterior */}
-                        {comissao.saldoAnterior && comissao.saldoAnterior !== 0 && (
+                        {comissao.saldoAnterior !== 0 && (
                             <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(245, 158, 11, 0.1)', borderWidth: 1, borderColor: 'rgba(245, 158, 11, 0.3)', padding: 12, marginBottom: 16 }}>
                                 <AlertTriangle size={16} color={theme.colors.warning} />
                                 <View style={{ marginLeft: 12 }}>

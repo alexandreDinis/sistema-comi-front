@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { authService } from '../services/authService';
+import authService from '../services/authService';
 import { LoginRequest, UserResponse } from '../types';
 
 interface AuthContextData {
@@ -19,11 +19,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     useEffect(() => {
         const loadStorageData = async () => {
-            const storedUser = await authService.getCurrentUser();
-            if (storedUser) {
-                setUser(storedUser);
+            console.log('[AuthContext] loadStorageData started');
+            try {
+                const storedUser = await authService.getUserProfile();
+                console.log('[AuthContext] storedUser retrieved:', !!storedUser);
+                if (storedUser) {
+                    setUser(storedUser);
+                }
+            } catch (error) {
+                console.error('[AuthContext] loadStorageData error:', error);
+            } finally {
+                console.log('[AuthContext] Setting loading to false');
+                setLoading(false);
             }
-            setLoading(false);
         };
         loadStorageData();
     }, []);

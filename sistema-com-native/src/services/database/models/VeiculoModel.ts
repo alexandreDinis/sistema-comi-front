@@ -2,7 +2,7 @@
 // Model para operações CRUD de Veículos em OS no banco local
 
 import { databaseService } from '../DatabaseService';
-import { v4 as uuidv4 } from 'uuid';
+import { generateUUID } from '../../../utils/uuid';
 import { LocalVeiculo, SYNC_PRIORITIES } from './types';
 import type { VeiculoOS, AddVeiculoRequest } from '../../../types';
 import { OSModel } from './OSModel';
@@ -71,7 +71,7 @@ export const VeiculoModel = {
      */
     async create(data: AddVeiculoRequest & { osLocalId?: string }): Promise<LocalVeiculo> {
         const now = Date.now();
-        const localId = uuidv4();
+        const localId = generateUUID();
 
         // Resolver OS
         let osId: number | null = null;
@@ -113,11 +113,20 @@ export const VeiculoModel = {
     /**
      * Salvar veículo do servidor
      */
+    /**
+     * Salvar veículo do servidor
+     */
     async upsertFromServer(veiculo: VeiculoOS, osLocalId: number): Promise<LocalVeiculo> {
         const now = Date.now();
         const existing = await this.getByServerId(veiculo.id);
 
         if (existing) {
+            // Conflict Resolution: Client Wins if Pending
+            if (existing.sync_status !== 'SYNCED') {
+                console.log(`[VeiculoModel] Ignorando update do servidor para veiculo ${existing.id} pois tem alterações locais pendentes.`);
+                return existing;
+            }
+
             await databaseService.runUpdate(
                 `UPDATE veiculos_os SET
           placa = ?, modelo = ?, cor = ?, valor_total = ?,
@@ -127,7 +136,7 @@ export const VeiculoModel = {
             );
             return (await this.getById(existing.id))!;
         } else {
-            const localId = uuidv4();
+            const localId = generateUUID();
             const id = await databaseService.runInsert(
                 `INSERT INTO veiculos_os (
           local_id, server_id, version, os_id, placa, modelo, cor, valor_total,

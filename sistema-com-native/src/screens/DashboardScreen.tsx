@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, RefreshControl, TextInput, Alert } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
+import { useOffline } from '../contexts/OfflineContext';
 import { LogOut, Plus, Users, Search, Wrench, CheckCircle, Car, Package, Activity, DollarSign } from 'lucide-react-native';
 import { osService } from '../services/osService';
 import { OrdemServico } from '../types';
@@ -9,6 +10,7 @@ import { theme } from '../theme';
 import { Card } from '../components/ui';
 import { VehicleHistoryModal } from '../components/modals/VehicleHistoryModal';
 import { CyberpunkAlert, CyberpunkAlertProps } from '../components/ui/CyberpunkAlert';
+import { OfflineIndicator } from '../components/ui/OfflineIndicator';
 
 // Limpar placa helper
 const limparPlaca = (placa: string) => placa.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
@@ -16,6 +18,7 @@ const limparPlaca = (placa: string) => placa.replace(/[^a-zA-Z0-9]/g, '').toUppe
 export const DashboardScreen = () => {
     const navigation = useNavigation<any>();
     const { user, signOut } = useAuth();
+    const { isInitialized } = useOffline();
 
     // Plate search state
     type PlateFormat = 'MERC' | 'ANTIGA';
@@ -79,6 +82,11 @@ export const DashboardScreen = () => {
     const [refreshing, setRefreshing] = useState(false);
 
     const fetchData = async () => {
+        // Esperar DB estar inicializado antes de buscar
+        if (!isInitialized) {
+            console.log('[DashboardScreen] DB not ready, skipping fetch');
+            return;
+        }
         try {
             const data = await osService.listOS();
             setOsList(data);
@@ -92,7 +100,7 @@ export const DashboardScreen = () => {
     useFocusEffect(
         useCallback(() => {
             fetchData();
-        }, [])
+        }, [isInitialized]) // Re-run when isInitialized changes
     );
 
     const onRefresh = () => {
@@ -211,18 +219,21 @@ export const DashboardScreen = () => {
                         PAINEL OPERACIONAL
                     </Text>
                 </View>
-                <TouchableOpacity
-                    onPress={signOut}
-                    style={{
-                        padding: 10,
-                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                        borderWidth: 1,
-                        borderColor: 'rgba(239, 68, 68, 0.3)',
-                        borderRadius: 8,
-                    }}
-                >
-                    <LogOut size={20} color={theme.colors.error} />
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    <OfflineIndicator compact alwaysVisible />
+                    <TouchableOpacity
+                        onPress={signOut}
+                        style={{
+                            padding: 10,
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderWidth: 1,
+                            borderColor: 'rgba(239, 68, 68, 0.3)',
+                            borderRadius: 8,
+                        }}
+                    >
+                        <LogOut size={20} color={theme.colors.error} />
+                    </TouchableOpacity>
+                </View>
             </View>
 
             <ScrollView

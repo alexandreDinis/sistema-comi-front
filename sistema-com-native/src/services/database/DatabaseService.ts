@@ -50,14 +50,28 @@ class DatabaseService {
             if (migration.version > currentVersion) {
                 console.log(`[DatabaseService] Running migration ${migration.version}: ${migration.name}`);
 
-                // Executar SQL da migração
-                const statements = migration.sql
-                    .split(';')
-                    .map(s => s.trim())
-                    .filter(s => s.length > 0);
+                // Suporta dois formatos: sql (string única) ou statements (array)
+                if ('sql' in migration && migration.sql) {
+                    // Formato antigo: sql único que é dividido por ;
+                    const statements = migration.sql
+                        .split(';')
+                        .map(s => s.trim())
+                        .filter(s => s.length > 0);
 
-                for (const statement of statements) {
-                    await this.db.execAsync(statement);
+                    for (const statement of statements) {
+                        await this.db.execAsync(statement);
+                    }
+                } else if ('statements' in migration && Array.isArray(migration.statements)) {
+                    // Formato novo: array de statements com tratamento de erro individual
+                    for (const statement of migration.statements) {
+                        try {
+                            await this.db.execAsync(statement);
+                            console.log(`[DatabaseService] Executed: ${statement.substring(0, 50)}...`);
+                        } catch (err: any) {
+                            // Ignorar erros de "column already exists" ou similares
+                            console.log(`[DatabaseService] Statement skipped (may already exist): ${err.message}`);
+                        }
+                    }
                 }
 
                 // Atualizar versão
@@ -139,32 +153,51 @@ class DatabaseService {
 
         console.log(`[DatabaseService] Cleaning up data older than ${daysToKeep} days...`);
 
+        let osDeleted = 0;
+
         // Remover OS finalizadas antigas (manter apenas sincronizadas)
-        const osDeleted = await this.runDelete(
-            `DELETE FROM ordens_servico 
-       WHERE status = 'FINALIZADA' 
-       AND sync_status = 'SYNCED'
-       AND updated_at < ?`,
-            [cutoffDate]
-        );
+        // Usar COALESCE para lidar com colunas que podem não existir
+        try {
+            osDeleted = await this.runDelete(
+                `DELETE FROM ordens_servico 
+                 WHERE status = 'FINALIZADA' 
+                 AND sync_status = 'SYNCED'
+                 AND COALESCE(updated_at, created_at, 0) < ?`,
+                [cutoffDate]
+            );
+        } catch (e: any) {
+            console.log('[DatabaseService] Cleanup OS skipped:', e.message);
+        }
 
         // Limpar peças e veículos órfãos
-        await this.runDelete(
-            `DELETE FROM pecas_os 
-       WHERE veiculo_id NOT IN (SELECT id FROM veiculos_os)`
-        );
+        try {
+            await this.runDelete(
+                `DELETE FROM pecas_os 
+                 WHERE veiculo_id NOT IN (SELECT id FROM veiculos_os)`
+            );
+        } catch (e: any) {
+            console.log('[DatabaseService] Cleanup pecas skipped:', e.message);
+        }
 
-        await this.runDelete(
-            `DELETE FROM veiculos_os 
-       WHERE os_id NOT IN (SELECT id FROM ordens_servico)`
-        );
+        try {
+            await this.runDelete(
+                `DELETE FROM veiculos_os 
+                 WHERE os_id NOT IN (SELECT id FROM ordens_servico)`
+            );
+        } catch (e: any) {
+            console.log('[DatabaseService] Cleanup veiculos skipped:', e.message);
+        }
 
         // Limpar logs de auditoria muito antigos
-        const auditCutoff = Date.now() - (90 * 24 * 60 * 60 * 1000); // 90 dias
-        await this.runDelete(
-            `DELETE FROM audit_log WHERE timestamp < ?`,
-            [auditCutoff]
-        );
+        try {
+            const auditCutoff = Date.now() - (90 * 24 * 60 * 60 * 1000); // 90 dias
+            await this.runDelete(
+                `DELETE FROM audit_log WHERE timestamp < ?`,
+                [auditCutoff]
+            );
+        } catch (e: any) {
+            console.log('[DatabaseService] Cleanup audit_log skipped:', e.message);
+        }
 
         console.log(`[DatabaseService] Cleanup complete. Removed ${osDeleted} old OS records.`);
     }

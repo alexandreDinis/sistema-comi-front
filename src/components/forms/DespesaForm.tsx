@@ -255,6 +255,8 @@ export const DespesaForm: React.FC = () => {
                                 <option value="MARKETING">📢 MARKETING</option>
                                 <option value="VIAGENS_REPRESENTACAO">✈️ VIAGENS</option>
                                 <option value="COMBUSTIVEL">⛽ COMBUSTÍVEL</option>
+                                <option value="ALIMENTACAO">🍽️ ALIMENTAÇÃO</option>
+                                <option value="MANUTENCAO_VEICULO">🔧 MANUTENÇÃO VEÍCULO</option>
                             </optgroup>
                             <optgroup label="── FINANCEIRO ──">
                                 <option value="TARIFAS_BANCARIAS">🏦 TARIFAS BANCÁRIAS</option>

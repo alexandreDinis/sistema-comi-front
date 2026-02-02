@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardTypeOptions } from 'react-native';
 import { RefreshCw } from 'lucide-react-native';
 import { theme } from '../../theme';
 
@@ -16,6 +16,33 @@ export const PlateInput: React.FC<PlateInputProps> = ({ value, onChange, onBlur 
 
     const isLetter = (char: string) => /^[A-Z]$/.test(char.toUpperCase());
     const isNumber = (char: string) => /^[0-9]$/.test(char);
+
+    // Determina o tipo de teclado baseado na posição atual
+    const keyboardType = useMemo((): KeyboardTypeOptions => {
+        const cleanValue = value.replace(/[^A-Z0-9]/gi, '');
+        const currentPosition = cleanValue.length;
+
+        if (format === 'mercosul') {
+            // Mercosul: L L L N L N N (posições 0,1,2,4 são letras; 3,5,6 são números)
+            const letterPositions = [0, 1, 2, 4];
+            const numberPositions = [3, 5, 6];
+
+            if (currentPosition >= 7) {
+                return 'default'; // Placa completa
+            }
+
+            if (numberPositions.includes(currentPosition)) {
+                return 'number-pad';
+            }
+            return 'default'; // Para letras, usa teclado padrão
+        } else {
+            // Legacy: L L L - N N N N (posições 0,1,2 são letras; 3,4,5,6 são números)
+            if (currentPosition >= 3) {
+                return 'number-pad';
+            }
+            return 'default';
+        }
+    }, [value, format]);
 
     const applyMask = (rawValue: string, fmt: PlateFormat): string => {
         const chars = rawValue.toUpperCase().replace(/[^A-Z0-9]/g, '').split('');
@@ -84,11 +111,26 @@ export const PlateInput: React.FC<PlateInputProps> = ({ value, onChange, onBlur 
         onChange(applyMask(value, newFormat));
     };
 
+    // Hint para o usuário sobre qual tipo de caractere digitar
+    const getPositionHint = (): string => {
+        const cleanValue = value.replace(/[^A-Z0-9]/gi, '');
+        const currentPosition = cleanValue.length;
+
+        if (format === 'mercosul') {
+            if (currentPosition >= 7) return 'Placa completa';
+            const letterPositions = [0, 1, 2, 4];
+            return letterPositions.includes(currentPosition) ? 'Digite uma LETRA' : 'Digite um NÚMERO';
+        } else {
+            if (currentPosition >= 7) return 'Placa completa';
+            return currentPosition < 3 ? 'Digite uma LETRA' : 'Digite um NÚMERO';
+        }
+    };
+
     return (
         <View style={styles.container}>
             {/* Toggle Button */}
             <TouchableOpacity onPress={toggleFormat} style={styles.toggleButton}>
-                <RefreshCw size={14} color="#000" />
+                <RefreshCw size={16} color="#000" />
             </TouchableOpacity>
 
             {/* Plate Container */}
@@ -116,15 +158,17 @@ export const PlateInput: React.FC<PlateInputProps> = ({ value, onChange, onBlur 
                 {/* Input Field */}
                 <View style={[
                     styles.inputContainer,
-                    format === 'mercosul' ? { marginTop: 28 } : { marginTop: 12 }
+                    format === 'mercosul' ? { marginTop: 32 } : { marginTop: 16 }
                 ]}>
                     <TextInput
                         value={value}
                         onChangeText={handleChange}
                         onBlur={onBlur}
                         placeholder={format === 'mercosul' ? 'ABC1D23' : 'ABC-1234'}
-                        placeholderTextColor="rgba(0,0,0,0.2)"
+                        placeholderTextColor="rgba(0,0,0,0.25)"
                         autoCapitalize="characters"
+                        autoCorrect={false}
+                        keyboardType={keyboardType}
                         maxLength={format === 'mercosul' ? 7 : 8}
                         style={[
                             styles.input,
@@ -141,6 +185,9 @@ export const PlateInput: React.FC<PlateInputProps> = ({ value, onChange, onBlur 
                 )}
             </View>
 
+            {/* Position Hint */}
+            <Text style={styles.positionHint}>{getPositionHint()}</Text>
+
             {/* Format Label */}
             <Text style={styles.formatLabel}>
                 {format === 'mercosul' ? 'Padrão Mercosul' : 'Padrão Antigo'}
@@ -152,16 +199,16 @@ export const PlateInput: React.FC<PlateInputProps> = ({ value, onChange, onBlur 
 const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
-        marginBottom: 16,
+        marginBottom: 20,
     },
     toggleButton: {
         position: 'absolute',
-        top: -8,
-        right: 20,
+        top: -10,
+        right: 10,
         zIndex: 10,
         backgroundColor: theme.colors.primary,
         borderRadius: 20,
-        padding: 8,
+        padding: 10,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.3,
@@ -169,16 +216,16 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     plateContainer: {
-        width: 260,
-        height: 80,
-        borderRadius: 8,
-        borderWidth: 3,
+        width: 320,
+        height: 100,
+        borderRadius: 10,
+        borderWidth: 4,
         overflow: 'hidden',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
-        elevation: 8,
+        shadowOpacity: 0.4,
+        shadowRadius: 8,
+        elevation: 10,
     },
     plateMercosul: {
         backgroundColor: '#FFFFFF',
@@ -193,15 +240,15 @@ const styles = StyleSheet.create({
         top: 0,
         left: 0,
         right: 0,
-        height: 26,
+        height: 30,
         backgroundColor: '#1a4d8c',
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 8,
+        paddingHorizontal: 10,
     },
     flagContainer: {
-        width: 24,
-        height: 16,
+        width: 28,
+        height: 18,
         backgroundColor: '#003087',
         borderRadius: 2,
         overflow: 'hidden',
@@ -215,70 +262,77 @@ const styles = StyleSheet.create({
         top: '40%',
         left: 0,
         right: 0,
-        height: 4,
+        height: 5,
         backgroundColor: '#FFCC00',
     },
     brasilText: {
         flex: 1,
         color: '#FFFFFF',
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: '900',
         textAlign: 'center',
-        letterSpacing: 3,
+        letterSpacing: 4,
     },
     legacyLabel: {
         position: 'absolute',
-        top: 4,
+        top: 6,
         alignSelf: 'center',
-        fontSize: 8,
-        color: 'rgba(0,0,0,0.3)',
+        fontSize: 10,
+        color: 'rgba(0,0,0,0.35)',
         fontWeight: '700',
-        letterSpacing: 4,
+        letterSpacing: 5,
     },
     inputContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 10,
+        paddingHorizontal: 12,
     },
     input: {
         width: '100%',
         textAlign: 'center',
         fontWeight: '900',
-        letterSpacing: 6,
+        letterSpacing: 8,
     },
     inputMercosul: {
-        fontSize: 34,
+        fontSize: 42,
         color: '#000000',
-        // Default system font (sans-serif)
-        fontWeight: '700',
+        fontWeight: '800',
     },
     inputLegacy: {
-        fontSize: 32,
+        fontSize: 40,
         color: '#333333',
         fontFamily: 'monospace',
     },
     qrCode: {
         position: 'absolute',
-        bottom: 4,
-        left: 6,
-        width: 18,
-        height: 18,
+        bottom: 6,
+        left: 8,
+        width: 22,
+        height: 22,
         backgroundColor: 'rgba(0,0,0,0.1)',
-        borderRadius: 2,
+        borderRadius: 3,
         justifyContent: 'center',
         alignItems: 'center',
     },
     qrText: {
-        fontSize: 6,
+        fontSize: 7,
         color: 'rgba(0,0,0,0.4)',
         fontWeight: '700',
     },
+    positionHint: {
+        marginTop: 6,
+        fontSize: 11,
+        color: theme.colors.primary,
+        fontWeight: '600',
+        letterSpacing: 1,
+    },
     formatLabel: {
-        marginTop: 8,
+        marginTop: 4,
         fontSize: 10,
-        color: 'rgba(212, 175, 55, 0.6)',
+        color: 'rgba(212, 175, 55, 0.5)',
         letterSpacing: 2,
         textTransform: 'uppercase',
     },
 });
+

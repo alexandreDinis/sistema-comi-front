@@ -109,10 +109,24 @@ export const OSDetailsScreen = () => {
         try {
             setUpdating(true);
             await osService.updateStatus(osId, newStatus);
-            Alert.alert('Sucesso', `Status atualizado para ${newStatus}`);
+            Alert.alert('✅ Sucesso', `Status atualizado para ${newStatus}`);
             fetchDetails();
-        } catch (error) {
-            Alert.alert('Erro', 'Falha ao atualizar status.');
+        } catch (error: any) {
+            console.error('Erro ao atualizar status:', error);
+
+            // Extract backend message
+            const backendMessage = error.response?.data?.message || error.response?.data?.mensagem;
+
+            // Check if it's the "no responsible" error
+            if (backendMessage && backendMessage.includes('responsável')) {
+                Alert.alert(
+                    '⚠️ Responsável Necessário',
+                    backendMessage || 'Não é possível iniciar a OS sem um responsável técnico definido.\n\nEdite o campo "Responsável" acima antes de iniciar.',
+                    [{ text: 'ENTENDI', style: 'default' }]
+                );
+            } else {
+                Alert.alert('❌ Erro', backendMessage || 'Falha ao atualizar status.');
+            }
         } finally {
             setUpdating(false);
         }

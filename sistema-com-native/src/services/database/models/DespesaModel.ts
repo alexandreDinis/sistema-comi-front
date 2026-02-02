@@ -2,7 +2,7 @@
 // Model para operações CRUD de Despesas no banco local
 
 import { databaseService } from '../DatabaseService';
-import { v4 as uuidv4 } from 'uuid';
+import { generateUUID } from '../../../utils/uuid';
 import { LocalDespesa, SYNC_PRIORITIES } from './types';
 
 export interface CreateDespesaLocal {
@@ -54,7 +54,7 @@ export const DespesaModel = {
      */
     async create(data: CreateDespesaLocal): Promise<LocalDespesa> {
         const now = Date.now();
-        const localId = uuidv4();
+        const localId = generateUUID();
 
         const id = await databaseService.runInsert(
             `INSERT INTO despesas (
@@ -145,6 +145,72 @@ export const DespesaModel = {
          VALUES ('despesa', ?, ?, ?, ?, ?)`,
                 [localId, operation, payload ? JSON.stringify(payload) : null, SYNC_PRIORITIES.CRITICAL, now]
             );
+        }
+    },
+
+    /**
+     * Salvar despesa do servidor
+     */
+    async upsertFromServer(despesa: any): Promise<LocalDespesa> {
+        const now = Date.now();
+        const existing = await databaseService.getFirst<LocalDespesa>(
+            `SELECT * FROM despesas WHERE server_id = ?`,
+            [despesa.id]
+        );
+
+        if (existing) {
+            // Conflict Resolution: Client Wins if Pending
+            if (existing.sync_status !== 'SYNCED') {
+                console.log(`[DespesaModel] Ignorando update do servidor para despesa ${existing.id} pois tem alterações locais pendentes.`);
+                return existing;
+            }
+
+            await databaseService.runUpdate(
+                `UPDATE despesas SET
+          data_despesa = ?, data_vencimento = ?, valor = ?, categoria = ?,
+          descricao = ?, pago_agora = ?, meio_pagamento = ?,
+          sync_status = 'SYNCED', last_synced_at = ?, updated_at = ?
+         WHERE id = ?`,
+                [
+                    despesa.dataDespesa,
+                    despesa.dataVencimento || null,
+                    despesa.valor,
+                    despesa.categoria || null,
+                    despesa.descricao || null,
+                    despesa.pagoAgora ? 1 : 0,
+                    despesa.meioPagamento || null,
+                    now,
+                    now,
+                    existing.id
+                ]
+            );
+            return (await this.getById(existing.id))!;
+        } else {
+            const localId = generateUUID();
+            const id = await databaseService.runInsert(
+                `INSERT INTO despesas (
+          local_id, server_id, version, data_despesa, data_vencimento,
+          valor, categoria, descricao, pago_agora, meio_pagamento, cartao_id,
+          sync_status, last_synced_at, updated_at, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'SYNCED', ?, ?, ?)`,
+                [
+                    localId,
+                    despesa.id,
+                    1,
+                    despesa.dataDespesa,
+                    despesa.dataVencimento || null,
+                    despesa.valor,
+                    despesa.categoria || null,
+                    despesa.descricao || null,
+                    despesa.pagoAgora ? 1 : 0,
+                    despesa.meioPagamento || null,
+                    despesa.cartaoId || null,
+                    now,
+                    now,
+                    now
+                ]
+            );
+            return (await this.getById(id))!;
         }
     },
 

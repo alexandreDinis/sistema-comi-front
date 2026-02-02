@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text } from 'react-native';
+import { View, Text, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, FileText, DollarSign, Users, User, TrendingDown } from 'lucide-react-native';
 import { theme } from '../theme';
 import { DashboardScreen } from '../screens/DashboardScreen';
@@ -35,6 +36,10 @@ const TabIcon: React.FC<TabIconProps> = ({ focused, icon, label }) => (
 );
 
 export const TabNavigator = () => {
+    const insets = useSafeAreaInsets();
+    // Garantir padding mínimo de 20 + safe area do dispositivo
+    const bottomPadding = Math.max(insets.bottom, 10) + 15;
+
     return (
         <Tab.Navigator
             screenOptions={{
@@ -44,8 +49,8 @@ export const TabNavigator = () => {
                     backgroundColor: theme.colors.backgroundSecondary,
                     borderTopWidth: 1,
                     borderTopColor: theme.colors.border,
-                    height: 85,
-                    paddingBottom: 20,
+                    height: 65 + bottomPadding,
+                    paddingBottom: bottomPadding,
                     paddingTop: 8,
                 },
                 tabBarActiveTintColor: theme.colors.primary,

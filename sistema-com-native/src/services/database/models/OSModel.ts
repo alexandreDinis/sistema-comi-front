@@ -2,7 +2,7 @@
 // Model para operações CRUD de Ordens de Serviço no banco local
 
 import { databaseService } from '../DatabaseService';
-import { v4 as uuidv4 } from 'uuid';
+import { generateUUID } from '../../../utils/uuid';
 import { LocalOS, SyncStatus, SYNC_PRIORITIES } from './types';
 import type { OrdemServico, CreateOSRequest, OSStatus } from '../../../types';
 import { ClienteModel } from './ClienteModel';
@@ -76,7 +76,7 @@ export const OSModel = {
      */
     async create(data: CreateOSRequest & { clienteLocalId?: string }, syncStatus: SyncStatus = 'PENDING_CREATE'): Promise<LocalOS> {
         const now = Date.now();
-        const localId = uuidv4();
+        const localId = generateUUID();
 
         // Resolver cliente (pode ser por server_id ou local_id)
         let clienteId: number | null = null;
@@ -127,18 +127,24 @@ export const OSModel = {
         const now = Date.now();
         const existing = await this.getByServerId(os.id);
 
-        // Resolver cliente local
-        let clienteId: number | null = null;
-        let clienteLocalId: string | null = null;
-        if (os.cliente) {
-            const clienteLocal = await ClienteModel.getByServerId(os.cliente.id);
-            if (clienteLocal) {
-                clienteId = clienteLocal.id;
-                clienteLocalId = clienteLocal.local_id;
-            }
-        }
-
         if (existing) {
+            // Conflict Resolution: Client Wins if Pending
+            if (existing.sync_status !== 'SYNCED') {
+                console.log(`[OSModel] Ignorando update do servidor para OS ${existing.id} pois tem alterações locais pendentes.`);
+                return existing;
+            }
+
+            // Resolver cliente local
+            let clienteId: number | null = null;
+            let clienteLocalId: string | null = null;
+            if (os.cliente) {
+                const clienteLocal = await ClienteModel.getByServerId(os.cliente.id);
+                if (clienteLocal) {
+                    clienteId = clienteLocal.id;
+                    clienteLocalId = clienteLocal.local_id;
+                }
+            }
+
             // Atualizar existente
             await databaseService.runUpdate(
                 `UPDATE ordens_servico SET
@@ -163,7 +169,19 @@ export const OSModel = {
             return (await this.getById(existing.id))!;
         } else {
             // Inserir novo
-            const localId = uuidv4();
+            const localId = generateUUID();
+
+            // Resolver cliente local
+            let clienteId: number | null = null;
+            let clienteLocalId: string | null = null;
+            if (os.cliente) {
+                const clienteLocal = await ClienteModel.getByServerId(os.cliente.id);
+                if (clienteLocal) {
+                    clienteId = clienteLocal.id;
+                    clienteLocalId = clienteLocal.local_id;
+                }
+            }
+
             const id = await databaseService.runInsert(
                 `INSERT INTO ordens_servico (
           local_id, server_id, version, cliente_id, cliente_local_id,
@@ -211,38 +229,37 @@ export const OSModel = {
             [status, newVersion, now, id]
         );
 
-        // Se era SYNCED, adicionar à fila
-        if (existing.sync_status === 'SYNCED') {
-            // Prioridade crítica para finalizações
+        // Se estava SYNCED ou já estava PENDING, garante na fila
+        const updated = await this.getById(id);
+        if (updated && updated.sync_status !== 'SYNCED') {
             const priority = status === 'FINALIZADA' ? SYNC_PRIORITIES.CRITICAL : SYNC_PRIORITIES.HIGH;
-            await this.addToSyncQueue(existing.local_id, 'UPDATE', { status }, priority);
+            // Payload apenas com status se for só update de status
+            await this.addToSyncQueue(updated.local_id, 'UPDATE', { status }, priority);
         }
 
         return await this.getById(id);
     },
 
-    /**
-     * Atualizar valor total da OS
-     */
-    async updateValorTotal(id: number, valorTotal: number): Promise<void> {
-        await databaseService.runUpdate(
-            `UPDATE ordens_servico SET valor_total = ?, updated_at = ? WHERE id = ?`,
-            [valorTotal, Date.now(), id]
-        );
-    },
+    // ... existing updateValorTotal ...
 
     /**
-     * Marcar OS para deleção
+     * Soft Delete
      */
-    async delete(id: number): Promise<boolean> {
+    async softDelete(id: number): Promise<boolean> {
         const existing = await this.getById(id);
         if (!existing) return false;
+
+        const now = Date.now();
 
         if (existing.server_id) {
             // Tem no servidor
             await databaseService.runUpdate(
-                `UPDATE ordens_servico SET sync_status = 'PENDING_DELETE', updated_at = ? WHERE id = ?`,
-                [Date.now(), id]
+                `UPDATE ordens_servico SET 
+                    sync_status = 'PENDING_DELETE', 
+                    updated_at = ?,
+                    deleted_at = ? 
+                WHERE id = ?`,
+                [now, now, id]
             );
             await this.addToSyncQueue(existing.local_id, 'DELETE', null, SYNC_PRIORITIES.NORMAL);
         } else {
@@ -255,6 +272,13 @@ export const OSModel = {
         }
 
         return true;
+    },
+
+    /**
+     * Marcar OS para deleção (Alias para softDelete)
+     */
+    async delete(id: number): Promise<boolean> {
+        return this.softDelete(id);
     },
 
     /**
@@ -291,20 +315,28 @@ export const OSModel = {
     async addToSyncQueue(localId: string, operation: 'CREATE' | 'UPDATE' | 'DELETE', payload: any, priority: number = SYNC_PRIORITIES.NORMAL): Promise<void> {
         const now = Date.now();
 
-        const existing = await databaseService.getFirst<{ id: number }>(
-            `SELECT id FROM sync_queue WHERE entity_type = 'os' AND entity_local_id = ?`,
+        const existing = await databaseService.getFirst<{ id: number; attempts: number }>(
+            `SELECT id, attempts FROM sync_queue WHERE entity_type = 'os' AND entity_local_id = ?`,
             [localId]
         );
 
         if (existing) {
             await databaseService.runUpdate(
-                `UPDATE sync_queue SET operation = ?, payload = ?, priority = ?, created_at = ? WHERE id = ?`,
+                `UPDATE sync_queue SET 
+                    operation = ?, 
+                    payload = ?, 
+                    priority = ?, 
+                    created_at = ?,
+                    status = 'PENDING',
+                    attempts = 0,
+                    error_message = NULL
+                WHERE id = ?`,
                 [operation, payload ? JSON.stringify(payload) : null, priority, now, existing.id]
             );
         } else {
             await databaseService.runInsert(
-                `INSERT INTO sync_queue (entity_type, entity_local_id, operation, payload, priority, created_at)
-         VALUES ('os', ?, ?, ?, ?, ?)`,
+                `INSERT INTO sync_queue (entity_type, entity_local_id, operation, payload, priority, created_at, status)
+         VALUES ('os', ?, ?, ?, ?, ?, 'PENDING')`,
                 [localId, operation, payload ? JSON.stringify(payload) : null, priority, now]
             );
         }

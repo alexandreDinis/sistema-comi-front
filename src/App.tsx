@@ -48,7 +48,7 @@ import DistribuicaoLucrosPage from './pages/financeiro/DistribuicaoLucrosPage';
 import FluxoCaixaPage from './pages/financeiro/FluxoCaixaPage';
 import ReceitaCaixaPage from './pages/relatorios/ReceitaCaixaPage';
 import ImpostoPagoPage from './pages/financeiro/ImpostoPagoPage';
-import { AppLayout } from './layouts/AppLayout';
+import { ResponsiveLayout } from './layouts/ResponsiveLayout';
 import { PlatformLayout } from './layouts/PlatformLayout';
 import './index.css';
 
@@ -83,7 +83,7 @@ export const App: React.FC = () => {
           </Route>
 
           {/* App Routes (Cyberpunk Theme) */}
-          <Route element={<AppLayout />}>
+          <Route element={<ResponsiveLayout />}>
             <Route path="/" element={
               <ProtectedRoute requiredFeature={Feature.DASHBOARD_VIEW}>
                 <HomePage />

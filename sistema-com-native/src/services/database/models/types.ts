@@ -94,6 +94,8 @@ export interface LocalTipoPeca {
     updated_at: number;
 }
 
+export type QueueItemStatus = 'PENDING' | 'SYNCING' | 'SUCCESS' | 'FAILED';
+
 export interface SyncQueueItem {
     id: number;
     entity_type: string;
@@ -102,6 +104,8 @@ export interface SyncQueueItem {
     payload: string | null;
     priority: SyncPriority;
     attempts: number;
+    max_retries: number;
+    status: QueueItemStatus;
     last_attempt: number | null;
     error_message: string | null;
     created_at: number;

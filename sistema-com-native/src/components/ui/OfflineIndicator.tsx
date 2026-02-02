@@ -3,23 +3,25 @@
 
 import React from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { WifiOff, CloudOff, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react-native';
+import { Wifi, WifiOff, CloudOff, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react-native';
 import { theme } from '../../theme';
 import { useOffline } from '../../contexts/OfflineContext';
 
 interface OfflineIndicatorProps {
     compact?: boolean;
     showSyncButton?: boolean;
+    alwaysVisible?: boolean; // New prop
 }
 
 export const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({
     compact = false,
-    showSyncButton = true
+    showSyncButton = true,
+    alwaysVisible = false
 }) => {
     const { isOnline, isSyncing, pendingCount, errorCount, forceSync, lastSyncTime } = useOffline();
 
-    // Se online, sem pendências e não compacto, não mostrar nada
-    if (isOnline && pendingCount === 0 && errorCount === 0 && !compact) {
+    // Se online, sem pendências e não compacto e não alwaysVisible, não mostrar nada
+    if (isOnline && pendingCount === 0 && errorCount === 0 && !compact && !alwaysVisible) {
         return null;
     }
 
@@ -34,7 +36,43 @@ export const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({
         return `há ${Math.floor(hours / 24)}d`;
     };
 
-    // Modo compacto (para header)
+    // Variant Vertical (Estilo "LancamentoScreen")
+    if (compact && alwaysVisible) {
+        return (
+            <TouchableOpacity
+                onPress={forceSync}
+                style={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    opacity: isSyncing ? 0.7 : 1,
+                    marginRight: 8
+                }}
+            >
+                {isSyncing ? (
+                    <ActivityIndicator size="small" color={theme.colors.primary} />
+                ) : (
+                    <>
+                        {isOnline ? (
+                            <Wifi size={20} color="#10b981" />
+                        ) : (
+                            <WifiOff size={20} color="#ef4444" />
+                        )}
+                    </>
+                )}
+
+                <Text style={{
+                    fontSize: 9,
+                    color: isOnline ? '#10b981' : '#ef4444',
+                    marginTop: 2,
+                    fontWeight: '600'
+                }}>
+                    {isSyncing ? 'Sync...' : isOnline ? 'Online' : 'Offline'}
+                </Text>
+            </TouchableOpacity>
+        );
+    }
+
+    // Modo compacto original / fallback
     if (compact) {
         if (isOnline && pendingCount === 0) {
             return null;

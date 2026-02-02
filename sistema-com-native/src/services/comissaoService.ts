@@ -9,17 +9,38 @@ export interface IComissaoService {
 
 export const comissaoService: IComissaoService = {
     async obterComissaoMensal(ano: number, mes: number): Promise<ComissaoCalculada> {
-        const response = await api.get<ComissaoCalculada>(`comissao/${ano}/${mes}`);
-        return response.data;
+        console.log(`[comissaoService] obterComissaoMensal called for ${ano}/${mes}`);
+        try {
+            const response = await api.get<ComissaoCalculada>(`comissao/${ano}/${mes}`);
+            console.log(`[comissaoService] obterComissaoMensal response status:`, response.status);
+            return response.data;
+        } catch (error) {
+            console.error(`[comissaoService] obterComissaoMensal error:`, error);
+            throw error;
+        }
     },
 
     async forceSync(ano: number, mes: number): Promise<ComissaoCalculada> {
-        const response = await api.post<ComissaoCalculada>(`comissao/${ano}/${mes}/sync`);
-        return response.data;
+        console.log(`[comissaoService] forceSync called for ${ano}/${mes}`);
+        try {
+            const response = await api.post<ComissaoCalculada>(`comissao/${ano}/${mes}/sync`);
+            console.log(`[comissaoService] forceSync response status:`, response.status);
+            return response.data;
+        } catch (error) {
+            console.error(`[comissaoService] forceSync error:`, error);
+            throw error;
+        }
     },
 
     async getMinhasComissoes(): Promise<ComissaoCalculada[]> {
-        const response = await api.get<ComissaoCalculada[]>('/comissao/minhas');
-        return response.data;
+        console.log(`[comissaoService] getMinhasComissoes called`);
+        try {
+            const response = await api.get<ComissaoCalculada[]>('/comissao/minhas');
+            console.log(`[comissaoService] getMinhasComissoes response status:`, response.status);
+            return response.data;
+        } catch (error) {
+            console.error(`[comissaoService] getMinhasComissoes error:`, error);
+            throw error;
+        }
     },
 };

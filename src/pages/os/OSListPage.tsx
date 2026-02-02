@@ -217,18 +217,20 @@ export const OrdemServicoListPage: React.FC = () => {
                         <div
                             key={os.id}
                             onClick={() => navigate(`/os/${os.id}`)}
-                            className="bg-black/40 border border-white/10 p-4 rounded-lg hover:border-cyber-gold/50 cursor-pointer transition-all flex items-center justify-between group"
+                            className="bg-black/40 border border-white/10 p-4 rounded-lg hover:border-cyber-gold/50 cursor-pointer transition-all flex flex-col md:flex-row items-start md:items-center justify-between group gap-4 md:gap-0"
                         >
-                            <div className="flex items-center gap-6">
-                                <div className="flex flex-col items-center justify-center p-3 bg-white/5 rounded min-w-[80px]">
-                                    <span className="text-xs text-gray-500 font-mono">ID</span>
-                                    <span className="text-2xl font-bold text-white font-orbitron">#{os.id}</span>
+                            <div className="flex items-center gap-4 w-full md:w-auto">
+                                <div className="flex flex-col items-center justify-center p-3 bg-white/5 rounded min-w-[60px] md:min-w-[80px]">
+                                    <span className="text-[10px] md:text-xs text-gray-500 font-mono">ID</span>
+                                    <span className="text-xl md:text-2xl font-bold text-white font-orbitron">#{os.id}</span>
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                        <User className="w-4 h-4 text-cyber-gold" />
-                                        {os.cliente.nomeFantasia}
-                                        <span className="text-sm font-normal text-gray-400 ml-2">({os.cliente.razaoSocial})</span>
+                                    <h3 className="text-base md:text-lg font-bold text-white flex items-center gap-2 flex-wrap">
+                                        <div className="flex items-center gap-2">
+                                            <User className="w-4 h-4 text-cyber-gold" />
+                                            {os.cliente.nomeFantasia}
+                                        </div>
+                                        <span className="text-xs md:text-sm font-normal text-gray-400">({os.cliente.razaoSocial})</span>
                                     </h3>
                                     <div className="flex items-center gap-4 mt-1 text-sm text-gray-400 font-oxanium">
                                         <span className="flex items-center gap-1">
@@ -242,7 +244,7 @@ export const OrdemServicoListPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-8">
+                            <div className="flex items-center justify-between w-full md:w-auto md:justify-end gap-4 md:gap-8 border-t border-white/5 md:border-0 pt-3 md:pt-0">
                                 <div className="flex items-center gap-2">
                                     <div className={`px-3 py-1 rounded border text-xs font-bold font-oxanium tracking-wide ${getStatusColor(os.status)}`}>
                                         {os.status}
@@ -253,24 +255,26 @@ export const OrdemServicoListPage: React.FC = () => {
                                         </span>
                                     )}
                                 </div>
-                                <div className="text-right">
-                                    <div className="text-xs text-gray-500 font-oxanium">VALOR TOTAL</div>
-                                    {os.valorDesconto && os.valorDesconto > 0 ? (
-                                        <div className="flex flex-col items-end">
-                                            <span className="text-xs text-gray-500 line-through font-mono">
-                                                {(os.valorTotalSemDesconto || os.valorTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                            </span>
-                                            <span className="text-xl font-bold text-cyber-gold font-orbitron">
-                                                {(os.valorTotalComDesconto || os.valorTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                            </span>
-                                        </div>
-                                    ) : (
-                                        <div className="text-xl font-bold text-cyber-gold font-orbitron">
-                                            {os.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                        </div>
-                                    )}
+                                <div className="flex items-center gap-4">
+                                    <div className="text-right">
+                                        <div className="text-xs text-gray-500 font-oxanium">VALOR TOTAL</div>
+                                        {os.valorDesconto && os.valorDesconto > 0 ? (
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-xs text-gray-500 line-through font-mono">
+                                                    {(os.valorTotalSemDesconto || os.valorTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                                </span>
+                                                <span className="text-lg md:text-xl font-bold text-cyber-gold font-orbitron">
+                                                    {(os.valorTotalComDesconto || os.valorTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <div className="text-lg md:text-xl font-bold text-cyber-gold font-orbitron">
+                                                {os.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <ChevronRight className="w-6 h-6 text-gray-600 group-hover:text-cyber-gold transition-colors hidden md:block" />
                                 </div>
-                                <ChevronRight className="w-6 h-6 text-gray-600 group-hover:text-cyber-gold transition-colors" />
                             </div>
                         </div>
                     ))}

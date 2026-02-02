@@ -4,6 +4,8 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { FileText, Calendar, DollarSign, Search, Clock, CheckCircle, Ban, Plus, User, ChevronRight } from 'lucide-react-native';
 import { theme } from '../theme';
 import { Card, OSStatusBadge } from '../components/ui';
+import { OfflineIndicator } from '../components/ui/OfflineIndicator';
+import { useOffline } from '../contexts/OfflineContext';
 import { osService } from '../services/osService';
 import { OrdemServico, OSStatus, Cliente } from '../types';
 
@@ -18,6 +20,7 @@ const TABS: { key: TabType; label: string; icon: any }[] = [
 
 export const OSListScreen = () => {
     const navigation = useNavigation<any>();
+    const { isInitialized } = useOffline();
     const [ordens, setOrdens] = useState<OrdemServico[]>([]);
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<TabType>('iniciadas');
@@ -33,6 +36,11 @@ export const OSListScreen = () => {
     const [isCreating, setIsCreating] = useState(false);
 
     const fetchOrdens = async () => {
+        // Esperar DB estar inicializado antes de buscar
+        if (!isInitialized) {
+            console.log('[OSListScreen] DB not ready, skipping fetch');
+            return;
+        }
         try {
             setLoading(true);
             const data = await osService.listOS();
@@ -56,7 +64,7 @@ export const OSListScreen = () => {
     useFocusEffect(
         useCallback(() => {
             fetchOrdens();
-        }, [])
+        }, [isInitialized]) // Re-run when isInitialized changes
     );
 
     const filteredOrdens = useMemo(() => {
@@ -216,7 +224,7 @@ export const OSListScreen = () => {
                             ORDENS DE SERVIÇO
                         </Text>
                     </View>
-                    {/* Button removed, now using FAB */}<View />
+                    <OfflineIndicator compact alwaysVisible />
                 </View>
 
                 {/* Tabs */}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { despesaService } from '../../services/despesaService';
 import { cartaoService } from '../../services/cartaoService';
-import type { DespesaRequest, CartaoCredito } from '../../types';
+import type { DespesaRequest, CartaoCredito, LimiteDisponivelDTO } from '../../types';
 
 export const DespesaForm: React.FC = () => {
     const queryClient = useQueryClient();
@@ -21,10 +21,27 @@ export const DespesaForm: React.FC = () => {
 
     // Credit Card State
     const [cartoes, setCartoes] = useState<CartaoCredito[]>([]);
+    const [limiteInfo, setLimiteInfo] = useState<LimiteDisponivelDTO | null>(null);
+    const [loadingLimite, setLoadingLimite] = useState(false);
 
     React.useEffect(() => {
         cartaoService.listar().then(setCartoes).catch(console.error);
     }, []);
+
+    React.useEffect(() => {
+        if (values.cartaoId) {
+            setLoadingLimite(true);
+            cartaoService.getLimiteDisponivel(values.cartaoId)
+                .then(setLimiteInfo)
+                .catch(err => {
+                    console.error('Failed to fetch limit:', err);
+                    setLimiteInfo(null);
+                })
+                .finally(() => setLoadingLimite(false));
+        } else {
+            setLimiteInfo(null);
+        }
+    }, [values.cartaoId]);
 
     const { mutate, isPending: isLoading } = useMutation({
         mutationFn: (data: DespesaRequest): Promise<any> => {
@@ -188,9 +205,35 @@ export const DespesaForm: React.FC = () => {
                         </div>
                     </div>
                     {values.cartaoId && (
-                        <p className="text-[9px] text-cyber-gold/50 font-mono mt-1 tracking-wide">
-                            ⚡ Despesa será agrupada na fatura do cartão automaticamente
-                        </p>
+                        <div className="mt-2 text-[10px] font-mono border border-cyber-gold/20 bg-cyber-gold/5 p-2 rounded relative overflow-hidden">
+                            {loadingLimite ? (
+                                <span className="text-cyber-gold/50 animate-pulse">CARREGANDO_DADOS_BANCARIOS...</span>
+                            ) : limiteInfo ? (
+                                <div className="flex flex-col gap-1">
+                                    <div className="flex justify-between border-b border-cyber-gold/10 pb-1 mb-1">
+                                        <span className="text-cyber-gold/60">DISPONÍVEL:</span>
+                                        <span className={`font-black ${(limiteInfo.limiteDisponivel || 0) < 0 ? 'text-cyber-error' : 'text-cyber-gold'
+                                            }`}>
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(limiteInfo.limiteDisponivel || 0)}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between text-cyber-gold/40">
+                                        <span>LIMITE TOTAL:</span>
+                                        <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(limiteInfo.limiteTotal || 0)}</span>
+                                    </div>
+                                    <div className="w-full h-1 bg-black/40 mt-1 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-cyber-gold transition-all duration-500"
+                                            style={{ width: `${Math.min(100, Math.max(0, ((limiteInfo.limiteUtilizado || 0) / (limiteInfo.limiteTotal || 1)) * 100))}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className="text-cyber-gold/50 tracking-wide">
+                                    ⚡ Despesa será agrupada na fatura do cartão automaticamente
+                                </p>
+                            )}
+                        </div>
                     )}
                 </div>
 

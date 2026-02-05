@@ -68,6 +68,7 @@ export interface DespesaRequest {
     dataVencimento?: string;
     meioPagamento?: string;
     cartaoId?: number;
+    numeroParcelas?: number;
 }
 
 export interface RelatorioFinanceiro {

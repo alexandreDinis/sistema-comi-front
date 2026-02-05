@@ -13,7 +13,8 @@ export const DespesaForm: React.FC = () => {
         descricao: '',
         pagoAgora: false, // Default: A Prazo
         meioPagamento: '',
-        dataVencimento: ''
+        dataVencimento: '',
+        numeroParcelas: 1
     });
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState(false);
@@ -26,7 +27,13 @@ export const DespesaForm: React.FC = () => {
     }, []);
 
     const { mutate, isPending: isLoading } = useMutation({
-        mutationFn: despesaService.create,
+        mutationFn: (data: DespesaRequest): Promise<any> => {
+            if (data.cartaoId && data.numeroParcelas && data.numeroParcelas > 1) {
+                // @ts-ignore - Valid runtime behavior, ignoring TS union complexity for now
+                return despesaService.createParcelada(data);
+            }
+            return despesaService.create(data);
+        },
         onSuccess: () => {
             setSuccessMessage(true);
             setValues({
@@ -36,7 +43,8 @@ export const DespesaForm: React.FC = () => {
                 descricao: '',
                 pagoAgora: false,
                 meioPagamento: '',
-                dataVencimento: ''
+                dataVencimento: '',
+                numeroParcelas: 1
             });
             queryClient.invalidateQueries({ queryKey: ['comissao'] });
             queryClient.invalidateQueries({ queryKey: ['relatorio'] });
@@ -61,7 +69,8 @@ export const DespesaForm: React.FC = () => {
                         cartaoId: Number(value),
                         pagoAgora: false,
                         dataVencimento: undefined, // Backend will calculate invoice due date
-                        meioPagamento: 'CARTAO_CREDITO'
+                        meioPagamento: 'CARTAO_CREDITO',
+                        numeroParcelas: 1 // Default to 1
                     };
                 } else {
                     return {
@@ -184,6 +193,43 @@ export const DespesaForm: React.FC = () => {
                         </p>
                     )}
                 </div>
+
+                {/* Parcelas Field - Only if Card Selected */}
+                {values.cartaoId && (
+                    <div className="relative group/field">
+                        <label className="hud-label group-focus-within/field:text-cyber-gold transition-colors">
+                            PARCELAS (1x à 12x)
+                        </label>
+                        <select
+                            name="numeroParcelas"
+                            value={values.numeroParcelas}
+                            onChange={handleChange}
+                            className="w-full bg-black border border-cyber-gold/30 text-cyber-gold text-sm font-mono p-3 outline-none focus:border-cyber-gold transition-all appearance-none cursor-pointer"
+                            style={{ colorScheme: 'dark' }}
+                        >
+                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(num => {
+                                const numericValor = typeof values.valor === 'string'
+                                    ? parseFloat((values.valor as string).replace(/\./g, '').replace(',', '.')) || 0
+                                    : values.valor as number || 0;
+
+                                const valorParcela = numericValor > 0
+                                    ? (numericValor / num).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                                    : '';
+
+                                return (
+                                    <option key={num} value={num} className="bg-black text-cyber-gold">
+                                        {num}x {valorParcela ? `- ${valorParcela}` : ''} {num === 1 ? '(À Vista)' : ''}
+                                    </option>
+                                );
+                            })}
+                        </select>
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                            <svg className="w-4 h-4 text-cyber-gold/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                    </div>
+                )}
 
                 {/* Toggle Pago Agora - Only show if NO card selected */}
                 {!values.cartaoId && (

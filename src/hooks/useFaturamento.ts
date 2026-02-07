@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { faturamentoService } from '../services/faturamentoService';
 import type { FaturamentoRequest } from '../types';
 
@@ -34,4 +34,14 @@ export const useFaturamento = () => {
         isSuccess: registrarMutation.isSuccess,
         error,
     };
+};
+
+export const useFaturamentoDetalhado = (id: number | null) => {
+    // Só busca se tiver ID válido
+    return useQuery({
+        queryKey: ['faturamento', id],
+        queryFn: () => faturamentoService.getFaturamentoDetalhado(id!),
+        enabled: !!id,
+        staleTime: 1000 * 60 * 5, // 5 minutos de cache
+    });
 };

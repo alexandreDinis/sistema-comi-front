@@ -105,7 +105,23 @@ export const OSDetailsPage: React.FC = () => {
 
     const handleUpdateOwner = () => {
         if (!selectedUserId) return;
-        updateOwnerMutation.mutate(parseInt(selectedUserId));
+
+        const user = users?.find(u => u.id === parseInt(selectedUserId));
+        const userName = user?.name || user?.email || 'este usuário';
+
+        setActionModal({
+            isOpen: true,
+            title: 'Confirmar Responsável',
+            message: `Deseja definir "${userName}" como responsável técnico/vendedor desta OS? Isso é importante para o cálculo de comissões.`,
+            type: 'info',
+            showCancel: true,
+            confirmText: 'SIM, DEFINIR',
+            cancelText: 'CANCELAR',
+            onConfirm: () => {
+                updateOwnerMutation.mutate(parseInt(selectedUserId));
+                setActionModal(prev => ({ ...prev, isOpen: false }));
+            }
+        });
     };
 
     // Mutations
@@ -449,6 +465,22 @@ export const OSDetailsPage: React.FC = () => {
         });
     };
 
+    const handleStartService = () => {
+        if (!os.usuarioId) {
+            setActionModal({
+                isOpen: true,
+                title: 'Responsável Obrigatório',
+                message: 'Não é possível iniciar a execução sem um responsável definido. Por favor, atribua um técnico ou vendedor na seção "Responsável".',
+                type: 'danger',
+                showCancel: false,
+                confirmText: 'ENTENDI',
+                onConfirm: () => setActionModal(prev => ({ ...prev, isOpen: false }))
+            });
+            return;
+        }
+        updateStatusMutation.mutate('EM_EXECUCAO');
+    };
+
     return (
         <div className="pb-20">
             {/* Header / Actions */}
@@ -483,7 +515,7 @@ export const OSDetailsPage: React.FC = () => {
                                 <Ban className="w-4 h-4" /> CANCELAR (EXCLUIR)
                             </button>
                             <button
-                                onClick={() => updateStatusMutation.mutate('EM_EXECUCAO')}
+                                onClick={handleStartService}
                                 className="bg-blue-600/20 text-blue-400 border border-blue-600/50 px-4 py-2 rounded hover:bg-blue-600/40 transition-all font-oxanium flex items-center gap-2"
                             >
                                 <Wrench className="w-4 h-4" /> INICIAR SERVIÇO

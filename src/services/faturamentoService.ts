@@ -11,4 +11,9 @@ export const faturamentoService = {
         const response = await api.get<Faturamento[]>('faturamento');
         return response.data;
     },
+
+    async getFaturamentoDetalhado(id: number): Promise<Faturamento> {
+        const response = await api.get<Faturamento>(`/faturamento/${id}`);
+        return response.data;
+    },
 };

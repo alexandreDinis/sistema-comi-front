@@ -114,19 +114,41 @@ export const PlateInput: React.FC<PlateInputProps> = ({
         }
     };
 
-    // Improved handleChange to use strict masking
+    // Improved handleChange to use strict masking with auto-detection
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const raw = e.target.value;
-        // Logic: The user is typing. We take the raw, strip formatting, and re-apply strict mask.
-        // Issue: Deleting hyphen in Legacy.
-        // If user hits backspace on hyphen, we should remove the char before it? 
-        // HTML input handles this if we just process the new value.
-        // Let's strip non-alphanumeric and rebuild.
+        let currentFormat = format;
 
-        // However, we must ensure we don't block valid typing if the loop above is too strict strictly skipping.
-        // My loop above skips invalid source chars. So if user types "A1", expecting "L", "1" is skipped. Result "A". Correct.
+        // 1. Force Legacy if hyphen is typed
+        if (raw.includes('-')) {
+            if (currentFormat !== 'legacy') {
+                currentFormat = 'legacy';
+                setFormat('legacy');
+            }
+        } else {
+            // 2. Auto-detect based on 5th character (Index 4)
+            // Legacy: LLL-NNNN -> 5th char (ignoring hyphen) is Number (index 4 of cleaned string)
+            // Mercosul: LLLNLNN -> 5th char is Letter (index 4 of cleaned string)
+            const clean = raw.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
 
-        const newValue = applyMask(raw, format);
+            if (clean.length >= 5) {
+                const fifthChar = clean[4];
+                const isFifthLetter = /[A-Z]/.test(fifthChar);
+
+                if (isFifthLetter && currentFormat !== 'mercosul') {
+                    currentFormat = 'mercosul';
+                    setFormat('mercosul');
+                } else if (!isFifthLetter && /[0-9]/.test(fifthChar) && currentFormat !== 'legacy') {
+                    // Logic loop: Mercosul also has number at index 3 (4th char). 
+                    // But index 4 (5th char) IS Letter for Mercosul.
+                    // If it is Number, it MUST be Legacy (or invalid Mercosul, but we assume Legacy intent).
+                    currentFormat = 'legacy';
+                    setFormat('legacy');
+                }
+            }
+        }
+
+        const newValue = applyMask(raw, currentFormat);
         onChange(newValue);
     };
 

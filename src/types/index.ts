@@ -256,6 +256,7 @@ export interface TipoPecaRequest {
 
 export interface PecaOS {
     id: number;
+    tipoPecaId?: number;
     nomePeca: string;
     valorCobrado: number;
     descricao?: string;

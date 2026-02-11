@@ -364,6 +364,27 @@ export const OSDetailsPage: React.FC = () => {
             }
         }
 
+        // Verificar serviço duplicado
+        const veiculo = os.veiculos.find(v => v.id === isPecaModalOpen.veiculoId);
+        const jaExiste = veiculo?.pecas.some(p => p.tipoPecaId === parseInt(pecaForm.tipoPecaId));
+
+        if (jaExiste) {
+            setActionModal({
+                isOpen: true,
+                type: 'warning',
+                title: 'Serviço Duplicado',
+                message: 'Esse serviço já foi adicionado a este veículo. Deseja continuar?',
+                confirmText: 'SIM, ADICIONAR',
+                cancelText: 'CANCELAR',
+                showCancel: true,
+                onConfirm: () => {
+                    setActionModal(prev => ({ ...prev, isOpen: false }));
+                    addPecaMutation.mutate(requestData);
+                }
+            });
+            return;
+        }
+
         addPecaMutation.mutate(requestData);
     };
 

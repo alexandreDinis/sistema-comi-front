@@ -162,7 +162,9 @@ export const OrdemServicoListPage: React.FC = () => {
                                 >
                                     <option value={0}>Selecione um cliente...</option>
                                     {clientes?.map(c => (
-                                        <option key={c.id} value={c.id}>{c.nomeFantasia} ({c.razaoSocial})</option>
+                                        <option key={c.id} value={c.id}>
+                                            {c.nomeFantasia}{c.razaoSocial ? ` (${c.razaoSocial})` : ''}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -228,7 +230,9 @@ export const OrdemServicoListPage: React.FC = () => {
                                     <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                         <User className="w-4 h-4 text-cyber-gold" />
                                         {os.cliente.nomeFantasia}
-                                        <span className="text-sm font-normal text-gray-400 ml-2">({os.cliente.razaoSocial})</span>
+                                        {os.cliente.razaoSocial && (
+                                            <span className="text-sm font-normal text-gray-400 ml-2">({os.cliente.razaoSocial})</span>
+                                        )}
                                     </h3>
                                     <div className="flex items-center gap-4 mt-1 text-sm text-gray-400 font-oxanium">
                                         <span className="flex items-center gap-1">

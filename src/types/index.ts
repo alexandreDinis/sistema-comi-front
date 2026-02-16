@@ -98,6 +98,23 @@ export interface ApiResponse<T> {
     isError: boolean;
 }
 
+export interface PageResponse<T> {
+    content: T[];
+    totalPages: number;
+    totalElements: number;
+    last: boolean;
+    size: number;
+    number: number;
+    sort: {
+        empty: boolean;
+        sorted: boolean;
+        unsorted: boolean;
+    };
+    numberOfElements: number;
+    first: boolean;
+    empty: boolean;
+}
+
 export interface LoginRequest {
     email: string;
     password: string;

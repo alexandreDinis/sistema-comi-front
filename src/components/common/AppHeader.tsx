@@ -1,13 +1,13 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown, Wrench, Settings, LayoutDashboard, FileText, Edit, DollarSign, BarChart2 } from 'lucide-react';
+import { ChevronDown, Wrench, Settings, LayoutDashboard, FileText, Edit, DollarSign, BarChart2 } from 'lucide-react';
 import { usePermission } from '../../hooks/usePermission';
 import { Feature } from '../../types/features';
 import { UserMenu } from './UserMenu';
 import logo from '../../assets/log.png';
 
 export const AppHeader: React.FC = () => {
-    const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+
     const location = useLocation();
     const { hasFeature } = usePermission();
 
@@ -127,10 +127,10 @@ export const AppHeader: React.FC = () => {
                         </div>
                     </Link>
 
-                    {/* Mobile Toggle */}
-                    <button className="md:hidden text-cyber-gold p-2 hover:bg-cyber-gold/10" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-                        {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                    </button>
+                    {/* Mobile: show UserMenu directly instead of hamburger */}
+                    <div className="md:hidden">
+                        <UserMenu />
+                    </div>
 
                     {/* Desktop Nav */}
                     <nav className="hidden md:flex gap-6">
@@ -176,37 +176,7 @@ export const AppHeader: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Mobile Menu */}
-                {isMenuOpen && (
-                    <div className="md:hidden mt-4 border-t border-cyber-gold/20 pt-4 space-y-4 animate-slideDown bg-black/95">
-                        {hasFeature(Feature.DASHBOARD_VIEW) && (
-                            <Link to="/" onClick={() => setIsMenuOpen(false)} className="block px-4 py-2 text-xs font-black tracking-widest uppercase text-cyber-gold">PAINEL</Link>
-                        )}
-                        {navGroups.map(group => (
-                            <div key={group.label} className="px-4">
-                                <div className="text-[10px] text-cyber-gold/40 uppercase tracking-widest mb-2 font-mono flex items-center gap-2">
-                                    <group.icon size={12} /> {group.label}
-                                </div>
-                                <div className="pl-4 border-l border-cyber-gold/10 space-y-2">
-                                    {group.items.map(item => (
-                                        <Link
-                                            key={item.label}
-                                            to={item.path}
-                                            onClick={() => setIsMenuOpen(false)}
-                                            className={`block text-xs font-bold uppercase ${isActive(item.path) ? 'text-cyber-gold' : 'text-gray-400'}`}
-                                        >
-                                            {item.label}
-                                        </Link>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                        {/* Mobile User Menu */}
-                        <div className="border-t border-cyber-gold/20 pt-4 px-4">
-                            <UserMenu />
-                        </div>
-                    </div>
-                )}
+                {/* Mobile Menu removed — bottom tab navigation handles mobile nav */}
             </div>
         </header>
     );

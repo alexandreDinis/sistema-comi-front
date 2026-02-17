@@ -267,3 +267,22 @@ body::after {
 .italic-shadow {
   text-shadow: 2px 2px 0px rgba(212, 175, 55, 0.2);
 }
+
+/* Hide CRT overlay on mobile for cleaner look */
+@media (max-width: 767px) {
+  body::after {
+    display: none;
+  }
+  body::before {
+    display: none;
+  }
+}
+
+/* Scrollbar hide utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

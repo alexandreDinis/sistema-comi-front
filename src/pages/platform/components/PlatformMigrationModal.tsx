@@ -116,7 +116,7 @@ export const PlatformMigrationModal: React.FC<PlatformMigrationModalProps> = ({
                                     <option value="">Selecione o destino...</option>
                                     {licencas?.filter(l => l.status === 'ATIVA').map(licenca => (
                                         <option key={licenca.id} value={licenca.id}>
-                                            {licenca.nomeFantasia || licenca.razaoSocial} ({licenca.status})
+                                            {licenca.nomeFantasia || licenca.razaoSocial}{licenca.status ? ' (' + licenca.status + ')' : ''}
                                         </option>
                                     ))}
                                 </select>

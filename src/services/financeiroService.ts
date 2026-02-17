@@ -39,9 +39,35 @@ export const financeiroService = {
         return response.data;
     },
 
-    // ========================================
-    // FLUXO DE CAIXA
-    // ========================================
+    registrarRecebimentoParcial: async (id: number, request: {
+        valor: number;
+        dataRecebimento?: string;
+        meioPagamento: string;
+        observacao?: string;
+    }): Promise<ContaReceber> => {
+        const response = await api.post(`/financeiro/contas-receber/${id}/recebimento-parcial`, request);
+        return response.data;
+    },
+
+    baixarSaldo: async (id: number, request: { motivo: string }): Promise<ContaReceber> => {
+        const response = await api.post(`/financeiro/contas-receber/${id}/baixar`, request);
+        return response.data;
+    },
+
+    estornarRecebimento: async (recebimentoId: number): Promise<ContaReceber> => {
+        const response = await api.delete(`/financeiro/contas-receber/recebimentos/${recebimentoId}`);
+        return response.data;
+    },
+
+    listarRecebimentos: async (contaId: number) => {
+        const response = await api.get(`/financeiro/contas-receber/${contaId}/recebimentos`);
+        return response.data;
+    },
+
+    atualizarVencimento: async (id: number, novaDataVencimento: string): Promise<ContaReceber> => {
+        const response = await api.patch(`/financeiro/contas-receber/${id}/vencimento`, { novaDataVencimento });
+        return response.data;
+    },
 
     getFluxoCaixa: async (mes: number, ano: number): Promise<FluxoCaixa> => {
         const response = await api.get(`/financeiro/fluxo-caixa?mes=${mes}&ano=${ano}`);

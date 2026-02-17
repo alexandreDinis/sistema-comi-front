@@ -454,7 +454,7 @@ export interface RankingCliente {
 // MÓDULO FINANCEIRO - CONTAS A PAGAR/RECEBER
 // ========================================
 
-export type StatusConta = 'PENDENTE' | 'PAGO' | 'CANCELADO';
+export type StatusConta = 'PENDENTE' | 'PARCIAL' | 'PAGO' | 'CANCELADO' | 'BAIXADO';
 export type MeioPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'BOLETO' | 'TRANSFERENCIA' | 'CHEQUE';
 
 // Updated TipoContaPagar (Cash Flow Standard)
@@ -484,10 +484,21 @@ export interface ContaPagar {
     dataCriacao: string;
 }
 
+export interface Recebimento {
+    id: number;
+    valorPago: number;
+    dataPagamento: string;
+    meioPagamento?: MeioPagamento;
+    observacao?: string;
+}
+
 export interface ContaReceber {
     id: number;
     descricao: string;
     valor: number;
+    valorPagoAcumulado: number;
+    saldoRestante: number;
+    observacao?: string;
     dataCompetencia: string;
     dataVencimento: string;
     dataRecebimento?: string;

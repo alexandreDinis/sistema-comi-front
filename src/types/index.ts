@@ -98,6 +98,23 @@ export interface ApiResponse<T> {
     isError: boolean;
 }
 
+export interface PageResponse<T> {
+    content: T[];
+    totalPages: number;
+    totalElements: number;
+    last: boolean;
+    size: number;
+    number: number;
+    sort: {
+        empty: boolean;
+        sorted: boolean;
+        unsorted: boolean;
+    };
+    numberOfElements: number;
+    first: boolean;
+    empty: boolean;
+}
+
 export interface LoginRequest {
     email: string;
     password: string;
@@ -256,6 +273,7 @@ export interface TipoPecaRequest {
 
 export interface PecaOS {
     id: number;
+    tipoPecaId?: number;
     nomePeca: string;
     valorCobrado: number;
     descricao?: string;
@@ -436,7 +454,7 @@ export interface RankingCliente {
 // MÓDULO FINANCEIRO - CONTAS A PAGAR/RECEBER
 // ========================================
 
-export type StatusConta = 'PENDENTE' | 'PAGO' | 'CANCELADO';
+export type StatusConta = 'PENDENTE' | 'PARCIAL' | 'PAGO' | 'CANCELADO' | 'BAIXADO';
 export type MeioPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'BOLETO' | 'TRANSFERENCIA' | 'CHEQUE';
 
 // Updated TipoContaPagar (Cash Flow Standard)
@@ -466,10 +484,21 @@ export interface ContaPagar {
     dataCriacao: string;
 }
 
+export interface Recebimento {
+    id: number;
+    valorPago: number;
+    dataPagamento: string;
+    meioPagamento?: MeioPagamento;
+    observacao?: string;
+}
+
 export interface ContaReceber {
     id: number;
     descricao: string;
     valor: number;
+    valorPagoAcumulado: number;
+    saldoRestante: number;
+    observacao?: string;
     dataCompetencia: string;
     dataVencimento: string;
     dataRecebimento?: string;

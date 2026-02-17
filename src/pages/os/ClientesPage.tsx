@@ -342,7 +342,6 @@ export const ClientesPage: React.FC = () => {
                             </label>
                             <input
                                 type="text"
-                                required
                                 className="w-full bg-black/60 border border-cyber-gold/30 text-white p-2 focus:border-cyber-gold focus:outline-none transition-all"
                                 value={formData.razaoSocial}
                                 onChange={e => setFormData({ ...formData, razaoSocial: e.target.value })}
@@ -366,7 +365,6 @@ export const ClientesPage: React.FC = () => {
                             </label>
                             <input
                                 type="text"
-                                required
                                 className="w-full bg-black/60 border border-cyber-gold/30 text-white p-2 focus:border-cyber-gold focus:outline-none transition-all"
                                 value={formData.tipoPessoa === 'FISICA' ? (formData.cpf || '') : formData.cnpj}
                                 onChange={e => {
@@ -384,7 +382,6 @@ export const ClientesPage: React.FC = () => {
                             <label className="text-cyber-gold font-oxanium text-sm">Contato</label>
                             <input
                                 type="text"
-                                required
                                 className="w-full bg-black/60 border border-cyber-gold/30 text-white p-2 focus:border-cyber-gold focus:outline-none transition-all"
                                 value={formData.contato}
                                 onChange={e => setFormData({ ...formData, contato: formatTelefone(e.target.value) })}
@@ -396,7 +393,6 @@ export const ClientesPage: React.FC = () => {
                             <label className="text-cyber-gold font-oxanium text-sm">Email</label>
                             <input
                                 type="email"
-                                required
                                 className="w-full bg-black/60 border border-cyber-gold/30 text-white p-2 focus:border-cyber-gold focus:outline-none transition-all"
                                 value={formData.email}
                                 onChange={e => setFormData({ ...formData, email: e.target.value })}
@@ -426,7 +422,6 @@ export const ClientesPage: React.FC = () => {
                             <label className="text-cyber-gold font-oxanium text-sm">CEP</label>
                             <input
                                 type="text"
-                                required
                                 className="w-full bg-black/60 border border-cyber-gold/30 text-white p-2 focus:border-cyber-gold focus:outline-none transition-all"
                                 value={formData.cep}
                                 onChange={e => setFormData({ ...formData, cep: formatCEP(e.target.value) })}
@@ -438,7 +433,6 @@ export const ClientesPage: React.FC = () => {
                             <label className="text-cyber-gold font-oxanium text-sm">Logradouro</label>
                             <input
                                 type="text"
-                                required
                                 className="w-full bg-black/60 border border-cyber-gold/30 text-white p-2 focus:border-cyber-gold focus:outline-none transition-all"
                                 value={formData.logradouro}
                                 onChange={e => setFormData({ ...formData, logradouro: e.target.value })}
@@ -448,7 +442,6 @@ export const ClientesPage: React.FC = () => {
                             <label className="text-cyber-gold font-oxanium text-sm">Número</label>
                             <input
                                 type="text"
-                                required
                                 className="w-full bg-black/60 border border-cyber-gold/30 text-white p-2 focus:border-cyber-gold focus:outline-none transition-all"
                                 value={formData.numero}
                                 onChange={e => setFormData({ ...formData, numero: e.target.value })}
@@ -458,7 +451,6 @@ export const ClientesPage: React.FC = () => {
                             <label className="text-cyber-gold font-oxanium text-sm">Bairro</label>
                             <input
                                 type="text"
-                                required
                                 className="w-full bg-black/60 border border-cyber-gold/30 text-white p-2 focus:border-cyber-gold focus:outline-none transition-all"
                                 value={formData.bairro}
                                 onChange={e => setFormData({ ...formData, bairro: e.target.value })}
@@ -468,7 +460,6 @@ export const ClientesPage: React.FC = () => {
                             <label className="text-cyber-gold font-oxanium text-sm">Cidade</label>
                             <input
                                 type="text"
-                                required
                                 className="w-full bg-black/60 border border-cyber-gold/30 text-white p-2 focus:border-cyber-gold focus:outline-none transition-all"
                                 value={formData.cidade}
                                 onChange={e => setFormData({ ...formData, cidade: e.target.value })}
@@ -478,7 +469,6 @@ export const ClientesPage: React.FC = () => {
                             <label className="text-cyber-gold font-oxanium text-sm">Estado</label>
                             <input
                                 type="text"
-                                required
                                 className="w-full bg-black/60 border border-cyber-gold/30 text-white p-2 focus:border-cyber-gold focus:outline-none transition-all"
                                 value={formData.estado}
                                 onChange={e => setFormData({ ...formData, estado: e.target.value })}

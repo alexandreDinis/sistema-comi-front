@@ -268,11 +268,21 @@ body::after {
   text-shadow: 2px 2px 0px rgba(212, 175, 55, 0.2);
 }
 
-/* Mobile Safe Areas */
-.safe-area-top {
-  padding-top: env(safe-area-inset-top);
+/* Hide CRT overlay on mobile for cleaner look */
+@media (max-width: 767px) {
+  body::after {
+    display: none;
+  }
+  body::before {
+    display: none;
+  }
 }
 
-.safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+/* Scrollbar hide utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

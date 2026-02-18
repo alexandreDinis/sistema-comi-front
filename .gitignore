@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 /subPass
+.env
+.env.*.local
+!.env.example
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

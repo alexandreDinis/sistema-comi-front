@@ -5,7 +5,7 @@ import type {
     OrdemServico, CreateOSRequest,
     AddVeiculoRequest, AddPecaRequest, UpdateOSStatusRequest,
     VeiculoOS, OSStatus,
-    PlacaCheckResponse, HistoricoResponse
+    PlacaCheckResponse, HistoricoResponse, PageResponse
 } from '../types';
 
 export const osService = {
@@ -58,6 +58,20 @@ export const osService = {
 
     listOS: async (): Promise<OrdemServico[]> => {
         const response = await api.get<OrdemServico[]>('/ordens-servico');
+        return response.data;
+    },
+
+    listOSGrid: async (page: number, size: number, filters?: { status?: string, search?: string, date?: string, atrasado?: boolean }): Promise<PageResponse<OrdemServico>> => {
+        const params = new URLSearchParams();
+        params.append('page', page.toString());
+        params.append('size', size.toString());
+        if (filters) {
+            if (filters.status) params.append('status', filters.status);
+            if (filters.search) params.append('search', filters.search);
+            if (filters.date) params.append('date', filters.date);
+            if (filters.atrasado) params.append('atrasado', 'true');
+        }
+        const response = await api.get<PageResponse<OrdemServico>>(`/ordens-servico/grid`, { params });
         return response.data;
     },
 

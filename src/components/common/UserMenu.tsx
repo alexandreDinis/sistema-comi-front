@@ -57,7 +57,7 @@ export const UserMenu: React.FC = () => {
             >
                 {/* Avatar */}
                 <div className="w-8 h-8 rounded-full bg-cyber-gold/20 border border-cyber-gold/40 flex items-center justify-center text-cyber-gold text-xs font-bold group-hover:border-cyber-gold transition-colors">
-                    {getInitials(user.email)}
+                    {getInitials(user.email || '??')}
                 </div>
 
                 {/* Email (hidden on mobile) */}
@@ -80,7 +80,7 @@ export const UserMenu: React.FC = () => {
                     <div className="px-4 py-3 border-b border-cyber-gold/20 bg-cyber-gold/5">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-cyber-gold/20 border-2 border-cyber-gold/40 flex items-center justify-center text-cyber-gold font-bold">
-                                {getInitials(user.email)}
+                                {getInitials(user.email || '??')}
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-cyber-gold text-sm font-medium truncate">{user.email}</p>

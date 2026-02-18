@@ -7,6 +7,15 @@ export const userService = {
         return response.data;
     },
 
+    /**
+     * Retorna a lista de usuários da mesma empresa.
+     * Qualquer usuário autenticado pode acessar (para seleção de responsável em OS).
+     */
+    getEquipe: async (): Promise<User[]> => {
+        const response = await api.get<User[]>('/users/equipe');
+        return response.data;
+    },
+
     getMe: async (): Promise<User> => {
         const response = await api.get<User>('/users/me');
         return response.data;

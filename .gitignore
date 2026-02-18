@@ -24,4 +24,8 @@ dist-ssr
 *.ntvs*
 *.njsproj
 *.sln
+*.sln
 *.sw?
+
+# Secrets
+subPass

@@ -4,6 +4,8 @@ import { ArrowLeft, Loader2, AlertCircle, DollarSign, Check, ReceiptText, Refres
 import { Link } from 'react-router-dom';
 import { comissaoService } from '../../services/comissaoService';
 import type { ComissaoFuncionario } from '../../services/comissaoService';
+import { ActionModal } from '../../components/modals/ActionModal';
+import type { ActionModalType } from '../../components/modals/ActionModal';
 
 const formatarMoeda = (valor: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
@@ -14,6 +16,20 @@ export const GestaoComissoesPage: React.FC = () => {
     const agora = new Date();
     const [ano, setAno] = useState(agora.getFullYear());
     const [mes, setMes] = useState(agora.getMonth() + 1);
+
+    // Estado para o modal de ação (Recalcular)
+    const [actionModal, setActionModal] = useState<{
+        isOpen: boolean;
+        type: ActionModalType;
+        title: string;
+        message: string;
+        onConfirm?: () => void;
+    }>({
+        isOpen: false,
+        type: 'info',
+        title: '',
+        message: ''
+    });
 
     const { data: comissoes, isLoading, isError, refetch } = useQuery({
         queryKey: ['comissoes-empresa', ano, mes],
@@ -38,14 +54,26 @@ export const GestaoComissoesPage: React.FC = () => {
     const recalcularMutation = useMutation({
         mutationFn: () => comissaoService.listarComissoesEmpresa(ano, mes, true),
         onSuccess: () => {
-            console.log('✅ Recálculo forçado com sucesso!');
             queryClient.invalidateQueries({ queryKey: ['comissoes-empresa'] });
             queryClient.invalidateQueries({ queryKey: ['comissao'] });
-            alert('Sistema recalculou todas as comissões deste mês.');
+
+            setActionModal({
+                isOpen: true,
+                type: 'success',
+                title: 'Sucesso',
+                message: 'Comissão recalculada com sucesso',
+                onConfirm: () => setActionModal(prev => ({ ...prev, isOpen: false }))
+            });
         },
         onError: (error) => {
             console.error(error);
-            alert('Erro ao recalcular comissões');
+            setActionModal({
+                isOpen: true,
+                type: 'danger',
+                title: 'Erro',
+                message: 'Erro ao recalcular comissões',
+                onConfirm: () => setActionModal(prev => ({ ...prev, isOpen: false }))
+            });
         }
     });
 
@@ -77,6 +105,14 @@ export const GestaoComissoesPage: React.FC = () => {
                 </div>
             </div>
 
+            {/* Aviso de Recálculo Necessário */}
+            <div className="bg-yellow-500/10 border border-yellow-500/30 p-4 flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
+                <p className="text-yellow-500/90 text-sm font-mono">
+                    Atenção: É necessário recalcular as comissões ao acessar esta página para garantir que os valores estejam atualizados com o faturamento mais recente.
+                </p>
+            </div>
+
             {/* Filtros */}
             <div className="flex gap-4 items-center bg-black/40 border border-cyber-gold/20 p-4">
                 <label className="text-cyber-gold/60 text-sm font-mono">PERÍODO:</label>
@@ -98,12 +134,8 @@ export const GestaoComissoesPage: React.FC = () => {
                         <option key={a} value={a}>{a}</option>
                     ))}
                 </select>
-                <button
-                    onClick={() => refetch()}
-                    className="px-4 py-2 bg-cyber-gold/10 border border-cyber-gold/30 text-cyber-gold hover:bg-cyber-gold/20 transition-colors flex items-center gap-2"
-                >
-                    <RefreshCw size={14} /> Atualizar
-                </button>
+
+                {/* Botão Atualizar REMOVIDO conforme solicitado */}
 
                 <button
                     onClick={() => recalcularMutation.mutate()}
@@ -223,6 +255,18 @@ export const GestaoComissoesPage: React.FC = () => {
                     </div>
                 )
             }
+
+            <ActionModal
+                isOpen={actionModal.isOpen}
+                onClose={() => setActionModal(prev => ({ ...prev, isOpen: false }))}
+                type={actionModal.type}
+                title={actionModal.title}
+                message={actionModal.message}
+                onConfirm={actionModal.onConfirm}
+                showCancel={actionModal.type === 'warning'}
+                confirmText={actionModal.type === 'warning' ? 'SIM, RECALCULAR' : 'OK'}
+            />
         </div >
     );
 };
+

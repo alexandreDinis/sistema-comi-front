@@ -15,6 +15,7 @@ const formatCurrency = (val: number) => {
 
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
     ALIMENTACAO: Utensils,
+    MANUTENCAO_VEICULO: Construction,
     COMBUSTIVEL: Truck,
     FERRAMENTAS: Construction,
     MARKETING: Megaphone,

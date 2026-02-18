@@ -82,8 +82,8 @@ export const OSDetailsPage: React.FC = () => {
 
     // Query para usuários (para selecionar responsável)
     const { data: users } = useQuery({
-        queryKey: ['users'],
-        queryFn: userService.getUsers
+        queryKey: ['users-equipe'],
+        queryFn: userService.getEquipe
     });
 
     const [isEditingUser, setIsEditingUser] = useState(false);
@@ -244,6 +244,36 @@ export const OSDetailsPage: React.FC = () => {
                 });
             }, 1000); // Reduced delay slightly to 1s
             setIsFinalizeModalOpen(false);
+        },
+        onError: (error: any) => {
+            console.error('Erro ao atualizar status:', error);
+
+            // Extract backend message
+            const backendMessage = error.response?.data?.message || error.response?.data?.mensagem;
+
+            // Check if it's the "no responsible" error
+            if (backendMessage && backendMessage.includes('responsável')) {
+                setActionModal({
+                    isOpen: true,
+                    type: 'warning',
+                    title: 'Responsável Necessário',
+                    message: backendMessage || 'Não é possível iniciar a OS sem um responsável técnico definido. Edite a OS e atribua um responsável.',
+                    showCancel: false,
+                    confirmText: 'ENTENDI',
+                    onConfirm: () => setActionModal(prev => ({ ...prev, isOpen: false }))
+                });
+            } else {
+                // Generic error
+                setActionModal({
+                    isOpen: true,
+                    type: 'danger',
+                    title: 'Erro ao Atualizar Status',
+                    message: backendMessage || 'Não foi possível atualizar o status da OS. Tente novamente.',
+                    showCancel: false,
+                    confirmText: 'FECHAR',
+                    onConfirm: () => setActionModal(prev => ({ ...prev, isOpen: false }))
+                });
+            }
         }
     });
 

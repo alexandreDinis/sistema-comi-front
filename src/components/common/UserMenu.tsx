@@ -3,15 +3,21 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Key, LogOut, ChevronDown, Shield } from 'lucide-react';
 import { authService } from '../../services/authService';
 
-export const UserMenu: React.FC = () => {
+interface UserMenuProps {
+    mobile?: boolean;
+    onClose?: () => void;
+}
+
+export const UserMenu: React.FC<UserMenuProps> = ({ mobile, onClose }) => {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
 
     const user = authService.getCurrentUser();
 
-    // Close menu when clicking outside
+    // Close menu when clicking outside (only for desktop dropdown)
     useEffect(() => {
+        if (mobile) return;
         const handleClickOutside = (event: MouseEvent) => {
             if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
@@ -19,11 +25,12 @@ export const UserMenu: React.FC = () => {
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    }, [mobile]);
 
     const handleLogout = () => {
         authService.logout();
         navigate('/login');
+        if (onClose) onClose();
     };
 
     const getInitials = (email: string) => {
@@ -48,6 +55,48 @@ export const UserMenu: React.FC = () => {
 
     const roleBadge = getRoleBadge(user.role);
 
+    // MOBILE VIEW (Expanded)
+    if (mobile) {
+        return (
+            <div className="w-full space-y-4">
+                {/* User Info */}
+                <div className="flex items-center gap-3 p-2 bg-cyber-gold/5 rounded border border-cyber-gold/20">
+                    <div className="w-10 h-10 rounded-full bg-cyber-gold/20 border-2 border-cyber-gold/40 flex items-center justify-center text-cyber-gold font-bold">
+                        {getInitials(user.email)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-cyber-gold text-sm font-medium truncate">{user.email}</p>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider border rounded ${roleBadge.color}`}>
+                            <Shield size={8} />
+                            {roleBadge.label}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Actions */}
+                <div className="space-y-2">
+                    <Link
+                        to="/change-password"
+                        onClick={onClose}
+                        className="flex items-center gap-3 px-4 py-3 bg-cyber-gold/5 border border-cyber-gold/10 rounded text-cyber-gold/80 hover:text-cyber-gold hover:bg-cyber-gold/10 transition-colors"
+                    >
+                        <Key size={16} />
+                        <span className="text-xs font-bold uppercase tracking-wider">Alterar Senha</span>
+                    </Link>
+
+                    <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-3 bg-red-500/5 border border-red-500/10 rounded text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+                    >
+                        <LogOut size={16} />
+                        <span className="text-xs font-bold uppercase tracking-wider">Sair</span>
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // DESKTOP VIEW (Dropdown)
     return (
         <div className="relative" ref={menuRef}>
             {/* Trigger Button */}
@@ -60,7 +109,7 @@ export const UserMenu: React.FC = () => {
                     {getInitials(user.email || '??')}
                 </div>
 
-                {/* Email (hidden on mobile) */}
+                {/* Email (hidden on mobile - logic handled by parent via hidden md:block) */}
                 <div className="hidden lg:flex flex-col items-start">
                     <span className="text-[10px] text-cyber-gold/80 font-mono truncate max-w-[120px]">
                         {user.email}

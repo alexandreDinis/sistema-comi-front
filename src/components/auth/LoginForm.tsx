@@ -161,9 +161,9 @@ export const LoginForm: React.FC = () => {
                     </button>
 
                     <div className="text-center pt-4 space-y-2">
-                        <Link to="/register" className="text-[10px] text-cyber-gold/60 hover:text-cyber-gold font-mono hover:underline tracking-wider transition-colors block">
-                            REGISTRAR NOVO ACESSO {`>>`}
-                        </Link>
+                        <span className="text-[10px] text-cyber-gold/30 font-mono tracking-wider block cursor-not-allowed">
+                            REGISTRAR NOVO ACESSO (EM CONSTRUÇÃO)
+                        </span>
                         <Link to="/forgot-password" className="text-[10px] text-cyber-gold/40 hover:text-cyber-gold font-mono hover:underline tracking-wider transition-colors block">
                             ESQUECI MINHA SENHA
                         </Link>

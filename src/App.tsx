@@ -5,7 +5,6 @@ import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { Feature } from './types/features';
 import { HomePage } from './pages/HomePage';
 import { FaturamentoPage } from './pages/FaturamentoPage';
-import { AdiantamentoPage } from './pages/AdiantamentoPage';
 import { DespesaPage } from './pages/DespesaPage';
 import { RelatoriosHubPage } from './pages/RelatoriosHubPage';
 import { RelatorioFinanceiroPage } from './pages/RelatorioFinanceiroPage';
@@ -140,11 +139,6 @@ export const App: React.FC = () => {
             <Route path="/faturamento" element={
               <ProtectedRoute requiredFeature={Feature.RELATORIO_FINANCEIRO_VIEW}>
                 <FaturamentoPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/adiantamento" element={
-              <ProtectedRoute requiredFeature={Feature.RELATORIO_FINANCEIRO_VIEW}>
-                <AdiantamentoPage />
               </ProtectedRoute>
             } />
             <Route path="/despesa" element={

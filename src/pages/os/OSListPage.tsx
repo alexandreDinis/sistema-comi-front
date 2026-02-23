@@ -4,6 +4,7 @@ import { formatarData } from '../../utils/formatters';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { osService } from '../../services/osService';
+import { userService } from '../../services/userService';
 import type { CreateOSRequest, OrdemServico, PageResponse } from '../../types';
 import { ClipboardList, Plus, Calendar, User, ChevronRight, Search, Ban, CheckCircle, Clock, ChevronLeft } from 'lucide-react';
 
@@ -20,7 +21,9 @@ export const OrdemServicoListPage: React.FC = () => {
     const [dateFilter, setDateFilter] = useState('');
 
     const [newOSData, setNewOSData] = useState<CreateOSRequest>({
-        clienteId: 0, data: new Date().toISOString().split('T')[0],
+        clienteId: 0,
+        usuarioId: 0,
+        data: new Date().toISOString().split('T')[0],
         dataVencimento: new Date().toISOString().split('T')[0]
     });
 
@@ -55,6 +58,11 @@ export const OrdemServicoListPage: React.FC = () => {
         queryFn: () => osService.listClientes()
     });
 
+    const { data: equipe } = useQuery({
+        queryKey: ['equipe'],
+        queryFn: () => userService.getEquipe()
+    });
+
     const mutation = useMutation({
         mutationFn: osService.createOS,
         onSuccess: (data) => {
@@ -68,6 +76,10 @@ export const OrdemServicoListPage: React.FC = () => {
         e.preventDefault();
         if (newOSData.clienteId === 0) {
             alert("Selecione um cliente");
+            return;
+        }
+        if (!newOSData.usuarioId || newOSData.usuarioId === 0) {
+            alert("Selecione um responsável técnico");
             return;
         }
         mutation.mutate(newOSData);
@@ -175,6 +187,22 @@ export const OrdemServicoListPage: React.FC = () => {
                                     {clientes?.map(c => (
                                         <option key={c.id} value={c.id}>
                                             {c.nomeFantasia}{c.razaoSocial ? ` (${c.razaoSocial})` : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-cyber-gold font-oxanium text-sm">Responsável Técnico</label>
+                                <select
+                                    className="w-full bg-black/60 border border-cyber-gold/30 text-white p-3 focus:border-cyber-gold outline-none"
+                                    value={newOSData.usuarioId}
+                                    onChange={e => setNewOSData({ ...newOSData, usuarioId: parseInt(e.target.value) })}
+                                    required
+                                >
+                                    <option value={0}>Selecione um técnico...</option>
+                                    {equipe?.filter(u => u.roles?.includes('ROLE_ADMIN_EMPRESA') || u.roles?.includes('ROLE_FUNCIONARIO') || u.role === 'ADMIN' || u.role === 'USER').map(u => (
+                                        <option key={u.id} value={u.id}>
+                                            {u.name || u.email}
                                         </option>
                                     ))}
                                 </select>

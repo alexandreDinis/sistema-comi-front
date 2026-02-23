@@ -92,12 +92,13 @@ export const ComissaoCard: React.FC<ComissaoCardProps> = ({ comissao, onQuitado 
                         </div>
                     )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-12">
                         {[
                             { label: 'FATUR_GERAL', value: formatarMoeda(comissao.faturamentoMensal), icon: TrendingUp },
                             { label: 'TAXA_RENDIM', value: formatarPorcentagem(comissao.porcentagemComissao), icon: Percent },
                             { label: 'ALOC_BRUTA', value: formatarMoeda(comissao.valorBrutoComissao), icon: ReceiptText },
                             { label: 'SAQUE_PRÉVIO', value: formatarMoeda(comissao.valorAdiantado), icon: Landmark },
+                            { label: 'JÁ_PAGO', value: formatarMoeda(comissao.valorQuitado || 0), icon: CheckCircle2 },
                         ].map((stat, idx) => (
                             <div key={idx} className="p-6 bg-black/60 border border-cyber-gold/10 hover:border-cyber-gold/40 transition-all relative overflow-hidden group/item">
                                 <div className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-cyber-gold"></div>

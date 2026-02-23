@@ -268,6 +268,7 @@ const ContasReceberPage = () => {
                             <thead className="bg-black/60">
                                 <tr>
                                     <th className="text-left p-4 text-cyber-gold/70 font-mono text-xs tracking-wider">DESCRIÇÃO</th>
+                                    <th className="text-left p-4 text-cyber-gold/70 font-mono text-xs tracking-wider">CLIENTE</th>
                                     <th className="text-left p-4 text-cyber-gold/70 font-mono text-xs tracking-wider">VENCIMENTO</th>
                                     <th className="text-right p-4 text-cyber-gold/70 font-mono text-xs tracking-wider">VALOR</th>
                                     <th className="text-center p-4 text-cyber-gold/70 font-mono text-xs tracking-wider">PROGRESSO</th>
@@ -287,6 +288,16 @@ const ContasReceberPage = () => {
                                             <div className="text-cyber-gold/40 font-mono text-xs mt-1">
                                                 {conta.tipo.replace(/_/g, ' ')}
                                             </div>
+                                        </td>
+                                        <td className="p-4">
+                                            {conta.cliente ? (
+                                                <div className="flex flex-col">
+                                                    <span className="text-cyber-text font-bold text-sm">{conta.cliente.nomeFantasia || conta.cliente.razaoSocial}</span>
+                                                    <span className="text-[10px] text-cyber-gold/50 font-mono">{conta.cliente.cnpj || conta.cliente.cpf}</span>
+                                                </div>
+                                            ) : (
+                                                <span className="text-cyber-gold/30 font-mono text-[10px] italic">AVULSO</span>
+                                            )}
                                         </td>
                                         <td className={`p-4 font-mono text-sm ${isVencido(conta) ? 'text-cyber-error' : 'text-cyber-gold/60'}`}>
                                             {formatDate(conta.dataVencimento)}

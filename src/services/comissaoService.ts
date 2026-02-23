@@ -44,6 +44,7 @@ export interface ComissaoFuncionario {
     porcentagem: number;
     valorBruto: number;
     adiantamentos: number;
+    valorQuitado: number; // NOVO: Já Pago
     saldoAPagar: number;
     quitado: boolean;
     dataQuitacao?: string;

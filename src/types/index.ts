@@ -33,6 +33,7 @@ export interface ComissaoCalculada {
     porcentagemComissao: number;
     valorBrutoComissao: number;
     valorAdiantado: number;
+    valorQuitado?: number; // NOVO: Já Pago
     saldoAReceber: number;
     saldoAnterior?: number; // NOVO: Saldo do mês anterior (carryover)
     quitado?: boolean; // NOVO: Se foi pago
@@ -336,6 +337,7 @@ export interface CreateOSRequest {
     dataVencimento?: string;
     tipoDesconto?: 'PERCENTUAL' | 'VALOR_FIXO';
     valorDesconto?: number;
+    usuarioId?: number;
 }
 
 export interface AddVeiculoRequest {
@@ -506,6 +508,8 @@ export interface ContaReceber {
     tipo: TipoContaReceber;
     meioPagamento?: MeioPagamento;
     dataCriacao: string;
+    cliente?: Cliente;
+    ordemServico?: OrdemServico;
 }
 
 export interface ResumoFinanceiro {

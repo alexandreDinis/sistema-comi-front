@@ -254,7 +254,14 @@ const FinanceiroDashboard = () => {
                                 <div key={conta.id} className={`flex justify-between items-center p-3 bg-black/50 border-l-4 ${new Date(conta.dataVencimento) < new Date() ? 'border-cyber-error' : 'border-green-500/50'
                                     }`}>
                                     <div>
-                                        <p className="text-sm text-cyber-text">{conta.descricao}</p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-sm text-cyber-text">{conta.descricao}</p>
+                                            {conta.cliente && (
+                                                <span className="text-[10px] text-cyber-gold/70 font-mono bg-cyber-gold/10 px-1 border border-cyber-gold/20 uppercase">
+                                                    {conta.cliente.nomeFantasia || conta.cliente.razaoSocial}
+                                                </span>
+                                            )}
+                                        </div>
                                         <p className="text-xs text-cyber-gold/50 font-mono">
                                             {new Date(conta.dataVencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
                                         </p>

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Loader2, AlertCircle, DollarSign, Check, ReceiptText, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, DollarSign, Check, RefreshCw, Wallet } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { comissaoService } from '../../services/comissaoService';
 import type { ComissaoFuncionario } from '../../services/comissaoService';
 import { ActionModal } from '../../components/modals/ActionModal';
 import type { ActionModalType } from '../../components/modals/ActionModal';
+import { AdiantamentoModal } from '../../components/modals/AdiantamentoModal';
 
 const formatarMoeda = (valor: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
@@ -16,8 +17,6 @@ export const GestaoComissoesPage: React.FC = () => {
     const agora = new Date();
     const [ano, setAno] = useState(agora.getFullYear());
     const [mes, setMes] = useState(agora.getMonth() + 1);
-
-    // Estado para o modal de ação (Recalcular)
     const [actionModal, setActionModal] = useState<{
         isOpen: boolean;
         type: ActionModalType;
@@ -31,6 +30,16 @@ export const GestaoComissoesPage: React.FC = () => {
         message: ''
     });
 
+    const [adiantamentoModal, setAdiantamentoModal] = useState<{
+        isOpen: boolean;
+        funcionarioId: number | null;
+        funcionarioNome: string;
+    }>({
+        isOpen: false,
+        funcionarioId: null,
+        funcionarioNome: ''
+    });
+
     const { data: comissoes, isLoading, isError, refetch } = useQuery({
         queryKey: ['comissoes-empresa', ano, mes],
         queryFn: () => comissaoService.listarComissoesEmpresa(ano, mes)
@@ -40,14 +49,6 @@ export const GestaoComissoesPage: React.FC = () => {
         mutationFn: (id: number) => comissaoService.quitarComissao(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['comissoes-empresa', ano, mes] });
-        }
-    });
-
-    const pagarMutation = useMutation({
-        mutationFn: (id: number) => comissaoService.gerarPagamentoComissao(id),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['comissoes-empresa', ano, mes] });
-            alert('Pagamento gerado no Financeiro (PENDENTE)');
         }
     });
 
@@ -199,7 +200,8 @@ export const GestaoComissoesPage: React.FC = () => {
                                     <th className="p-4 border-b border-cyber-gold/20 text-right">%</th>
                                     <th className="p-4 border-b border-cyber-gold/20 text-right">Bruto</th>
                                     <th className="p-4 border-b border-cyber-gold/20 text-right">Adiant.</th>
-                                    <th className="p-4 border-b border-cyber-gold/20 text-right">A Pagar</th>
+                                    <th className="p-4 border-b border-cyber-gold/20 text-right">Já Pago</th>
+                                    <th className="p-4 border-b border-cyber-gold/20 text-right">Saldo</th>
                                     <th className="p-4 border-b border-cyber-gold/20 text-center">Status</th>
                                     <th className="p-4 border-b border-cyber-gold/20 text-center">Ações</th>
                                 </tr>
@@ -215,6 +217,7 @@ export const GestaoComissoesPage: React.FC = () => {
                                         <td className="p-4 text-right font-mono text-cyber-gold/60">{c.porcentagem}%</td>
                                         <td className="p-4 text-right font-mono text-cyber-gold/80">{formatarMoeda(c.valorBruto)}</td>
                                         <td className="p-4 text-right font-mono text-red-400/80">-{formatarMoeda(c.adiantamentos)}</td>
+                                        <td className="p-4 text-right font-mono text-blue-400/80">-{formatarMoeda(c.valorQuitado || 0)}</td>
                                         <td className="p-4 text-right font-mono font-bold text-cyber-gold">{formatarMoeda(c.saldoAPagar)}</td>
                                         <td className="p-4 text-center">
                                             {c.quitado ? (
@@ -227,12 +230,15 @@ export const GestaoComissoesPage: React.FC = () => {
                                             {!c.quitado && c.saldoAPagar > 0 && (
                                                 <div className="flex gap-2 justify-center">
                                                     <button
-                                                        onClick={() => pagarMutation.mutate(c.id)}
-                                                        disabled={pagarMutation.isPending}
-                                                        className="px-3 py-1 bg-blue-500/20 border border-blue-500/40 text-blue-400 text-xs hover:bg-blue-500/30 disabled:opacity-50 flex items-center gap-1"
-                                                        title="Gerar conta a pagar no Financeiro"
+                                                        onClick={() => setAdiantamentoModal({
+                                                            isOpen: true,
+                                                            funcionarioId: c.funcionarioId,
+                                                            funcionarioNome: c.funcionarioNome
+                                                        })}
+                                                        className="px-3 py-1 bg-cyber-gold/20 border border-cyber-gold/40 text-cyber-gold text-xs hover:bg-cyber-gold/30 flex items-center gap-1"
+                                                        title="Lançar Adiantamento para este funcionário"
                                                     >
-                                                        <ReceiptText size={12} /> Financeiro
+                                                        <Wallet size={12} /> Adiantar
                                                     </button>
                                                     <button
                                                         onClick={() => quitarMutation.mutate(c.id)}
@@ -255,6 +261,23 @@ export const GestaoComissoesPage: React.FC = () => {
                     </div>
                 )
             }
+
+            <AdiantamentoModal
+                isOpen={adiantamentoModal.isOpen}
+                onClose={() => setAdiantamentoModal(prev => ({ ...prev, isOpen: false }))}
+                onSuccess={() => {
+                    refetch();
+                    setActionModal({
+                        isOpen: true,
+                        type: 'success',
+                        title: 'Sucesso',
+                        message: 'Adiantamento registrado e comissão atualizada.',
+                        onConfirm: () => setActionModal(prev => ({ ...prev, isOpen: false }))
+                    });
+                }}
+                funcionarioId={adiantamentoModal.funcionarioId || 0}
+                funcionarioNome={adiantamentoModal.funcionarioNome}
+            />
 
             <ActionModal
                 isOpen={actionModal.isOpen}

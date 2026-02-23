@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { relatorioService } from '../../services/relatorioService';
 import { ShieldCheck, Truck, Utensils, Construction, FileText, TrendingDown, Megaphone, Server, Briefcase, Box, TrendingUp, Wallet, type LucideIcon } from 'lucide-react';
 import { AxiosError } from 'axios';
+import { empresaService } from '../../services/empresaService';
 
 interface RelatorioConsolidadoProps {
     ano: number;
@@ -26,10 +27,17 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
 };
 
 export const RelatorioConsolidado: React.FC<RelatorioConsolidadoProps> = ({ ano, mes }) => {
-    const { data: report, isLoading, error } = useQuery({
+    const { data: report, isLoading: isReportLoading, error } = useQuery({
         queryKey: ['relatorio', ano, mes],
         queryFn: () => relatorioService.getRelatorio(ano, mes),
     });
+
+    const { data: config, isLoading: isConfigLoading } = useQuery({
+        queryKey: ['empresa-config'],
+        queryFn: () => empresaService.getConfig(),
+    });
+
+    const isLoading = isReportLoading || isConfigLoading;
 
     // Debug: log what we receive
     console.log('[RelatorioConsolidado] Data:', report, 'Error:', error);
@@ -132,7 +140,9 @@ export const RelatorioConsolidado: React.FC<RelatorioConsolidadoProps> = ({ ano,
                                 <span className="text-cyber-gold/60">{formatCurrency(report.despesasTotal)}</span>
                             </div>
                             <div className="flex justify-between items-center text-[10px] font-mono">
-                                <span className="text-cyber-gold/40">OBRIGAÇÃO_FISCAL_6%</span>
+                                <span className="text-cyber-gold/40">
+                                    OBRIGAÇÃO_FISCAL{config?.aliquotaImposto !== undefined ? `_${(config.aliquotaImposto * 100).toFixed(1)}%` : ''}
+                                </span>
                                 <span className="text-cyber-gold/60">{formatCurrency(report.imposto)}</span>
                             </div>
                             <div className="flex justify-between items-center text-[10px] font-mono">

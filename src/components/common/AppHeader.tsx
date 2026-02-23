@@ -56,7 +56,6 @@ export const AppHeader: React.FC = () => {
             items: [
                 { label: 'DESPESAS', path: '/despesa', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
                 { label: 'FATURAMENTO MANUAL', path: '/faturamento', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
-                { label: 'ADIANTAMENTOS', path: '/adiantamento', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
             ]
         },
         // COMISSÕES - Gestão

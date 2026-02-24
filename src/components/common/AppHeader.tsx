@@ -116,13 +116,13 @@ export const AppHeader: React.FC = () => {
                         </div>
                         <div className="flex flex-col">
                             <div className="flex items-center gap-2">
-                                <span className="text-2xl font-black text-cyber-gold tracking-tighter italic italic-shadow glitch">OROBOROS</span>
+                                <span className="text-2xl font-black text-cyber-gold tracking-tighter italic italic-shadow glitch">MARTELINHO DIGITAL</span>
                                 <div className="px-1.5 py-0.5 bg-cyber-gold/10 border border-cyber-gold/30 text-[8px] text-cyber-gold/60 font-mono flex items-center gap-1">
                                     <span className="w-1 h-1 bg-cyber-gold rounded-full animate-pulse"></span>
                                     ONLINE
                                 </div>
                             </div>
-                            <span className="text-[10px] text-cyber-gold/40 font-mono uppercase tracking-[0.4em]">SERVICE_CORE_V3</span>
+                            <span className="text-[10px] text-cyber-gold/40 font-mono uppercase tracking-[0.4em]">by Power Oroboros Technology</span>
                         </div>
                     </Link>
 

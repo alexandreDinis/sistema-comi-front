@@ -200,7 +200,7 @@ export const OrdemServicoListPage: React.FC = () => {
                                     required
                                 >
                                     <option value={0}>Selecione um técnico...</option>
-                                    {equipe?.filter(u => u.roles?.includes('ROLE_ADMIN_EMPRESA') || u.roles?.includes('ROLE_FUNCIONARIO') || u.role === 'ADMIN' || u.role === 'USER').map(u => (
+                                    {equipe?.map(u => (
                                         <option key={u.id} value={u.id}>
                                             {u.name || u.email}
                                         </option>

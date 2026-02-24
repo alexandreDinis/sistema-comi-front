@@ -165,6 +165,18 @@ export interface EmpresaConfig {
     aliquotaImposto?: number; // Ex: 0.06 = 6%
     regimeTributario?: RegimeTributario;
     uf?: UF;
+    // Dados de Cobrança
+    razaoSocial?: string;
+    cnpj?: string;
+    telefone?: string;
+    email?: string;
+    endereco?: string;
+    pixTipo?: string;
+    pixChave?: string;
+    banco?: string;
+    agencia?: string;
+    conta?: string;
+    tipoConta?: string;
 }
 
 export interface UploadLogoResponse {
@@ -178,6 +190,18 @@ export interface UpdateEmpresaConfigRequest {
     aliquotaImposto?: number;
     regimeTributario?: RegimeTributario;
     uf?: UF;
+    // Dados de Cobrança
+    razaoSocial?: string;
+    cnpj?: string;
+    telefone?: string;
+    email?: string;
+    endereco?: string;
+    pixTipo?: string;
+    pixChave?: string;
+    banco?: string;
+    agencia?: string;
+    conta?: string;
+    tipoConta?: string;
 }
 
 export interface Feature {

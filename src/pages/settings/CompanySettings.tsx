@@ -1,8 +1,9 @@
 import React from 'react';
-import { Users, Shield, Calculator, Image } from 'lucide-react';
+import { Users, Shield, Calculator, Image, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ModoComissaoConfig } from '../../components/settings/ModoComissaoConfig';
 import { LogoUploadConfig } from '../../components/settings/LogoUploadConfig';
+import { BillingConfig } from '../../components/settings/BillingConfig';
 
 export const CompanySettings: React.FC = () => {
     const navigate = useNavigate();
@@ -65,6 +66,21 @@ export const CompanySettings: React.FC = () => {
                     <h2 className="text-xl font-bold text-cyber-gold uppercase">Logo da Empresa</h2>
                 </div>
                 <LogoUploadConfig />
+            </section>
+
+            {/* Dados da Empresa e Cobrança */}
+            <section className="bg-black/40 border border-cyber-gold/30 p-6 relative group overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full bg-cyber-gold opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                <div className="flex items-center gap-4 mb-6">
+                    <div className="p-3 bg-cyber-gold/10 rounded-lg border border-cyber-gold/30 text-cyber-gold">
+                        <CreditCard size={24} />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-cyber-gold uppercase">Dados &amp; Cobrança</h2>
+                        <p className="text-cyber-gold/50 text-xs mt-1">Dados da empresa, PIX e conta bancária (aparecem no PDF da OS)</p>
+                    </div>
+                </div>
+                <BillingConfig />
             </section>
 
             {/* Comissão Configuration */}

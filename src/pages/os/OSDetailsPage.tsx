@@ -295,17 +295,7 @@ export const OSDetailsPage: React.FC = () => {
     };
 
     const deleteMutation = useMutation({
-        mutationFn: async (id: number) => {
-            // 1. Manual Cascade: Delete all vehicles first
-            if (os && os.veiculos && os.veiculos.length > 0) {
-                console.log(`Excluindo ${os.veiculos.length} veículos associados...`);
-                // Using map to create array of promises
-                const deleteVeiculosPromises = os.veiculos.map(v => osService.deleteVeiculo(v.id));
-                await Promise.all(deleteVeiculosPromises);
-            }
-            // 2. Delete the OS
-            await osService.deleteOS(id);
-        },
+        mutationFn: (id: number) => osService.deleteOS(id),
         onSuccess: () => {
             console.log('OS e veículos excluídos com sucesso, redirecionando...');
             queryClient.invalidateQueries({ queryKey: ['ordens-servico'] });

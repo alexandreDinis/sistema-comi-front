@@ -24,6 +24,22 @@ export const LogoUploadConfig: React.FC = () => {
         queryFn: empresaService.getConfig
     });
 
+    const getUploadErrorMessage = (error: unknown): string => {
+        // Axios error with response
+        const axiosError = error as { response?: { status?: number; data?: { error?: string } }; message?: string };
+        if (axiosError?.response?.status === 413) {
+            return `Arquivo excede o limite do servidor (máx. ${MAX_SIZE_MB}MB). Reduza o tamanho da imagem.`;
+        }
+        if (axiosError?.response?.data?.error) {
+            return axiosError.response.data.error;
+        }
+        if (axiosError?.message?.toLowerCase().includes('too large') ||
+            axiosError?.message?.toLowerCase().includes('size')) {
+            return `Arquivo muito grande. O limite é ${MAX_SIZE_MB}MB.`;
+        }
+        return 'Erro ao enviar logo. Tente novamente.';
+    };
+
     const uploadMutation = useMutation({
         mutationFn: (file: File) => {
             if (!config?.id) throw new Error('Empresa não encontrada');
@@ -212,8 +228,8 @@ export const LogoUploadConfig: React.FC = () => {
             {uploadMutation.isError && (
                 <div className="text-red-400 text-xs font-mono bg-red-400/10 border border-red-400/30 p-3">
                     <div className="flex items-center gap-2">
-                        <AlertCircle className="w-4 h-4" />
-                        Erro ao enviar logo. Tente novamente.
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        {getUploadErrorMessage(uploadMutation.error)}
                     </div>
                 </div>
             )}

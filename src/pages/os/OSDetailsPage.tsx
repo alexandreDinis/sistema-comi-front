@@ -9,6 +9,8 @@ import { ArrowLeft, Car, Wrench, CheckCircle, Plus, Ban, History, FileDown, Tras
 import { VehicleHistoryModal } from '../../components/modals/VehicleHistoryModal';
 import { DuplicatePlateModal } from '../../components/modals/DuplicatePlateModal';
 import { ActionModal } from '../../components/modals/ActionModal';
+import { PdfQueueModal } from '../../components/modals/PdfQueueModal';
+import { usePdfDownload } from '../../hooks/usePdfDownload';
 import { limparPlaca, validarPlaca } from '../../utils/validators';
 import { PlateInput } from '../../components/forms/PlateInput';
 import type { ActionModalType } from '../../components/modals/ActionModal';
@@ -20,6 +22,7 @@ export const OSDetailsPage: React.FC = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const osId = parseInt(id || '0');
+    const { pdfState, startPdfDownload, retryPdfDownload, closePdfModal } = usePdfDownload(osService.getApiBaseUrl());
 
     // State for modals
     const [isVeiculoModalOpen, setVeiculoModalOpen] = useState(false);
@@ -502,7 +505,7 @@ export const OSDetailsPage: React.FC = () => {
                 <div className="flex gap-3">
                     {/* PDF Download - disponível para todos os status */}
                     <button
-                        onClick={() => osService.downloadOSPdf(osId)}
+                        onClick={() => startPdfDownload(osService.getOSPdfPath(osId), `os-${osId}.pdf`)}
                         className="bg-cyber-gold/20 text-cyber-gold border border-cyber-gold/50 px-4 py-2 rounded hover:bg-cyber-gold hover:text-black transition-all font-oxanium flex items-center gap-2"
                     >
                         <FileDown className="w-4 h-4" /> BAIXAR PDF
@@ -1133,6 +1136,8 @@ export const OSDetailsPage: React.FC = () => {
                 type={actionModal.type}
             />
 
+
+            <PdfQueueModal state={pdfState} onRetry={retryPdfDownload} onClose={closePdfModal} />
         </div>
     );
 };

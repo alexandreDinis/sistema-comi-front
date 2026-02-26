@@ -3,6 +3,9 @@ import { RelatorioConsolidado } from '../components/reports/RelatorioConsolidado
 import { ClientRankingWidget } from '../components/relatorios/ClientRankingWidget';
 import { ChevronRight, Home } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { PdfQueueModal } from '../components/modals/PdfQueueModal';
+import { usePdfDownload } from '../hooks/usePdfDownload';
+import { osService } from '../services/osService';
 
 export const RelatorioFinanceiroPage: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -14,6 +17,7 @@ export const RelatorioFinanceiroPage: React.FC = () => {
 
     const [mes, setMes] = useState(initialMes);
     const [ano, setAno] = useState(initialAno);
+    const { pdfState, startPdfDownload, retryPdfDownload, closePdfModal } = usePdfDownload(osService.getApiBaseUrl());
 
     const handlePreviousMonth = () => {
         if (mes === 1) {
@@ -58,7 +62,7 @@ export const RelatorioFinanceiroPage: React.FC = () => {
 
                     <div className="flex items-center gap-4 bg-black/40 border border-cyber-gold/20 p-1 relative">
                         <button
-                            onClick={() => import('../services/osService').then(m => m.osService.downloadRelatorioPdf(ano, mes))}
+                            onClick={() => startPdfDownload(osService.getRelatorioPdfPath(ano, mes), `relatorio-${ano}-${mes}.pdf`)}
                             className="px-4 h-12 flex items-center justify-center hover:bg-cyber-gold hover:text-black transition-all font-bold text-xs tracking-wider border-r border-cyber-gold/10 font-oxanium text-cyber-gold"
                             title="Exportar Relatório em PDF"
                         >
@@ -93,6 +97,8 @@ export const RelatorioFinanceiroPage: React.FC = () => {
             <div className="mt-8 h-[500px]">
                 <ClientRankingWidget selectedAno={ano} selectedMes={mes} />
             </div>
+
+            <PdfQueueModal state={pdfState} onRetry={retryPdfDownload} onClose={closePdfModal} />
         </div>
     );
 };

@@ -28,6 +28,13 @@ export const LoginForm: React.FC = () => {
 
             console.log('[LoginForm] Login Success:', { role, empresa: user.empresa, user });
 
+            // 🔐 Force password change if required
+            if (user.mustChangePassword) {
+                console.log('[LoginForm] 🔑 Senha temporária detectada -> /change-password');
+                navigate('/change-password');
+                return;
+            }
+
             // =====================================================
             // 🔐 LOGIN REDIRECT LOGIC - TWO WORLDS (REGRA DE OURO)
             // =====================================================

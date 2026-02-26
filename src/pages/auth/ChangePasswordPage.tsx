@@ -23,7 +23,7 @@ export const ChangePasswordPage: React.FC = () => {
             const user = authService.getCurrentUser();
             if (user) {
                 user.mustChangePassword = false;
-                localStorage.setItem('user_comi', JSON.stringify(user));
+                localStorage.setItem('user', JSON.stringify(user));
             }
             // Show success message then redirect
             setSuccess(true);

@@ -82,7 +82,7 @@ export const RelatorioConsolidado: React.FC<RelatorioConsolidadoProps> = ({ ano,
                     <div className="flex items-center gap-3 mb-8 border-b border-cyber-gold/20 pb-4">
                         <TrendingDown className="w-4 h-4 text-cyber-gold/60" />
                         <h3 className="text-xl font-black text-cyber-gold tracking-widest italic italic-shadow">
-                            FLUXO_DETALHE_DESPESAS
+                            DETALHAMENTO_DESPESAS_DRE
                         </h3>
                     </div>
 

@@ -1,4 +1,4 @@
-import api from './api';
+import api, { API_BASE_URL } from './api';
 import type { RelatorioFinanceiro, RelatorioAnualDTO } from '../types';
 
 export const relatorioService = {
@@ -12,15 +12,8 @@ export const relatorioService = {
         return response.data;
     },
 
-    downloadRelatorioAnualPdf: async (ano: number): Promise<void> => {
-        const userStr = localStorage.getItem('user');
-        const token = userStr ? JSON.parse(userStr).token : null;
-        console.log('[RelatorioService] User string found:', !!userStr);
-        console.log('[RelatorioService] Token parsed:', token ? token.substring(0, 10) + '...' : 'NULL');
-        const url = `${api.defaults.baseURL}relatorios/anual/${ano}/pdf?token=${token}`;
-        console.log('[RelatorioService] Opening URL:', url);
-        window.open(url, '_blank');
-    },
+    getRelatorioAnualPdfPath: (ano: number) => `relatorios/anual/${ano}/pdf`,
+    getApiBaseUrl: () => API_BASE_URL,
 
     getRankingClientes: async (ano: number, mes?: number): Promise<import('../types').RankingCliente[]> => {
         const params: any = { ano };

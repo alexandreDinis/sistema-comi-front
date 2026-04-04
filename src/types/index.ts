@@ -542,6 +542,7 @@ export interface ResumoFinanceiro {
     contasVencendoProximos7Dias: number;
     recebimentosVencendoProximos7Dias: number;
     saldoProjetado: number;
+    saldoAtual: number;
 }
 
 export interface FluxoCaixa {

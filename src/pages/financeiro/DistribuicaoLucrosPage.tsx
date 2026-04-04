@@ -23,6 +23,11 @@ export const DistribuicaoLucrosPage: React.FC = () => {
         queryFn: financeiroService.listarDistribuicoesLucro
     });
 
+    const { data: resumo } = useQuery({
+        queryKey: ['resumo-financeiro'],
+        queryFn: financeiroService.getResumo
+    });
+
     const createMutation = useMutation({
         mutationFn: financeiroService.criarDistribuicaoLucros,
         onSuccess: () => {
@@ -107,6 +112,40 @@ export const DistribuicaoLucrosPage: React.FC = () => {
                         </button>
                     </div>
                 </div>
+
+                {/* Resumo Caixa / Dívidas */}
+                {resumo && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div className="bg-black/60 border border-cyber-gold/20 p-4 rounded-sm hover:border-cyber-gold/50 transition-all group">
+                            <h3 className="text-xs font-mono text-cyber-gold/60 mb-1 tracking-widest uppercase">// Caixa Disponível</h3>
+                            <p className="text-2xl font-black text-cyber-gold">
+                                {formatCurrency(resumo.saldoAtual || 0)}
+                            </p>
+                            <p className="text-[10px] text-cyber-gold/40 mt-1">
+                                (Acumulado desde o início das operações)
+                            </p>
+                        </div>
+                        <div className="bg-black/60 border border-cyber-error/20 p-4 rounded-sm hover:border-cyber-error/50 transition-all group">
+                            <h3 className="text-xs font-mono text-cyber-gold/60 mb-1 tracking-widest uppercase">// Dívidas Pendentes</h3>
+                            <p className="text-2xl font-black text-cyber-error">
+                                {formatCurrency(resumo.totalAPagar || 0)}
+                            </p>
+                            <p className="text-[10px] text-cyber-error/40 mt-1">
+                                (Total a pagar para todos os meses)
+                            </p>
+                        </div>
+                        <div className="bg-black/60 border border-green-500/20 p-4 rounded-sm hover:border-green-500/50 transition-all group relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-16 h-16 bg-green-500/10 rounded-full blur-2xl group-hover:bg-green-500/20 transition-all"></div>
+                            <h3 className="text-xs font-mono text-green-400/80 mb-1 tracking-widest uppercase">// Saldo Real Livre</h3>
+                            <p className="text-2xl font-black text-green-400">
+                                {formatCurrency((resumo.saldoAtual || 0) - (resumo.totalAPagar || 0))}
+                            </p>
+                            <p className="text-[10px] text-green-400/60 mt-1">
+                                (Disponível p/ distribuir com segurança)
+                            </p>
+                        </div>
+                    </div>
+                )}
 
                 {/* Info Alert */}
                 <div className="bg-blue-900/30 border border-blue-500/30 rounded-sm p-4 mb-6 flex items-start gap-3">

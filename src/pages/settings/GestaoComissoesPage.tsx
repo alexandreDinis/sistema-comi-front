@@ -227,7 +227,7 @@ export const GestaoComissoesPage: React.FC = () => {
                                             )}
                                         </td>
                                         <td className="p-4 text-center">
-                                            {!c.quitado && c.saldoAPagar > 0 && (
+                                            {!c.quitado && (
                                                 <div className="flex gap-2 justify-center">
                                                     <button
                                                         onClick={() => setAdiantamentoModal({
@@ -240,14 +240,16 @@ export const GestaoComissoesPage: React.FC = () => {
                                                     >
                                                         <Wallet size={12} /> Adiantar
                                                     </button>
-                                                    <button
-                                                        onClick={() => quitarMutation.mutate(c.id)}
-                                                        disabled={quitarMutation.isPending}
-                                                        className="px-3 py-1 bg-green-500/20 border border-green-500/40 text-green-400 text-xs hover:bg-green-500/30 disabled:opacity-50 flex items-center gap-1"
-                                                        title="Marcar como pago manualmente"
-                                                    >
-                                                        <Check size={12} /> Quitar
-                                                    </button>
+                                                    {c.saldoAPagar > 0 && (
+                                                        <button
+                                                            onClick={() => quitarMutation.mutate(c.id)}
+                                                            disabled={quitarMutation.isPending}
+                                                            className="px-3 py-1 bg-green-500/20 border border-green-500/40 text-green-400 text-xs hover:bg-green-500/30 disabled:opacity-50 flex items-center gap-1"
+                                                            title="Marcar como pago manualmente"
+                                                        >
+                                                            <Check size={12} /> Quitar
+                                                        </button>
+                                                    )}
                                                 </div>
                                             )}
                                             {c.quitado && c.dataQuitacao && (

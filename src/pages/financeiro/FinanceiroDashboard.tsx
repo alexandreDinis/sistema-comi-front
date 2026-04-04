@@ -171,25 +171,42 @@ const FinanceiroDashboard = () => {
                         </div>
 
 
-                        <div className="grid grid-cols-3 gap-8">
-                            <div className="text-center">
-                                <span className="hud-label block text-center">ENTRADAS</span>
-                                <p className="text-3xl font-black text-green-400 mt-2">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                            <div className="text-center bg-black/40 p-3 rounded border border-cyber-gold/10">
+                                <span className="hud-label block text-center text-cyber-gold/50">SALDO ANTERIOR</span>
+                                <p className="text-2xl font-black text-cyber-gold/50 mt-2 hover:text-cyber-gold/80 transition-colors">
+                                    {formatCurrency((resumo?.saldoAtual || 0) - fluxoCaixa.saldo)}
+                                </p>
+                                <span className="text-[9px] font-mono text-cyber-gold/30 block mt-1">Acumulado passado</span>
+                            </div>
+                            <div className="text-center bg-black/40 p-3 rounded border border-green-500/20">
+                                <span className="hud-label block text-center text-green-400/70">(+) ENTRADAS</span>
+                                <p className="text-2xl font-black text-green-400 mt-2">
                                     {formatCurrency(fluxoCaixa.entradas)}
                                 </p>
+                                <span className="text-[9px] font-mono text-green-500/40 block mt-1">Recebimentos do Mês</span>
                             </div>
-                            <div className="text-center border-x border-cyber-gold/20">
-                                <span className="hud-label block text-center">SAÍDAS</span>
-                                <p className="text-3xl font-black text-cyber-error mt-2">
+                            <div className="text-center bg-black/40 p-3 rounded border border-cyber-error/20">
+                                <span className="hud-label block text-center text-cyber-error/70">(-) SAÍDAS</span>
+                                <p className="text-2xl font-black text-cyber-error mt-2">
                                     {formatCurrency(fluxoCaixa.saidas)}
                                 </p>
+                                <span className="text-[9px] font-mono text-cyber-error/40 block mt-1">Pagamentos do Mês</span>
                             </div>
-                            <div className="text-center">
-                                <span className="hud-label block text-center">SALDO</span>
-                                <p className={`text-3xl font-black mt-2 ${fluxoCaixa.saldo >= 0 ? 'text-cyber-gold' : 'text-cyber-error'
-                                    }`}>
+                            <div className="text-center bg-black/40 p-3 rounded border border-blue-400/20">
+                                <span className="hud-label block text-center text-blue-400">(=) RESULTADO MÊS</span>
+                                <p className={`text-2xl font-black mt-2 ${fluxoCaixa.saldo >= 0 ? 'text-blue-400' : 'text-cyber-error'}`}>
                                     {formatCurrency(fluxoCaixa.saldo)}
                                 </p>
+                                <span className="text-[9px] font-mono text-blue-400/40 block mt-1">Geração de Caixa</span>
+                            </div>
+                            <div className="text-center bg-cyber-gold/5 p-3 rounded border border-cyber-gold flex flex-col justify-center relative shadow-[inset_0_0_20px_rgba(212,175,55,0.05)]">
+                                <div className="absolute top-0 right-0 w-8 h-8 bg-cyber-gold/10 rounded-full blur-xl animate-pulse"></div>
+                                <span className="hud-label block text-center text-cyber-gold font-bold">(=) CAIXA REAL (CONTA)</span>
+                                <p className="text-3xl font-black text-cyber-gold mt-1 drop-shadow-[0_0_8px_rgba(212,175,55,0.3)]">
+                                    {formatCurrency(resumo?.saldoAtual || 0)}
+                                </p>
+                                <span className="text-[9px] font-mono text-cyber-gold/40 block mt-1 italic">Total Acumulado Disponível</span>
                             </div>
                         </div>
                     </section>

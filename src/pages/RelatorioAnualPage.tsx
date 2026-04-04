@@ -18,7 +18,7 @@ export const RelatorioAnualPage: React.FC = () => {
     });
 
     const handleDownloadPdf = () => {
-        startPdfDownload(relatorioService.getRelatorioAnualPdfPath(selectedYear), `relatorio-anual-${selectedYear}.pdf`);
+        startPdfDownload(relatorioService.getRelatorioAnualPdfPath(selectedYear), `relatorio-DRE-anual-${selectedYear}.pdf`);
     };
 
     // Generate year options (current year and past 5 years)

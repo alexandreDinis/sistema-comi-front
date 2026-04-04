@@ -76,7 +76,7 @@ export const AppHeader: React.FC = () => {
             requiredFeature: [Feature.RELATORIO_FINANCEIRO_VIEW],
             items: [
                 { label: 'HUB DE RELATÓRIOS', path: '/relatorio', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
-                { label: 'FLUXO DE CAIXA', path: '/relatorio/financeiro', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
+                { label: 'DRE MENSAL', path: '/relatorio/financeiro', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
                 { label: 'DRE / VISÃO ANUAL', path: '/relatorio/anual', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
                 { label: 'RANKING CLIENTES', path: '/relatorio/ranking', feature: Feature.RELATORIO_FINANCEIRO_VIEW },
             ]

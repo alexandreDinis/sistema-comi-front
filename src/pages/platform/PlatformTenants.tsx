@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { platformService } from '../../services/platformService';
 import type { TenantSummary, TenantUpdateRequest } from '../../services/platformService';
-import { Ban, CheckCircle, Search, Plus, Building2, Calendar, Pencil, X, KeyRound, Loader2 } from 'lucide-react';
+import { Ban, CheckCircle, Search, Plus, Building2, Calendar, Pencil, X, KeyRound, Loader2, DollarSign } from 'lucide-react';
 import { TenantOnboarding } from '../../components/platform/TenantOnboarding';
 
 export const PlatformTenants: React.FC = () => {
@@ -18,9 +18,17 @@ export const PlatformTenants: React.FC = () => {
     });
 
     const toggleBlockMutation = useMutation({
-        mutationFn: platformService.toggleBlockTenant,
+        mutationFn: platformService.toggleTenantStatus,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['platform-tenants'] });
+        }
+    });
+
+    const darBaixaMutation = useMutation({
+        mutationFn: platformService.darBaixaTenant,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['platform-tenants'] });
+            alert('Pagamento registrado com sucesso! Assinatura renovada/desbloqueada.');
         }
     });
 
@@ -55,6 +63,12 @@ export const PlatformTenants: React.FC = () => {
     const handleToggleBlock = (tenant: TenantSummary) => {
         if (confirm(`Tem certeza que deseja ${!tenant.ativo ? 'DESBLOQUEAR' : 'BLOQUEAR'} o acesso da empresa ${tenant.nome}?`)) {
             toggleBlockMutation.mutate(tenant.id);
+        }
+    };
+
+    const handleDarBaixa = (tenant: TenantSummary) => {
+        if (confirm(`Confirmar recebimento de pagamento e renovação para ${tenant.nome}?`)) {
+            darBaixaMutation.mutate(tenant.id);
         }
     };
 
@@ -165,6 +179,15 @@ export const PlatformTenants: React.FC = () => {
                                                 title={!tenant.ativo ? "Desbloquear Acesso" : "Kill Switch (Bloquear Acesso)"}
                                             >
                                                 {!tenant.ativo ? <CheckCircle size={18} /> : <Ban size={18} />}
+                                            </button>
+                                            
+                                            <button
+                                                onClick={() => handleDarBaixa(tenant)}
+                                                disabled={darBaixaMutation.isPending}
+                                                className="p-2 rounded text-emerald-400 bg-emerald-900/20 hover:bg-emerald-900/40 hover:text-emerald-300 transition-colors ml-1 border border-emerald-800/50"
+                                                title="Registrar Pagamento / Renovar Assinatura"
+                                            >
+                                                <DollarSign size={18} />
                                             </button>
                                         </div>
                                     </td>

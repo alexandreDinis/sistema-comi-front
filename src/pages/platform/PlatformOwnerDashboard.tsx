@@ -34,6 +34,21 @@ export const PlatformOwnerDashboard: React.FC = () => {
         }
     });
 
+    const toggleStatusMutation = useMutation({
+        mutationFn: platformService.toggleLicencaStatus,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['owner-licencas'] });
+        }
+    });
+
+    const darBaixaMutation = useMutation({
+        mutationFn: platformService.darBaixaLicenca,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['owner-licencas'] });
+            alert('Pagamento registrado com sucesso! Assinatura renovada/desbloqueada.');
+        }
+    });
+
     const formatCurrency = (value: number) =>
         new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
@@ -110,6 +125,39 @@ export const PlatformOwnerDashboard: React.FC = () => {
                                         >
                                             <Eye size={14} /> Ver Stats
                                         </button>
+                                        
+                                        <button
+                                            onClick={() => {
+                                                if (confirm(`Tem certeza que deseja ${licenca.status === 'ATIVA' ? 'BLOQUEAR/SUSPENDER' : 'DESBLOQUEAR'} o revendedor "${licenca.razaoSocial}"?`)) {
+                                                    toggleStatusMutation.mutate(licenca.id);
+                                                }
+                                            }}
+                                            disabled={toggleStatusMutation.isPending}
+                                            className={`font-medium text-xs inline-flex items-center gap-1 ${
+                                                licenca.status === 'ATIVA' 
+                                                ? 'text-yellow-400 hover:text-yellow-300' 
+                                                : 'text-green-400 hover:text-green-300'
+                                            }`}
+                                        >
+                                            {licenca.status === 'ATIVA' ? (
+                                                <><Ban size={14} /> Suspender</>
+                                            ) : (
+                                                <><CheckCircle size={14} /> Desbloquear</>
+                                            )}
+                                        </button>
+                                        
+                                        <button
+                                            onClick={() => {
+                                                if (confirm(`Confirmar registro de pagamento para o revendedor "${licenca.razaoSocial}"?\nIsso renovará a assinatura e liberará/manterá os acessos ativos.`)) {
+                                                    darBaixaMutation.mutate(licenca.id);
+                                                }
+                                            }}
+                                            disabled={darBaixaMutation.isPending}
+                                            className="text-emerald-400 bg-emerald-900/20 hover:bg-emerald-900/40 hover:text-emerald-300 font-medium text-xs inline-flex items-center gap-1 px-2 py-1 rounded border border-emerald-800/50"
+                                        >
+                                            <DollarSign size={14} /> Dar Baixa
+                                        </button>
+
                                         {licenca.status === 'ATIVA' && (
                                             <button
                                                 onClick={() => {

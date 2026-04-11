@@ -78,8 +78,14 @@ export const platformService = {
     },
 
     // PUT /api/v1/platform/tenants/{id}/toggle-status
-    toggleBlockTenant: async (id: number): Promise<TenantSummary> => {
+    toggleTenantStatus: async (id: number): Promise<TenantSummary> => {
         const response = await api.put<TenantSummary>(`${BASE_URL}/tenants/${id}/toggle-status`);
+        return response.data;
+    },
+
+    // PUT /api/v1/platform/tenants/{id}/dar-baixa
+    darBaixaTenant: async (id: number): Promise<TenantSummary> => {
+        const response = await api.put<TenantSummary>(`${BASE_URL}/tenants/${id}/dar-baixa`);
         return response.data;
     },
 
@@ -96,6 +102,18 @@ export const platformService = {
     // GET /api/v1/platform/licencas/{id}/stats
     getLicencaStats: async (id: number): Promise<LicencaStats> => {
         const response = await api.get<LicencaStats>(`${BASE_URL}/licencas/${id}/stats`);
+        return response.data;
+    },
+
+    // PUT /api/v1/platform/licencas/{id}/toggle-status
+    toggleLicencaStatus: async (id: number): Promise<LicencaSummary> => {
+        const response = await api.put<LicencaSummary>(`${BASE_URL}/licencas/${id}/toggle-status`);
+        return response.data;
+    },
+
+    // PUT /api/v1/platform/licencas/{id}/dar-baixa
+    darBaixaLicenca: async (id: number): Promise<LicencaSummary> => {
+        const response = await api.put<LicencaSummary>(`${BASE_URL}/licencas/${id}/dar-baixa`);
         return response.data;
     },
 

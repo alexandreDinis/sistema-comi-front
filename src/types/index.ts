@@ -139,6 +139,7 @@ export interface UserResponse {
     features?: string[];
     mustChangePassword?: boolean;
     participaComissao?: boolean;
+    diasParaVencimento?: number;
 }
 
 export interface Empresa {
@@ -225,6 +226,7 @@ export interface User {
     features?: Feature[] | string[]; // Can be strings (legacy/mock) or objects (backend)
     mustChangePassword?: boolean;
     participaComissao?: boolean;
+    diasParaVencimento?: number;
 }
 
 // --- Módulo OS Definitions ---

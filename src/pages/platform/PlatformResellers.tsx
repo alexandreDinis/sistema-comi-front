@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { licencaService } from '../../services/licencaService';
+import { platformService } from '../../services/platformService';
 import type { Licenca, LicencaCreateRequest, PlanoLicenca } from '../../services/licencaService';
-import { Plus, Building2, Mail, Phone, AlertTriangle, CheckCircle, Ban, Loader2, Edit2 } from 'lucide-react';
+import { Plus, Building2, Mail, Phone, AlertTriangle, CheckCircle, Ban, Loader2, Edit2, DollarSign, Unlock } from 'lucide-react';
 
 export const PlatformResellers: React.FC = () => {
     const queryClient = useQueryClient();
@@ -42,6 +43,19 @@ export const PlatformResellers: React.FC = () => {
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['licencas'] })
     });
 
+    const toggleStatusMutation = useMutation({
+        mutationFn: platformService.toggleLicencaStatus,
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['licencas'] })
+    });
+
+    const darBaixaMutation = useMutation({
+        mutationFn: platformService.darBaixaLicenca,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['licencas'] });
+            alert('Pagamento registrado com sucesso! Assinatura renovada/desbloqueada.');
+        }
+    });
+
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
@@ -63,9 +77,21 @@ export const PlatformResellers: React.FC = () => {
     };
 
     const handleSuspend = (licenca: Licenca) => {
-        const motivo = prompt('Motivo da suspensão:');
+        const motivo = prompt('Motivo da suspensão (ex: Inadimplente):');
         if (motivo) {
             suspendMutation.mutate({ id: licenca.id, motivo });
+        }
+    };
+
+    const handleUnsuspend = (licenca: Licenca) => {
+        if (confirm(`Tem certeza que deseja DESBLOQUEAR e reativar o revendedor "${licenca.razaoSocial}"? Todos os tenants dele serão impactados positivamente.`)) {
+            toggleStatusMutation.mutate(licenca.id);
+        }
+    };
+
+    const handleDarBaixa = (licenca: Licenca) => {
+        if (confirm(`Confirmar registro de pagamento para o revendedor "${licenca.razaoSocial}"?\nIsso renovará a assinatura e liberará/manterá os acessos ativos.`)) {
+            darBaixaMutation.mutate(licenca.id);
         }
     };
 
@@ -140,16 +166,38 @@ export const PlatformResellers: React.FC = () => {
                                     <td className="p-4 text-slate-300">{licenca.planoTipo}</td>
                                     <td className="p-4">{getStatusBadge(licenca.status)}</td>
                                     <td className="p-4 flex gap-2">
-                                        <button onClick={() => handleEdit(licenca)} className="text-blue-400 hover:text-blue-300 p-1" title="Editar">
+                                        <button onClick={() => handleEdit(licenca)} className="text-blue-400 hover:text-blue-300 p-1 bg-blue-900/20 rounded" title="Editar">
                                             <Edit2 size={16} />
                                         </button>
+                                        
+                                        <button
+                                            onClick={() => handleDarBaixa(licenca)}
+                                            disabled={darBaixaMutation.isPending}
+                                            className="text-emerald-400 hover:text-emerald-300 p-1 bg-emerald-900/20 rounded flex items-center gap-1 border border-emerald-800/50"
+                                            title="Registrar Pagamento"
+                                        >
+                                            <DollarSign size={16} /> Dar Baixa
+                                        </button>
+                                        
                                         {licenca.status === 'ATIVA' && (
                                             <button
                                                 onClick={() => handleSuspend(licenca)}
-                                                className="text-red-400 hover:text-red-300 p-1"
-                                                title="Suspender"
+                                                disabled={suspendMutation.isPending}
+                                                className="text-red-400 hover:text-red-300 p-1 bg-red-900/20 rounded ml-2"
+                                                title="Suspender Revendedor"
                                             >
                                                 <Ban size={16} />
+                                            </button>
+                                        )}
+
+                                        {licenca.status !== 'ATIVA' && (
+                                            <button
+                                                onClick={() => handleUnsuspend(licenca)}
+                                                disabled={toggleStatusMutation.isPending}
+                                                className="text-green-400 hover:text-green-300 p-1 bg-green-900/20 rounded ml-2"
+                                                title="Desbloquear / Reativar sem baixar pagamento"
+                                            >
+                                                <Unlock size={16} />
                                             </button>
                                         )}
                                     </td>

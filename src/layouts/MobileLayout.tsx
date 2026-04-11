@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Home, FileText, Users, TrendingDown, DollarSign, LogOut } from 'lucide-react';
 import { authService } from '../services/authService';
+import { ExpirationBanner } from '../components/common/ExpirationBanner';
 
 // Rotas permitidas no mobile (mesmo que no native app)
 export const MOBILE_ALLOWED_ROUTES = [
@@ -53,6 +54,7 @@ export const MobileLayout: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-cyber-bg flex flex-col">
+            <ExpirationBanner />
             {/* Header simples */}
             <header className="bg-cyber-card border-b border-cyber-border px-4 py-3 safe-area-top">
                 <div className="flex items-center justify-between">

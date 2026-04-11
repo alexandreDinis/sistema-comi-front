@@ -6,7 +6,6 @@ import { Link } from 'react-router-dom';
 export const ExpirationBanner: React.FC = () => {
     const [isVisible, setIsVisible] = useState(false);
     const [daysLeft, setDaysLeft] = useState<number | undefined>(undefined);
-    const [isDismissed, setIsDismissed] = useState(false);
 
     useEffect(() => {
         const user = authService.getCurrentUser();

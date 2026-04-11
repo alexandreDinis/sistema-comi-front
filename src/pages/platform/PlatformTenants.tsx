@@ -18,7 +18,7 @@ export const PlatformTenants: React.FC = () => {
     });
 
     const toggleBlockMutation = useMutation({
-        mutationFn: platformService.toggleBlockTenant,
+        mutationFn: platformService.toggleTenantStatus,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['platform-tenants'] });
         }
